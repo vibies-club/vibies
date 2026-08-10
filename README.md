@@ -1,0 +1,1 @@
+Vibies is a post-AI school
