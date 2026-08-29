@@ -30,9 +30,20 @@ These rules keep it safe and useful for everyone — including our youngest memb
 
 ## Enforcement
 
-- First time: a private reminder from a moderator.
+- First time: a private reminder from the instructor.
 - Second time: you're out. No debates.
-- See something wrong? Tell a moderator. Reporting protects the club.
+- See something wrong? Tell the instructor. Reporting protects the club.
+
+The instructor is the product's only moderator. The instructor may hide or
+restore content but does not rewrite member content. See the
+[product definition](docs/PRODUCT.md) for permissions and the
+[workflows](docs/WORKFLOWS.md) for moderation behavior.
+
+## Related documentation
+
+- [Documentation home](README.md)
+- [Product roles, permissions, and privacy boundaries](docs/PRODUCT.md)
+- [Canonical product terminology](docs/DOMAIN.md)
 
 ---
 
