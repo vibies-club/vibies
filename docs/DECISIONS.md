@@ -192,3 +192,29 @@ words such as “collaborate” or “manage.”
 
 **Related documents:** [Product boundaries](PRODUCT.md),
 [domain concepts](DOMAIN.md), and [workflow scope](WORKFLOWS.md).
+
+## D-011: Open the repository under vibies-club
+
+**Status:** Accepted.
+
+**Decision:** The repository moves to the `vibies-club` organization and
+becomes public under the Apache License 2.0. Members receive Write access
+through a reviewers team so their PR approvals count toward the review
+requirement. Main is protected: every change arrives through a PR with at
+least one member review, and only the instructor account `0xinBeta` can push
+to or merge into main. [RULES.md](../RULES.md) serves as the code of conduct,
+and conduct reports go to the instructor.
+
+**Why:** Open source turns every contribution into a public receipt. Write
+access lets member reviews satisfy the review requirement, and protection on
+main keeps merge authority with the instructor.
+
+**Consequence:** The instructor performs the organization hardening (2FA
+requirement on, member repository creation off), the transfer, the visibility
+change, the branch protection, and the invitations after the readiness PR
+merges. Protection on main comes before invitations. This heading uses a
+colon because the writing rules exclude em dashes; older headings keep their
+format until a cleanup issue.
+
+**Related documents:** [Contributing guide](../CONTRIBUTING.md),
+[community rules](../RULES.md), and [agent rules](../AGENTS.md).

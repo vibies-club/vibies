@@ -1,0 +1,19 @@
+name: docs
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check local Markdown links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          # ponytail: offline keeps CI deterministic; external links are a
+          # human-review concern until they start rotting.
+          args: --offline --no-progress --include-fragments "**/*.md"
+          fail: true
