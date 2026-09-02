@@ -28,6 +28,7 @@ definition instead of creating a different version of it.
 | Document | What it defines |
 | --- | --- |
 | [Community rules](RULES.md) | Behavior, safety, privacy conduct, feedback conduct, and enforcement |
+| [Contributing guide](CONTRIBUTING.md) | The workflow every contributor follows, and the merge gate |
 | [Agent instructions](AGENTS.md) | How agents must work in this repository |
 | [Product](docs/PRODUCT.md) | Purpose, scope, roles, permissions, privacy boundaries, and exclusions |
 | [Domain](docs/DOMAIN.md) | Canonical concepts, relationships, constraints, states, and the Mermaid graph |
@@ -51,3 +52,7 @@ member also needs instructor approval. The sole instructor's access is
 pre-established when the private Community is created. Before joining, read the
 [community rules](RULES.md) to learn how we build, share feedback, and keep the
 community safe.
+
+## License
+
+Vibies is open source under the Apache License 2.0. See [LICENSE](LICENSE).
