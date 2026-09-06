@@ -5,7 +5,7 @@
 
 **Updated:** 2026-09-02
 
-## Current snapshot
+## Repository setup
 
 The open-source readiness work from issue #8 merged through PR #9 on
 2026-09-02, and the move recorded in
@@ -21,7 +21,7 @@ The open-source readiness work from issue #8 merged through PR #9 on
 - Seven member invitations are pending. Accepting one joins the reviewers
   team.
 
-## Not implemented
+## Product status
 
 There is no application code, user interface, API, database schema, real product
 data, GitHub App configuration, authentication flow, repository import, or sync
