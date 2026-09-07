@@ -15,5 +15,5 @@ jobs:
         with:
           # ponytail: offline keeps CI deterministic; external links are a
           # human-review concern until they start rotting.
-          args: --offline --no-progress --include-fragments "**/*.md"
+          args: --offline --no-progress --include-fragments --exclude-path node_modules --exclude-path .next --exclude-path graphify-out "**/*.md"
           fail: true

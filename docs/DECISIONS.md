@@ -218,3 +218,28 @@ format until a cleanup issue.
 
 **Related documents:** [Contributing guide](../CONTRIBUTING.md),
 [community rules](../RULES.md), and [agent rules](../AGENTS.md).
+
+## D-012: Prove the first public data path with a synthetic demo
+
+**Status:** Accepted.
+
+**Decision:** Issue #13 uses Node.js 24, npm, Next.js 16 App Router with
+TypeScript, Supabase, and Vercel for one public demo. The `/demo` page reads the
+fixed synthetic row `public.demo_projects.id = 1` through an unauthenticated
+Supabase client with a publishable key. Vercel deployment belongs to the
+`beta-momo` account.
+
+**Why:** One small browser-to-database path gives the class a concrete way to
+learn local setup, Row Level Security, deployment, and proof before private
+product features add more risk and decisions.
+
+**Consequence:** The demo table stays separate from Personal Projects and the
+Class Project. It contains synthetic data only. It adds no authentication,
+write feature, ORM, GitHub integration, or real product data. The `anon` role
+can select the demo row and cannot write. The `authenticated` role receives no
+demo access while issue #5 remains pending. Humans supply public configuration
+locally and in Vercel. This decision does not define the full Vibies product or
+its future production data model.
+
+**Related documents:** [Demo data model](DATA-MODEL.md),
+[Supabase setup](SUPABASE-SETUP.md), and [progress](PROGRESS.md).
