@@ -22,20 +22,34 @@ Instructor.
 
 **Outcome:**
 
-1. GitHub authenticates the person's identity.
-2. Vibies checks whether the identity is the pre-established Instructor or a
-   Member with approved Membership.
-3. The recognized Instructor or approved Member enters the Community.
-4. An approved Member whose onboarding is incomplete may browse but cannot post
+1. Vibies allows the sign-in start when this browser session has made fewer
+   than 10 starts in the current 10-minute window.
+2. GitHub authenticates the person's identity.
+3. Vibies matches the stable GitHub account identifier. A first successful
+   sign-in creates one unapproved Access entry, and repeated sign-ins reuse it.
+4. Vibies starts an opaque browser Session with an absolute 24-hour lifetime.
+5. Vibies checks whether the identity is the designated Instructor or a Member
+   with approved Membership.
+6. The recognized Instructor or approved Member enters the Community. An
+   approved Member whose onboarding is incomplete may browse but cannot post
    Comments or Feedback.
+7. An unapproved or revoked person sees access denied with a sign-out action.
 
 Authentication proves identity only. It does not approve Member Membership or
 provision a new Instructor.
 
-**Failure path:** If GitHub authentication is cancelled or fails, the person does
-not enter. If authentication succeeds but the identity is neither the
-pre-established Instructor nor an approved Member, the person still does not
-receive Community access.
+Every protected page and action checks the current Session and current access
+status. At 24 hours, the person must sign in again. Sign-out deletes the current
+browser Session without changing Membership. Every signed-in page offers this
+action.
+
+**Failure path:** Cancellation returns to sign-in. Authentication failure and an
+expired Session grant no access and offer a safe retry. If the Membership lookup
+fails, Vibies blocks private access and shows a retry message. It does not show
+private page data, internal errors, configuration, or a revoked label without a
+successful lookup. An eleventh sign-in start within the browser window waits
+until the limit permits another attempt. Clearing browser state can bypass this
+basic repeated-click limit; stronger abuse protection is separate work.
 
 ## 2. Approve Membership and complete onboarding
 
@@ -46,15 +60,24 @@ Membership decision.
 
 **Outcome — approval:**
 
-1. The Instructor confirms that one of the seven Member places is available and
-   approves or reapproves the person's Membership.
-2. The approved Member may enter and browse the private Community.
-3. If onboarding is incomplete, the Member connects a private personal
+1. The Instructor opens the private membership screen and identifies the account
+   using its GitHub username and stable identifier.
+2. For first approval, the Instructor agrees a Nickname with the Member and
+   checks it for real names or contact information. The screen explains that
+   automatic validation cannot detect all personal information.
+3. For first approval, Vibies trims outer ASCII spaces and validates the
+   Nickname rules from the [domain model](DOMAIN.md#people-and-access).
+4. Reapproval keeps the Former Member's reserved Nickname and retained records.
+5. Vibies approves or reapproves the Membership only when one of the seven
+   Member places is available. Approval, capacity enforcement, and Nickname
+   reservation are one operation. Repeated submissions create no duplicate.
+6. The approved Member may enter and browse the private Community.
+7. If onboarding is incomplete, the Member connects a private personal
    repository and publishes a first Personal Project.
-4. That first publication completes onboarding permanently.
-5. If onboarding was already completed before revocation, reapproval preserves
+8. That first publication completes onboarding permanently.
+9. If onboarding was already completed before revocation, reapproval preserves
    that milestone without another publication.
-6. A Member whose onboarding is complete can post Comments and Feedback under
+10. A Member whose onboarding is complete can post Comments and Feedback under
    the normal permissions.
 
 A reapproved Former Member returns with the same project ownership, content
@@ -64,11 +87,16 @@ Later archiving, disconnection, hiding, or deletion of the first project does no
 reverse onboarding completion.
 
 **Outcome — revocation:** Under the [community rules](../RULES.md), the Instructor
-may revoke a Member's access. The person becomes a Former Member and cannot enter
-the Community or run owner workflows. This opens a Member place but preserves the
-Member Role, project ownership, content authorship, onboarding milestone, and
-existing content states. Separate moderation and deletion rules continue to
-apply.
+reviews a warning that access ends while existing content remains. Cancellation
+changes nothing. After confirmation, the person becomes a Former Member. The
+next protected request or action is blocked, even when a Session remains valid.
+This opens a Member place but preserves the Member Role, Nickname, project
+ownership, content authorship, onboarding milestone, and existing content states.
+Separate moderation and deletion rules continue to apply.
+
+**Outcome — dismissal:** The Instructor may dismiss an unapproved Access entry.
+The entry is removed without granting access. A later successful sign-in may
+create it again. Dismissal cannot remove a revoked Member or retained content.
 
 **Failure path:** Until approval, the person cannot enter the Community. The
 Instructor cannot approve an eighth active Member, and no one else can approve or
@@ -270,3 +298,27 @@ rewrite those contributions before deletion.
 **Failure path:** Cancelling or leaving the confirmation changes nothing. A
 Member cannot delete another Member's Personal Project. Hiding, archiving, or
 disconnecting is not a substitute for confirmed deletion.
+
+## 11. Recover Instructor access
+
+**Start:** The designated Instructor cannot use the existing GitHub account.
+
+**Actor:** Deployment owner.
+
+**Preconditions:** The owner verifies the Instructor through an existing trusted
+channel outside Vibies, selects a separate GitHub account that is not a Member,
+and writes the reason in the private audit record. Ordinary sign-in cannot start
+this workflow.
+
+**Outcome:**
+
+1. The owner-only recovery operation locks the single Instructor designation.
+2. It designates the verified replacement and invalidates Sessions for the old
+   and replacement accounts.
+3. The old account loses Instructor access on its next protected request or
+   action.
+4. Exactly one Instructor remains, and the active Member count is unchanged.
+
+**Failure path:** A Member account cannot become the replacement through
+recovery. A rejected recovery changes no designation or Membership. Account
+transfer requires a separate reviewed procedure.

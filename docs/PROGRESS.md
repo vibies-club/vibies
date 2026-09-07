@@ -23,8 +23,7 @@ The open-source readiness work from issue #8 merged through PR #9 on
 
 ## Product status
 
-Issue #13 adds the first application slice on the
-`feature/supabase-demo-13` branch:
+Issue #13 merged through PR #15 on 2026-09-07. It provides:
 
 - a minimal Node.js 24, npm, Next.js 16 App Router, and TypeScript application;
 - a public `/demo` page that reads the fixed synthetic Supabase row with
@@ -34,8 +33,8 @@ Issue #13 adds the first application slice on the
 - local setup and Vercel deployment instructions.
 
 The demo is separate from the Vibies product domain. It has no real Personal
-Projects or Class Projects, member data, authentication, product writes, ORM,
-GitHub App configuration, repository import, or synchronization.
+Projects or Class Projects, member data, product writes, repository import, or
+synchronization.
 
 Local implementation exists. The `beta-momo/vibies` Vercel project is linked
 locally and connected to `vibies-club/vibies` on GitHub. The Supabase CLI applied
@@ -47,14 +46,27 @@ human-run Data API check passed all ten checks. Local and Preview pages display
 the stored sample and show database edits on new requests. Preview empty and
 safe error states also pass. The original sample and read grants are restored.
 
-[PR #15](https://github.com/vibies-club/vibies/pull/15) holds the verification
+[PR #15](https://github.com/vibies-club/vibies/pull/15) holds the demo verification
 receipts and [Preview link](https://vibies-git-feature-supabase-demo-13-beta-momo.vercel.app/demo).
-Vercel access is required to open the protected Preview. Production verification
-follows instructor merge.
+
+Issue #5 is implemented locally on `feature/sign-in-access-5` from the accepted
+[issue #14 specification](https://github.com/vibies-club/vibies/issues/14). Its
+scope is GitHub sign-in, unapproved access denial, Instructor membership
+administration, a minimal protected welcome page, absolute 24-hour Sessions,
+sign-out, and owner-run Instructor setup and recovery. The public demo and its
+anonymous Supabase client remain separate.
+
+The approved implementation uses direct GitHub OAuth, opaque hashed Sessions,
+and a private PostgreSQL API in `vibies_private`. The required human setup is in
+[Access setup](ACCESS-SETUP.md). The Skeptic findings and issue checks A1 through
+A16 are in [Access verification](ACCESS-VERIFICATION.md). Unit, database, HTTP,
+local browser, build, link, and diagram checks pass. Live GitHub, hosted Preview,
+and trusted-channel recovery checks remain pending human-owned setup.
 
 ## Next step
 
-Complete the remaining receipts with the [Supabase setup guide](SUPABASE-SETUP.md)
-before merge. Students review the feature PR, and the instructor merges after
-the gate passes. Verify Production after merge. Authentication remains pending
-in issue #5.
+On a clean staging database, run the access SQL twice and inspect the grants.
+Complete the real GitHub Preview and recovery procedures. The automated database
+proof runs only against its isolated local fixture database. Record privacy-safe receipts for A1
+through A16. Keep the implementation PR draft until the live checks pass, then request Member review. The Instructor merges only after
+the six merge-gate checks pass.

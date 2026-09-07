@@ -65,6 +65,9 @@ reapproval.
 
 **Status:** Accepted.
 
+**Supplemented by:** [D-013](#d-013-restrict-github-identity-to-access-management),
+which records the narrow Instructor-only identity exception accepted in issue #14.
+
 **Decision:** Nicknames are the only displayed identity. GitHub usernames,
 avatars, and personal details remain private, and real names, secrets, tokens,
 and installation IDs are excluded from this foundation.
@@ -243,3 +246,76 @@ its future production data model.
 
 **Related documents:** [Demo data model](DATA-MODEL.md),
 [Supabase setup](SUPABASE-SETUP.md), and [progress](PROGRESS.md).
+
+## D-013: Restrict GitHub identity to access management
+
+**Status:** Accepted in [issue #14](https://github.com/vibies-club/vibies/issues/14).
+
+**Decision:** D-004 remains the general privacy rule. Issue #14 supplements it
+with one narrow exception: only the Instructor membership screen may show the
+current GitHub username and stable account identifier, and only to identify an
+account for an access decision. Member-facing pages show Nicknames only. The
+feature stores the stable identifier, current username, and required access
+records. It does not store profile names, avatars, email addresses, or
+biographies. The GitHub profile response is transient and is discarded after
+projecting the stable identifier and username.
+
+The Instructor records a Member-agreed Nickname during first approval. Vibies
+trims outer ASCII spaces, counts Unicode code points, accepts 2 through 30
+characters made from Unicode letters (including letter numbers), Unicode decimal digits, spaces, hyphens,
+and underscores, and enforces case-insensitive uniqueness. Revoked Members keep
+their Nicknames reserved. Nickname editing is outside this feature.
+
+**Why:** The Instructor needs enough private information to distinguish accounts
+without exposing GitHub identity to Members or retaining unrelated profile data.
+
+**Consequence:** Access management is an explicit supplement to D-004. Direct
+requests by any non-Instructor must not reveal account details. Receipts use
+synthetic identifiers and Nicknames.
+
+**Related documents:** [Product privacy boundaries](PRODUCT.md#privacy-boundaries),
+[domain people and access](DOMAIN.md#people-and-access), and
+[access verification](ACCESS-VERIFICATION.md).
+
+## D-014: Use direct GitHub OAuth and a private database API
+
+**Status:** Accepted for issue #5 after the approved plan and Skeptic pass.
+
+**Decision:** The first access feature uses the native GitHub OAuth authorization
+code flow with no requested scope. It uses Node.js cryptography and `fetch`
+instead of an authentication framework. Each OAuth state is one-use, expires in
+10 minutes, is bound to its browser and PKCE verifier, and is consumed in one
+database operation. A cancelled flow or a GitHub HTTP 200 response containing an
+error fails safely. GitHub profile fields are projected as specified in D-013.
+
+Browser Sessions use random opaque cookies. Only their hashes are stored. Each
+Session expires absolutely 24 hours after sign-in, rotates at sign-in, and is
+deleted at sign-out. Every protected request and action joins the current
+Session to the current Instructor or Membership status. The browser sign-in
+counter permits 10 starts in a rolling 10-minute window and is updated before
+redirecting to GitHub.
+
+The server connects with `postgres` 3.4.9 through a dedicated TLS Supabase
+pooler connection. Product tables and callable functions live in the private
+`vibies_private` schema. The SQL creates `vibies_runtime` as a `NOLOGIN` role
+with only the required function execution rights. A human creates the dedicated
+login role and grants it `vibies_runtime`. The browser receives no database
+credential or service-role key. Instructor designation and recovery remain
+owner-only database operations outside the runtime role.
+
+**Why:** This design avoids automatic GitHub profile import, makes session expiry
+absolute, closes approval races in PostgreSQL, and keeps private access records
+outside the public Data API.
+
+**Consequence:** The database is the authorization boundary. Approval locks the
+single capacity record and saves capacity and Nickname uniqueness together.
+Revocation is effective at the next protected request. Recovery rejects a Member
+account, preserves the Member count, invalidates affected Sessions, and records
+its reason privately. Membership lookup and configuration failures deny access
+with a safe retry.
+
+The public `/demo` continues through its separate anonymous Supabase client.
+This feature does not change the grants accepted in D-012.
+
+**Related documents:** [Access setup](ACCESS-SETUP.md),
+[access verification](ACCESS-VERIFICATION.md), and [access workflows](WORKFLOWS.md).
