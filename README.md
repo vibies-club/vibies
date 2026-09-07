@@ -33,18 +33,48 @@ definition instead of creating a different version of it.
 | [Agent instructions](AGENTS.md) | How agents must work in this repository |
 | [Product](docs/PRODUCT.md) | Purpose, scope, roles, permissions, privacy boundaries, and exclusions |
 | [Domain](docs/DOMAIN.md) | Canonical concepts, relationships, constraints, states, and the Mermaid graph |
+| [Demo data model](docs/DATA-MODEL.md) | The synthetic Supabase table used by the public demo |
 | [Workflows](docs/WORKFLOWS.md) | How access, projects, discussion, feedback, moderation, connection, and deletion work |
 | [Decisions](docs/DECISIONS.md) | Accepted product and documentation decisions with their reasons |
 | [Progress](docs/PROGRESS.md) | The current development snapshot and immediate next step |
 | [Roadmap](docs/ROADMAP.md) | The `Now`, `Next`, and `Later` sequence |
+| [Supabase setup](docs/SUPABASE-SETUP.md) | Human setup, safety checks, local verification, and Vercel deployment |
 
 ## Current status
 
-The repository currently contains a documentation-only product foundation. It
-does not yet contain a working application, user interface, API, database,
-authentication flow, repository import, or synchronization implementation. See
-[progress](docs/PROGRESS.md) for the current snapshot and the
-[roadmap](docs/ROADMAP.md) for what comes next.
+The repository contains the product foundation and a small public demo. The demo
+reads one synthetic row from Supabase. It does not use real Personal Projects or
+Class Projects, authentication, writes, repository import, or synchronization.
+See the [Supabase setup guide](docs/SUPABASE-SETUP.md), the
+[demo data model](docs/DATA-MODEL.md), and [progress](docs/PROGRESS.md).
+
+## Run the demo locally
+
+Use Node.js 24 and npm. A human must first add the two public Supabase values to
+`.env.local` as described in the [Supabase setup guide](docs/SUPABASE-SETUP.md).
+
+```sh
+npm ci
+npm run dev
+```
+
+Open `http://localhost:3000`. The root path redirects to `/demo`.
+
+Run the local checks with:
+
+```sh
+npm run typecheck
+npm test
+npm run build
+npm start
+```
+
+The live Supabase check is a separate human-run command because it needs the
+values in `.env.local`:
+
+```sh
+npm run check:demo
+```
 
 ## How to join
 

@@ -3,7 +3,7 @@
 [Documentation home](../README.md) · [Decisions](DECISIONS.md) ·
 [Roadmap](ROADMAP.md)
 
-**Updated:** 2026-09-02
+**Updated:** 2026-09-07
 
 ## Repository setup
 
@@ -23,15 +23,31 @@ The open-source readiness work from issue #8 merged through PR #9 on
 
 ## Product status
 
-There is no application code, user interface, API, database schema, real product
-data, GitHub App configuration, authentication flow, repository import, or sync
-implementation in this repository. The documentation describes intended product
-behavior; it does not claim that behavior is running.
+Issue #13 adds the first application slice on the
+`feature/supabase-demo-13` branch:
+
+- a minimal Node.js 24, npm, Next.js 16 App Router, and TypeScript application;
+- a public `/demo` page that reads the fixed synthetic Supabase row with
+  `id = 1`;
+- an idempotent demo table setup, metadata proof, and Data API read and
+  write-denial check;
+- local setup and Vercel deployment instructions.
+
+The demo is separate from the Vibies product domain. It has no real Personal
+Projects or Class Projects, member data, authentication, product writes, ORM,
+GitHub App configuration, repository import, or synchronization.
+
+Local implementation exists. The `beta-momo/vibies` Vercel project is linked
+locally and connected to `vibies-club/vibies` on GitHub. The Supabase CLI applied
+the demo SQL twice to the previously empty public schema. One sample row
+remains, RLS is enabled, and anonymous grants allow SELECT only.
+
+Tests, type checking, and a build without database configuration pass. Live
+Data API, local persistence, Preview, and Production receipts remain pending.
 
 ## Next step
 
-Members accept their invitations and each runs one full loop: a small Ready
-issue, a feature branch, a proven fix, a PR with the six checks, and one
-peer review. After that, choose and plan the first product feature against
-the [product](PRODUCT.md), [domain](DOMAIN.md), and
-[workflow](WORKFLOWS.md) definitions.
+Complete the remaining receipts with the [Supabase setup guide](SUPABASE-SETUP.md)
+before merge. Students review the feature PR, and the instructor merges after
+the gate passes. Verify Production after merge. Authentication remains pending
+in issue #5.

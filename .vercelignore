@@ -1,0 +1,9 @@
+graphify-out/
+.env*
+.obsidian/
+*.tsbuildinfo
+.github/
+supabase/
+tests/
+scripts/
+docs/
