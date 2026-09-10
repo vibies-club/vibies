@@ -67,12 +67,12 @@ and approved Builder and Scout. Live receipts now show Member access, a private
 repository in the picker, publication and onboarding, Scout's Community list,
 Guide's list and direct read, and signed-out denial. Scout's direct read is
 human-confirmed. Selected-access loss preserves publication and onboarding and
-removes the project from shared reads. Same-project restoration remains pending.
+removes the project from shared reads. Builder and Scout confirmed restoration
+of the original project; Guide's list and original direct URL also pass. The
+first-stage proof gate is complete.
 
 ## Next step
 
-Complete the remaining checks in the
-[live P1/P15 procedure](PROJECT-SETUP.md#live-p1-and-p15-procedure).
-Then build and prove Edit and Delete (P10 to P12), followed
+Build and prove Edit and Delete (P10 to P12), followed
 by Instructor Hide and Restore (P16). Keep one PR draft until every row has a
 receipt. A Member reviews; only the Instructor merges.

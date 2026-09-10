@@ -9,10 +9,9 @@ chosen.
 ## Now
 
 - Implement issue #17 on `feature/personal-projects-17` in its approved order.
-- Prove Connect, Publish, and Community reading with local checks and live P1/P15
-  receipts. Hosted setup, publication, shared reads, and selected-access loss
-  pass. Same-project restoration remains pending.
-- Then build Edit and Delete (P10 to P12), followed by Instructor Hide and
+- Connect, Publish, Community reading, and connection loss/restoration have
+  local and live receipts, including P1/P15.
+- Build Edit and Delete (P10 to P12), followed by Instructor Hide and
   Restore (P16). Keep one PR draft until every proof row has a receipt.
 - Obtain a Member review after the six merge-gate checks pass. Only the
   Instructor merges. See [project verification](PROJECT-VERIFICATION.md).

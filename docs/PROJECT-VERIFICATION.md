@@ -14,9 +14,9 @@ application code. Commit `e424566` records D-015 before the first-stage build.
 Finding 10 requires Connect, Publish, and Community read proof first, including
 live P1/P15. Edit and Delete follow as P10 to P12. Instructor Hide and Restore
 follows as P16. This branch currently contains the first stage only. The isolated
-Preview and GitHub App are configured. Members have reached the Preview, and
-the live P1/P15 journey is in progress. The PR remains draft. Synthetic provider
-results do not satisfy live installation or hosted Preview proof.
+Preview and GitHub App are configured. The first-stage local and live receipts,
+including P1/P15, are complete. Edit/Delete may now begin. The PR remains draft
+until the later stages have proof too.
 
 The [owner clarifications](https://github.com/vibies-club/vibies/issues/17#issuecomment-5623179154)
 were answered on 2026-09-10. The owner chose an opaque internal account UUID for
@@ -74,6 +74,13 @@ Guide's list and the original project URL at about 20:24 UTC. These follow-up
 checks used the [deployment of documentation commit `45b9353`](https://vercel.com/beta-momo/vibies/EKc8d3SqPGykrst5z1u2NyzNbW2T),
 with the same application code.
 
+At about 20:32 UTC, the user confirmed the requested restoration checks for
+Builder and Scout. At about 20:33 UTC, the agent confirmed that Guide could read
+Project A in the list and at its original direct URL, with the same shared
+details. This used the [deployment of documentation commit `8ee4e72`](https://vercel.com/beta-momo/vibies/9gjLiZA6Q1Cc428GXbMeXeMkcS7a),
+still with the same application code. These receipts complete the first-stage
+gate before Edit/Delete implementation.
+
 | Check | Observed result | Receipt |
 | --- | --- | --- |
 | Member Preview access | PASS: Builder and Scout reached authenticated Member pages | User report and screenshots of owner and non-owner views. |
@@ -84,11 +91,11 @@ with the same application code.
 | Instructor reads | PASS: Guide read Project A in the Community list and opened its direct page; both showed the same chosen shared details and Builder's Nickname | Agent browser observation. No owner controls appeared. |
 | Signed-out private reads | PASS: after application sign-out, both Project A's actual direct URL and `/projects` redirected to `/sign-in?message=expired`; no project details appeared | Agent browser observation with Vercel access retained. Guide then signed in again. |
 | Selected-access loss | PASS: Builder's Check connection returned lost and showed Published, Disconnected, Visible, and Onboarding complete; the last successful check remained 20:01:17 UTC | User loss-check screenshot for the same Project A URL. Scout's loss check was human-confirmed. Guide's list omitted Project A and its direct page showed Project unavailable in the agent browser. |
-| Same-project restoration | PENDING | Builder must restore selected repository access and check the existing project again. Scout and Guide must verify that the original project returns. |
+| Same-project restoration | PASS: after selected access was restored, Builder confirmed Published, Connected, Visible, and completed onboarding on the existing project; Scout confirmed it returned and opened | Human confirmation of both requested checks. The agent independently confirmed Guide's list and original direct URL, with unchanged shared details. |
 
-Follow the [live procedure](PROJECT-SETUP.md#live-p1-and-p15-procedure) for the
-remaining restoration check. P1 has live receipts. P15 remains incomplete until
-the original project is restored and read again.
+The [live procedure](PROJECT-SETUP.md#live-p1-and-p15-procedure) is complete.
+P1, P9, and P15 now have live receipts. The next stage is Edit/Delete, then
+Instructor Hide/Restore.
 
 ## Local receipts
 
@@ -124,13 +131,13 @@ from these receipts. The clean test server uses an in-memory synthetic key.
 | P6 | Database and HTTP checks pass Hidden publication and unavailable direct reads. Instructor reads pass for available projects and Hidden targets; Visible Draft, Archived, and Disconnected targets stay unavailable. | Local PASS |
 | P7 | Database and HTTP checks pass invalid ownership, missing IDs, Archived, Disconnected, and submitted Class-kind attempts. The schema stores Personal Projects only. | Local PASS |
 | P8 | Provider and HTTP checks pass Unknown no-change results, confirmed loss saving Disconnected, and direct requests with untrusted browser verification fields. | Local PASS |
-| P9 | Database and HTTP checks pass explicit loss detection, same-repository restoration, retained publication/moderation, and unavailable Hidden/Archived states. Live selected-access loss also passes; live restoration remains pending. | Local PASS; live partial |
-| P10 | Edit is not built. Initial Connect form validation has unit coverage, including maximum Unicode fields, but this does not prove Edit. | Waiting for first-stage live receipts |
-| P11 | Delete is not built. No deletion claim is made. | Waiting for first-stage live receipts |
+| P9 | Database and HTTP checks pass explicit loss detection, same-repository restoration, retained publication/moderation, and unavailable Hidden/Archived states. Live selected-access loss and same-project restoration pass above. | Local and live PASS |
+| P10 | Edit is not built. Initial Connect form validation has unit coverage, including maximum Unicode fields, but this does not prove Edit. | Ready for the next stage |
+| P11 | Delete is not built. No deletion claim is made. | Ready for the next stage |
 | P12 | Row versions guard first-stage connection writes. The full Delete/Edit/revocation race row requires the next stage. | Waiting for the next stage |
 | P13 | Database tests pass UUID backfill and stability, runtime/anonymous grant denial, and private shared projection. HTTP responses and stored rows contain no synthetic provider identity/token markers. The clean browser bundle scan passes. | Local PASS |
 | P14 | Typecheck, 24 offline tests, 10 access tests, 22 project tests, 98 HTTP assertions, clean build, 177 local links, and Mermaid render pass. The public demo remains available. | Local PASS |
-| P15 | Real Member access, eligible private selection, publication, onboarding, Community reads, signed-out denial, and selected-access loss pass above. Same-project restoration remains pending. | Live partial |
+| P15 | Real Member access, eligible private selection, publication, onboarding, Community reads, signed-out denial, selected-access loss, and same-project restoration pass above. | Live PASS |
 | P16 | Instructor Hide and Restore actions are not built. They follow Edit/Delete under the approved order. | Waiting for the final stage |
 
 ## Merge gate
@@ -140,6 +147,7 @@ SQL, tests, CI, and approved documentation changes. Review found no unrelated
 files or dependency changes. A scan of all 30 changed files found no environment
 files, static private keys, live-token patterns, or database passwords. The
 first stage matches the approved plan and both owner clarifications. The clean
-build passes. Live Preview acceptance is pending, so the gate is incomplete.
+build passes. First-stage live Preview acceptance passes. Edit/Delete and
+Instructor Hide/Restore proof remain pending, so the merge gate is incomplete.
 No row is complete because a check was skipped. A Member review and all remaining
 proof are required before the Instructor merges.
