@@ -19,8 +19,14 @@ export default async function ProjectPage({ params, searchParams }: {params:Prom
   const { message } = await searchParams;
   return <AccessShell><section><p className="eyebrow">PERSONAL PROJECT</p><h1>{item.title}</h1><a href="/projects">Back to projects</a>
     <SharedDetails project={item} />
+    {(item.isOwner || access.kind === "instructor") && <ProjectMessage message={message} />}
+    {access.kind === "instructor" && <>
+      <p>{item.moderation === "Hidden" ? "Hidden from the Community." : "Visible to the Community."}</p>
+      <ProjectAction id={item.id} action={item.moderation === "Hidden" ? "restore" : "hide"}>
+        {item.moderation === "Hidden" ? "Restore project" : "Hide project"}
+      </ProjectAction>
+    </>}
     {item.isOwner && <>
-      <ProjectMessage message={message} />
       <p>{item.publication} · {item.connection} · {item.moderation}</p>
       <p>{access.onboardingComplete ? "Onboarding complete." : "Publish your first Personal Project to complete onboarding."}</p>
       <p>The repository must stay private. Connection shows the last known status. Use Check connection after you change GitHub access.</p>

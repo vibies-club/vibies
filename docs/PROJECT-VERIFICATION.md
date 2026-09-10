@@ -15,7 +15,8 @@ Finding 10 requires Connect, Publish, and Community read proof first, including
 live P1/P15. Edit and Delete follow as P10 to P12. Instructor Hide and Restore
 follows as P16. The first-stage local and live receipts, including P1/P15, were
 committed in `49747ba` before Edit/Delete code. Edit/Delete now have local receipts
-below. Instructor Hide/Restore is the remaining stage. The PR remains draft.
+below. Instructor Hide/Restore was built last and now has local receipts. The
+PR remains draft while its hosted check and final review are completed.
 
 The [owner clarifications](https://github.com/vibies-club/vibies/issues/17#issuecomment-5623179154)
 were answered on 2026-09-10. The owner chose an opaque internal account UUID for
@@ -94,7 +95,7 @@ gate before Edit/Delete implementation.
 
 The [live procedure](PROJECT-SETUP.md#live-p1-and-p15-procedure) is complete.
 P1, P9, and P15 now have live receipts. Edit/Delete local proof follows below.
-Instructor Hide/Restore is next.
+Instructor Hide/Restore local proof follows below.
 
 ## Local receipts
 
@@ -111,10 +112,10 @@ from these receipts. The clean test server uses an in-memory synthetic key.
 | `npm run typecheck` | PASS | Application and test TypeScript. |
 | `npm run build` | PASS, exit 0 | Next.js 16.3.4 production build from the clean snapshot. |
 | `npm run test:access` | PASS: 10 tests, zero skipped | Existing isolated access regression proof. |
-| `npm run test:projects` | PASS: 25 tests, zero skipped | 14 offline tests plus 11 database tests, including the parent test. |
+| `npm run test:projects` | PASS: 26 tests, zero skipped | 14 offline tests plus 12 database tests, including the parent test. |
 | Database commands without fixtures | PASS: both exit 1 with setup messages, zero skipped | `test:access` and `test:projects` cannot report absent database proof as success. |
-| `npm run check:access-web` | PASS: 122 assertions, exit 0 | Clean built server, synthetic provider, dedicated runtime login, loopback fixture database. |
-| Local Markdown links | PASS: 176 links and fragments in 23 documents | Repository paths and heading fragments, rechecked after the Edit/Delete receipt update. |
+| `npm run check:access-web` | PASS: 134 assertions, exit 0 | Clean built server, synthetic provider, dedicated runtime login, loopback fixture database. |
+| Local Markdown links | PASS: 176 links and fragments in 23 documents | Repository paths and heading fragments, rechecked after the final moderation receipt update. |
 | Browser JavaScript scan | PASS: 9 built JavaScript files, zero private server markers | Clean production snapshot; checked App/database configuration names, private SQL identifiers, and synthetic provider markers. |
 | Changed Mermaid graph | PASS, exit 0 | DOMAIN graph rendered to SVG with installed Mermaid CLI 11.17.0 and Chrome. No dependency added. |
 
@@ -143,6 +144,25 @@ no runtime Instructor-designation privilege. Automatic approval review rejected
 a full schema rerun because its scope was broader; that command did not run.
 The full idempotent SQL is proven locally by the database tests.
 
+## Instructor moderation milestone
+
+Instructor Hide/Restore was built after the Edit/Delete receipt commit
+`4b70d9e`. It uses one protected function, the same POST route, and native project
+page controls. Only moderation and the concurrency version change. The
+Instructor can act on available projects and Hidden targets; restoring a Hidden
+Draft, Archived, or Disconnected project does not make it available.
+
+The clean production build and typecheck pass. Offline tests pass 24/24, project
+tests 26/26, access tests 10/10, and built-server HTTP checks 134/134. No tests
+were skipped. The first fixture preparation found a PL/pgSQL CASE-expression
+syntax error; the same-state condition was corrected and fresh database and HTTP
+fixtures then passed. The browser scan still covers nine JavaScript files with
+zero private server markers. The isolated Preview received only the tested
+moderation function and its specific execution grants. That migration ran twice;
+both project rows stayed unchanged, the runtime allowlist contains 17 functions,
+and direct table access and Instructor designation remain denied. Hosted browser
+moderation proof remains pending.
+
 ## Acceptance rows
 
 | Row | Evidence and remaining work | Status |
@@ -160,9 +180,9 @@ The full idempotent SQL is proven locally by the database tests.
 | P11 | Database and HTTP proof pass title/warning/Cancel/Confirm controls, no write without confirmation, physical owned deletion, capacity recovery, safe retries/concurrent deletion, new ID on reconnect, and retained onboarding after deletion/revocation/reapproval. GitHub is not called for Edit or Delete. | Local PASS |
 | P12 | Database proof covers old contexts after Edit/Delete/newer checks and owner writes ordered against revocation. HTTP proof holds a real Check request in the synthetic provider, completes Edit or Delete, then releases the response and verifies it cannot overwrite the edit or recreate the deleted project. | Local PASS |
 | P13 | Database tests pass UUID backfill and stability, runtime/anonymous grant denial, and private shared projection. HTTP responses and stored rows contain no synthetic provider identity/token markers. The clean browser bundle scan passes. | Local PASS |
-| P14 | Typecheck, 24 offline tests, 10 access tests, 25 project tests, 122 HTTP assertions, clean build, 176 local links, and Mermaid render pass. The public demo remains available. | Local PASS |
+| P14 | Typecheck, 24 offline tests, 10 access tests, 26 project tests, 134 HTTP assertions, clean build, 176 local links, and Mermaid render pass. The public demo remains available. | Local PASS |
 | P15 | Real Member access, eligible private selection, publication, onboarding, Community reads, signed-out denial, selected-access loss, and same-project restoration pass above. | Live PASS |
-| P16 | Instructor Hide and Restore actions are not built. They follow Edit/Delete under the approved order. | Waiting for the final stage |
+| P16 | Database and HTTP proof pass Instructor-only Hide/Restore, generic unauthorized and cross-origin denial, reachable Hidden targets, unchanged details/timestamps/publication/connection/onboarding, same-state no-ops, and late owner-check rejection. Restored Draft, Archived, and Disconnected fixtures remain unavailable. | Local PASS |
 
 ## Merge gate
 
@@ -172,6 +192,7 @@ files or dependency changes. A scan of all 30 changed files found no environment
 files, static private keys, live-token patterns, or database passwords. The
 first stage matches the approved plan and both owner clarifications. The clean
 build passes. First-stage live Preview acceptance passes. Edit/Delete local proof passes.
-Instructor Hide/Restore proof remains pending, so the merge gate is incomplete.
+All local acceptance rows pass. The final hosted moderation check and review
+remain pending, so the merge gate is incomplete.
 No row is complete because a check was skipped. A Member review and all remaining
 proof are required before the Instructor merges.

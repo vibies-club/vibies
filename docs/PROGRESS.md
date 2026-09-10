@@ -74,6 +74,7 @@ first-stage proof gate is complete.
 ## Next step
 
 Edit and Delete (P10 to P12) now pass local database and HTTP proof, including
-delayed provider responses after edits and deletion. Build and prove Instructor
-Hide and Restore (P16) next. Keep one PR draft until every row has a
-receipt. A Member reviews; only the Instructor merges.
+delayed provider responses after edits and deletion. Instructor Hide and Restore
+(P16) pass local proof too. Complete the final hosted moderation check and review.
+Keep the PR draft until every row has a receipt. A Member reviews; only the
+Instructor merges.

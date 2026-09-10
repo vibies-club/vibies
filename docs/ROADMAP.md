@@ -12,8 +12,8 @@ chosen.
 - Connect, Publish, Community reading, and connection loss/restoration have
   local and live receipts, including P1/P15.
 - Edit and Delete (P10 to P12) have local database and HTTP receipts.
-- Build Instructor Hide and Restore (P16) last. Keep one PR draft until every
-  proof row has a receipt.
+- Instructor Hide and Restore (P16) were built last and pass local proof.
+  Complete hosted moderation verification and final review before handoff.
 - Obtain a Member review after the six merge-gate checks pass. Only the
   Instructor merges. See [project verification](PROJECT-VERIFICATION.md).
 

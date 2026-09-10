@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     const form = await projectForm(request);
     if (typeof form === "number") return safeError(form);
     const action = form.get("action");
-    if (!["connect", "publish", "check", "edit", "delete"].includes(action ?? "")) return safeError(400);
+    if (!["connect", "publish", "check", "edit", "delete", "hide", "restore"].includes(action ?? "")) return safeError(400);
     if (form.has("kind")) return safeError(400);
     if (action === "connect") {
       const actor = await projectActor(hash);
@@ -29,6 +29,12 @@ export async function POST(request: Request) {
     }
     const id = form.get("id");
     if (!projectId(id)) return safeError(404);
+    if (action === "hide" || action === "restore") {
+      const [row] = await database()`select vibies_private.moderate_project(${hash}, ${id}::uuid, ${action === "hide"}) as result`;
+      if (row.result.kind === "forbidden") return safeError(403);
+      if (row.result.kind === "restored") return go("/projects?message=restored");
+      return go(`/projects/${id}?message=${row.result.kind === "hidden" ? "hidden" : "error"}`);
+    }
     if (action === "edit" || action === "delete") {
       if (action === "delete" && form.get("confirm") !== "yes") return safeError(400);
       const context = await projectActor(hash, id) as ProjectContext | null;

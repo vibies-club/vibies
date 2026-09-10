@@ -926,6 +926,64 @@ begin
 end;
 $$;
 
+create or replace function vibies_private.moderate_project(
+  p_session_hash text,
+  p_project_id uuid,
+  p_hidden boolean
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, vibies_private
+as $$
+declare
+  project_moderation text;
+begin
+  if not vibies_private._valid_hash(p_session_hash)
+     or p_project_id is null or p_hidden is null then
+    return jsonb_build_object('kind', 'invalid');
+  end if;
+
+  perform 1
+    from vibies_private.community c
+    join vibies_private.sessions s on s.github_id = c.instructor_github_id
+   where c.singleton
+     and s.session_hash = p_session_hash
+     and s.created_at > clock_timestamp() - interval '24 hours'
+   for update of c;
+  if not found then
+    return jsonb_build_object('kind', 'forbidden');
+  end if;
+
+  select moderation into project_moderation
+    from vibies_private.personal_projects
+   where id = p_project_id
+     and (
+       moderation = 'Hidden'
+       or (
+         publication = 'Published'
+         and connection = 'Connected'
+         and moderation = 'Visible'
+       )
+     )
+   for update;
+  if not found then
+    return jsonb_build_object('kind', 'forbidden');
+  end if;
+
+  if (p_hidden and project_moderation = 'Hidden')
+     or (not p_hidden and project_moderation = 'Visible') then
+    return jsonb_build_object('kind', case when p_hidden then 'hidden' else 'restored' end);
+  end if;
+
+  update vibies_private.personal_projects
+     set moderation = case when p_hidden then 'Hidden' else 'Visible' end,
+         version = version + 1
+   where id = p_project_id;
+  return jsonb_build_object('kind', case when p_hidden then 'hidden' else 'restored' end);
+end;
+$$;
+
 create or replace function vibies_private.projects(p_session_hash text)
 returns jsonb
 language plpgsql
@@ -1143,6 +1201,7 @@ grant execute on function vibies_private.publish_project(text, uuid, bigint) to 
 grant execute on function vibies_private.record_project_connection(text, uuid, bigint, boolean) to vibies_runtime;
 grant execute on function vibies_private.edit_project(text, uuid, bigint, text, text, text) to vibies_runtime;
 grant execute on function vibies_private.delete_project(text, uuid, bigint) to vibies_runtime;
+grant execute on function vibies_private.moderate_project(text, uuid, boolean) to vibies_runtime;
 grant execute on function vibies_private.projects(text) to vibies_runtime;
 grant execute on function vibies_private.project(text, uuid) to vibies_runtime;
 

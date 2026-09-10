@@ -15,8 +15,8 @@ export default async function ProjectsPage({ searchParams }: {searchParams:Promi
   if (result.kind !== "ok") return <AccessShell><Retry href="/projects" /></AccessShell>;
   const { message } = await searchParams;
   return <AccessShell><section><p className="eyebrow">YOUR COMMUNITY</p><h1>Projects</h1><a href="/welcome">Back to welcome</a>
+    <ProjectMessage message={message} />
     {access.kind === "member" && <>
-      <ProjectMessage message={message} />
       <p>{access.onboardingComplete ? "Onboarding complete." : "Publish your first Personal Project to complete onboarding. You can browse while you prepare it."}</p>
       <h2>My projects</h2><p>{result.mine.length} of 3 project places filled.</p>
       <a className="button" href="/projects/connect">Connect a repository</a>

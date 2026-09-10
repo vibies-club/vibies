@@ -8,6 +8,8 @@ const messages: Record<string, string> = {
   connected: "Connection checked. The repository is connected.",
   edited: "Project details saved.",
   deleted: "Project deleted. A project place is now free.",
+  hidden: "Project hidden from the Community.",
+  restored: "Project restored. It is available only when Published and Connected.",
   lost: "Repository access was lost. Keep the repository private and select it in the GitHub App, then check again.",
   unknown: "We could not check GitHub. No project data changed. Please try again.",
   stale: "The project changed during this request. Review it and try again.",

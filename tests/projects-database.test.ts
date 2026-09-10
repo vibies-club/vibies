@@ -50,6 +50,8 @@ if (!databaseUrl) {
       tx`select vibies_private.edit_project(${session}, ${id}::uuid, ${version}::bigint, ${title}, ${summary}, ${demoUrl}) as value`);
     const remove = (session: string, id: string, version: string) => call((tx) =>
       tx`select vibies_private.delete_project(${session}, ${id}::uuid, ${version}::bigint) as value`);
+    const moderate = (session: string, id: string, hidden: boolean) => call((tx) =>
+      tx`select vibies_private.moderate_project(${session}, ${id}::uuid, ${hidden}) as value`);
     const list = (session: string) => call((tx) =>
       tx`select vibies_private.projects(${session}) as value`);
     const read = (session: string, id: string) => call((tx) =>
@@ -74,6 +76,7 @@ if (!databaseUrl) {
       revoked: hash("project-revoked"), pending: hash("project-pending"),
       expired: hash("project-expired"), race: hash("project-race"), duplicate: hash("project-duplicate"),
       editor: hash("project-editor"),
+      instructorExpired: hash("project-instructor-expired"),
     };
 
     try {
@@ -125,6 +128,8 @@ if (!databaseUrl) {
       }
       await change(sessions.instructor, "204", "revoke");
       assert.deepEqual(await change(sessions.instructor, "209", "approve", "Editor"), { kind: "ok" });
+      await finish("100", "synthetic-guide", sessions.instructorExpired);
+      await sql`update vibies_private.sessions set created_at = clock_timestamp() - interval '25 hours' where session_hash = ${sessions.instructorExpired}`;
       await sql`update vibies_private.sessions set created_at = clock_timestamp() - interval '25 hours' where session_hash = ${sessions.expired}`;
 
       await t.test("setup is repeatable and private", async () => {
@@ -175,6 +180,7 @@ if (!databaseUrl) {
           "end_session(text)",
           "finish_sign_in(text, text, text, text)",
           "members(text)",
+          "moderate_project(text, uuid, boolean)",
           "project(text, uuid)",
           "project_actor(text)",
           "project_operation_context(text, uuid)",
@@ -568,6 +574,92 @@ if (!databaseUrl) {
         const target = await read(sessions.instructor, hidden.id);
         assert.equal(target.kind, "ok");
         assert.equal(target.project.moderation, "Hidden");
+      });
+
+      await t.test("Instructor moderation changes only moderation and protects unavailable targets", async () => {
+        const projectRows = await sql`
+          select repository_id, id::text as id
+            from vibies_private.personal_projects
+           where repository_id in ('1001', '1002', '3001', '4001')
+        `;
+        const ids = new Map(projectRows.map(row => [row.repository_id, row.id]));
+        const availableId = ids.get("1001");
+        const archivedId = ids.get("1002");
+        const draftId = ids.get("3001");
+        const disconnectedId = ids.get("4001");
+        assert.ok(availableId && archivedId && draftId && disconnectedId);
+
+        await sql`
+          update vibies_private.personal_projects
+             set connection = 'Disconnected', version = version + 1
+           where id = ${disconnectedId}::uuid
+        `;
+        for (const id of [archivedId, draftId, disconnectedId]) {
+          const before = await stored(id);
+          assert.deepEqual(await moderate(sessions.instructor, id, true), { kind: "forbidden" });
+          assert.deepEqual(await moderate(sessions.instructor, id, false), { kind: "forbidden" });
+          assert.deepEqual(await stored(id), before);
+        }
+
+        const availableBefore = await stored(availableId);
+        for (const session of [hash("signed-out"), sessions.owner, sessions.reader,
+          sessions.pending, sessions.revoked, sessions.expired, sessions.instructorExpired]) {
+          assert.deepEqual(await moderate(session, availableId, true), { kind: "forbidden" });
+        }
+        assert.deepEqual(await moderate(sessions.instructor,
+          "00000000-0000-4000-8000-000000000001", true), { kind: "forbidden" });
+        assert.deepEqual(await call((tx) => tx`
+          select vibies_private.moderate_project(${sessions.instructor}, null, true) as value
+        `), { kind: "invalid" });
+        assert.deepEqual(await call((tx) => tx`
+          select vibies_private.moderate_project(${sessions.instructor}, ${availableId}::uuid, null) as value
+        `), { kind: "invalid" });
+        assert.deepEqual(await stored(availableId), availableBefore);
+
+        const ownerContext = await context(sessions.owner, availableId);
+        assert.deepEqual(await moderate(sessions.instructor, availableId, true), { kind: "hidden" });
+        const hidden = await stored(availableId);
+        assert.deepEqual({ ...hidden, moderation: availableBefore.moderation, version: availableBefore.version },
+          availableBefore);
+        assert.equal(hidden.moderation, "Hidden");
+        assert.equal(hidden.version, String(Number(availableBefore.version) + 1));
+        assert.deepEqual(await read(sessions.reader, availableId), { kind: "missing" });
+        assert.equal((await read(sessions.instructor, availableId)).kind, "ok");
+
+        assert.deepEqual(await moderate(sessions.instructor, availableId, true), { kind: "hidden" });
+        assert.deepEqual(await stored(availableId), hidden);
+        assert.deepEqual(await record(sessions.owner, availableId, ownerContext.version, false), { kind: "stale" });
+
+        assert.deepEqual(await moderate(sessions.instructor, availableId, false), { kind: "restored" });
+        const restored = await stored(availableId);
+        assert.deepEqual({ ...restored, moderation: hidden.moderation, version: hidden.version }, hidden);
+        assert.equal(restored.moderation, "Visible");
+        assert.equal(restored.version, String(Number(hidden.version) + 1));
+        assert.deepEqual(await moderate(sessions.instructor, availableId, false), { kind: "restored" });
+        assert.deepEqual(await stored(availableId), restored);
+        assert.equal((await read(sessions.reader, availableId)).kind, "ok");
+        assert.equal((await list(sessions.reader)).community.some((item: any) => item.id === availableId), true);
+
+        for (const id of [draftId, archivedId, disconnectedId]) {
+          await sql`
+            update vibies_private.personal_projects
+               set moderation = 'Hidden', version = version + 1
+             where id = ${id}::uuid
+          `;
+          const before = await stored(id);
+          assert.equal((await read(sessions.instructor, id)).kind, "ok");
+          assert.deepEqual(await moderate(sessions.owner, id, false), { kind: "forbidden" });
+          assert.deepEqual(await moderate(sessions.instructor, id, true), { kind: "hidden" });
+          assert.deepEqual(await stored(id), before);
+
+          assert.deepEqual(await moderate(sessions.instructor, id, false), { kind: "restored" });
+          const after = await stored(id);
+          assert.deepEqual({ ...after, moderation: before.moderation, version: before.version }, before);
+          assert.equal(after.moderation, "Visible");
+          assert.equal(after.version, String(Number(before.version) + 1));
+          assert.deepEqual(await read(sessions.reader, id), { kind: "missing" });
+          assert.deepEqual(await read(sessions.instructor, id), { kind: "missing" });
+        }
       });
     } finally {
       await migrationSql.end();
