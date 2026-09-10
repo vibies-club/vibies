@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { generateKeyPairSync } from "node:crypto";
+import postgres from "postgres";
 
 const database = new URL(process.env.VIBIES_DATABASE_URL ?? "http://missing");
 const appOrigin = new URL(process.env.VIBIES_APP_ORIGIN ?? "http://missing");
@@ -43,8 +44,21 @@ repositories.push(
 );
 
 const json = (value, status = 200, headers) => Response.json(value, { status, headers });
+const waitForProjectRace = async () => {
+  const lock = postgres(database.toString(), { max: 1, connect_timeout: 2, onnotice: () => {} });
+  try {
+    await lock.begin(async sql => {
+      await sql.unsafe("set local statement_timeout = '4000ms'");
+      await sql`select pg_advisory_xact_lock(1717, 12)`;
+    });
+  } finally { await lock.end(); }
+};
 globalThis.fetch = async (input, init = {}) => {
   const url = new URL(input instanceof Request ? input.url : String(input));
+  if (url.href === "https://127.0.0.1:1/server-must-not-fetch") {
+    console.error("Synthetic project proof failed: the server fetched a demo destination");
+    process.exit(1);
+  }
   if (url.origin !== "https://api.github.com") return nativeFetch(input, init);
 
   const method = init.method ?? (input instanceof Request ? input.method : "GET");
@@ -61,6 +75,10 @@ globalThis.fetch = async (input, init = {}) => {
   if (method === "GET" && direct && url.search === "") {
     const username = decodeURIComponent(direct[1]);
     if (username === "synthetic-member") return json(installation);
+    if (username === "synthetic-member-held") {
+      await waitForProjectRace();
+      return json(installation);
+    }
     if (username === "synthetic-member-lost") return new Response(null, { status: 404 });
     if (username === "synthetic-member-unknown") return new Response(null, { status: 503 });
     if (username === "synthetic-member-suspended") {

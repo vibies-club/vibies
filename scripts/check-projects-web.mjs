@@ -29,6 +29,14 @@ export async function checkProjectsWeb({ sql, origin, check }) {
     },
     body: new URLSearchParams(body),
   });
+  const sizedForm = (fields, bytes) => {
+    const form = new URLSearchParams({ ...fields, padding: "" });
+    const padding = bytes - Buffer.byteLength(form.toString());
+    if (padding < 0) throw new Error("Project proof form exceeds its requested size");
+    form.set("padding", "x".repeat(padding));
+    if (Buffer.byteLength(form.toString()) !== bytes) throw new Error("Project proof form has the wrong size");
+    return form;
+  };
   const body = response => response.text();
   const location = response => response.headers.get("location") ?? "";
   const projectId = response => location(response).match(/^\/projects\/([0-9a-f-]{36})\?message=(?:created|existing)$/)?.[1];
@@ -47,6 +55,41 @@ export async function checkProjectsWeb({ sql, origin, check }) {
     update vibies_private.accounts set github_username = ${username}
      where github_id = ${ids.member}
   `;
+  const delayedCheckRace = async ({ id, repositoryId, action }) => {
+    let delayed, mutation, afterMutation, setupError;
+    await sql`select pg_advisory_lock(1717, 12)`;
+    try {
+      await setUsername("synthetic-member-held");
+      delayed = post("member", { action: "check", id });
+      const deadline = Date.now() + 2_000;
+      let waiting = false;
+      while (Date.now() < deadline) {
+        const [state] = await sql`
+          select exists (
+            select 1 from pg_catalog.pg_locks
+             where locktype = 'advisory'
+               and database = (select oid from pg_catalog.pg_database where datname = current_database())
+               and classid = '1717'::oid and objid = '12'::oid and objsubid = 2
+               and not granted
+          ) as waiting
+        `;
+        if (state.waiting) { waiting = true; break; }
+        await new Promise(resolve => setTimeout(resolve, 20));
+      }
+      if (!waiting) throw new Error("Delayed project Check did not reach its bounded provider wait");
+      mutation = action === "edit"
+        ? await post("member", { action, id, title: "Edit Wins", summary: "A delayed Check cannot replace this edit.", demoUrl: "" })
+        : await post("member", { action, id, confirm: "yes" });
+      afterMutation = await snapshot(repositoryId);
+    } catch (error) { setupError = error; }
+    finally { await sql`select pg_advisory_unlock(1717, 12)`; }
+    let checked;
+    try { if (delayed) checked = await delayed; }
+    finally { await setUsername("synthetic-member"); }
+    if (setupError) throw setupError;
+    if (!mutation || !checked) throw new Error("Delayed project Check proof did not complete");
+    return { mutation, checked, afterMutation, afterCheck: await snapshot(repositoryId) };
+  };
 
   await sql`delete from vibies_private.personal_projects`;
   await sql`select vibies_private.finish_sign_in(${ids.member}, 'synthetic-member', ${hash(sessions.member)}, null)`;
@@ -82,6 +125,25 @@ export async function checkProjectsWeb({ sql, origin, check }) {
   check(review.status === 200 && reviewText.includes("Pocket Garden") && reviewText.includes("Draft") &&
     reviewText.includes("Connected") && reviewText.includes("Visible") && reviewText.includes(">Publish<"),
   "P1 the owner reviews the Draft and its independent states before Publish");
+  check(reviewText.includes(">Edit project</summary>") && reviewText.includes(">Save changes</button>") &&
+    reviewText.includes(">Delete project</summary>") && reviewText.replaceAll("<!-- -->", "").includes("Delete Pocket Garden?") &&
+    reviewText.includes("Your GitHub repository stays unchanged") && reviewText.includes(">Confirm delete</button>") &&
+    reviewText.includes(`href="/projects/${mainId}">Cancel</a>`),
+  "P10/P11 the owner page has labeled Edit and confirmed Delete controls with a Cancel link and warning");
+
+  const beforeDraftEdit = JSON.parse(await snapshot("17101"));
+  await setUsername("synthetic-member-unknown");
+  const draftEdit = await post("member", { action: "edit", id: mainId, title: "Pocket Garden Draft",
+    summary: "Draft details can change before publication.", demoUrl: "" });
+  const afterDraftEdit = JSON.parse(await snapshot("17101"));
+  check(location(draftEdit) === `/projects/${mainId}?message=edited` &&
+    afterDraftEdit.title === "Pocket Garden Draft" && afterDraftEdit.summary === "Draft details can change before publication." &&
+    afterDraftEdit.demo_url === null && afterDraftEdit.publication === beforeDraftEdit.publication &&
+    afterDraftEdit.connection === beforeDraftEdit.connection && afterDraftEdit.moderation === beforeDraftEdit.moderation &&
+    afterDraftEdit.last_checked_at === beforeDraftEdit.last_checked_at &&
+    afterDraftEdit.onboarding_completed === beforeDraftEdit.onboarding_completed && afterDraftEdit.version !== beforeDraftEdit.version,
+  "P10 an owner edits only authored details before publication without a GitHub provider check");
+  await setUsername("synthetic-member");
 
   const published = await post("member", { action: "publish", id: mainId });
   check(published.status === 303 && location(published) === `/projects/${mainId}?message=published`,
@@ -95,6 +157,84 @@ export async function checkProjectsWeb({ sql, origin, check }) {
   check(publishedRow?.publication === "Published" && publishedRow.connection === "Connected" &&
     publishedRow.moderation === "Visible" && publishedRow.onboarding_completed === true,
   "P1/P5 publication and onboarding persist while connection and moderation stay unchanged");
+
+  await setUsername("synthetic-member-unknown");
+  const maxTitle = "🌱".repeat(80);
+  const maxSummary = "🌿".repeat(250) + "\n" + "🌻".repeat(249);
+  const demoPrefix = "https://example.test/";
+  const maxDemo = demoPrefix + "🌱".repeat(2048 - [...demoPrefix].length);
+  const maxEdit = sizedForm({ action: "edit", id: mainId, title: maxTitle,
+    summary: maxSummary, demoUrl: maxDemo }, 32_768);
+  const maximum = await post("member", maxEdit);
+  const afterMaximum = JSON.parse(await snapshot("17101"));
+  check(location(maximum) === `/projects/${mainId}?message=edited` &&
+    Buffer.byteLength(maxEdit.toString()) === 32_768 && [...afterMaximum.title].length === 80 &&
+    [...afterMaximum.summary].length === 500 && [...afterMaximum.demo_url].length === 2048 &&
+    afterMaximum.publication === "Published" && afterMaximum.connection === "Connected" &&
+    afterMaximum.moderation === "Visible" && afterMaximum.onboarding_completed === true,
+  "P10 the HTTP route accepts maximum Unicode details and a full HTTPS URL at the 32,768-byte body bound");
+
+  const beforeInvalidEdits = await snapshot("17101");
+  const invalidEdits = [
+    ["empty title", " ", "Valid summary", ""],
+    ["oversized title", "🌱".repeat(81), "Valid summary", ""],
+    ["empty summary", "Valid title", " \n ", ""],
+    ["oversized summary", "Valid title", "🌱".repeat(501), ""],
+    ["title format control", "Unsafe\u200btitle", "Valid summary", ""],
+    ["summary control", "Valid title", "Unsafe\tsummary", ""],
+    ["non-HTTPS URL", "Valid title", "Valid summary", "http://example.test/demo"],
+    ["credential URL", "Valid title", "Valid summary", "https://user:password@example.test/demo"],
+    ["oversized URL", "Valid title", "Valid summary", demoPrefix + "x".repeat(2049 - demoPrefix.length)],
+  ];
+  for (const [label, title, summary, demoUrl] of invalidEdits) {
+    const invalid = await post("member", { action: "edit", id: mainId, title, summary, demoUrl });
+    check(location(invalid) === `/projects/${mainId}?message=invalid`, `P10 ${label} is rejected by the Edit HTTP route`);
+  }
+  const oversizedBody = await post("member", sizedForm({ action: "edit", id: mainId,
+    title: "Valid title", summary: "Valid summary", demoUrl: "" }, 32_769));
+  const crossOriginEdit = await post("member", { action: "edit", id: mainId,
+    title: "Valid title", summary: "Valid summary", demoUrl: "" }, "https://other.test");
+  const crossOriginDelete = await post("member", { action: "delete", id: mainId, confirm: "yes" }, "https://other.test");
+  check(oversizedBody.status === 413 && crossOriginEdit.status === 403 && crossOriginDelete.status === 403 &&
+    await snapshot("17101") === beforeInvalidEdits,
+  "P10/P11 an oversized body and cross-origin Edit or Delete are rejected without stored changes");
+
+  const escapedTitle = "<script>synthetic()</script>";
+  const escapedSummary = '<img src=x onerror="synthetic()">';
+  const unreachableDemo = "https://127.0.0.1:1/server-must-not-fetch";
+  const escapedEdit = await post("member", { action: "edit", id: mainId, title: escapedTitle,
+    summary: escapedSummary, demoUrl: unreachableDemo });
+  const escapedPage = await get(`/projects/${mainId}?message=edited`, "member");
+  const escapedText = await body(escapedPage);
+  check(location(escapedEdit) === `/projects/${mainId}?message=edited` && escapedPage.status === 200 &&
+    escapedText.includes("&lt;script&gt;synthetic()&lt;/script&gt;") && !escapedText.includes("<script>synthetic()</script>") &&
+    escapedText.includes("&lt;img src=x onerror=&quot;synthetic()&quot;&gt;") && !escapedText.includes("<img src=x") &&
+    escapedText.includes(unreachableDemo) && escapedText.includes("Project details saved."),
+  "P10 stored title and summary render as escaped text and an unreachable demo destination is not fetched");
+
+  const restoredDetails = await post("member", { action: "edit", id: mainId, title: "Pocket Garden",
+    summary: "A synthetic garden log for small daily experiments.", demoUrl: "https://example.test/vibies" });
+  const afterRestoreDetails = JSON.parse(await snapshot("17101"));
+  check(location(restoredDetails) === `/projects/${mainId}?message=edited` && afterRestoreDetails.title === "Pocket Garden" &&
+    afterRestoreDetails.summary === "A synthetic garden log for small daily experiments." &&
+    afterRestoreDetails.demo_url === "https://example.test/vibies" && afterRestoreDetails.publication === "Published" &&
+    afterRestoreDetails.connection === "Connected" && afterRestoreDetails.moderation === "Visible" &&
+    afterRestoreDetails.onboarding_completed === true,
+  "P10 an owner edits published details without changing project state or onboarding");
+  await setUsername("synthetic-member");
+
+  const protectedBefore = await snapshot("17101");
+  for (const [action, fields] of [["edit", { title: "Denied edit", summary: "Must stay unchanged.", demoUrl: "" }],
+    ["delete", { confirm: "yes" }]]) {
+    const denials = await Promise.all([undefined, "unapproved", "revoked", "expired", "instructor", "second"]
+      .map(role => post(role, { action, id: mainId, ...fields })));
+    const denialBodies = await Promise.all(denials.map(body));
+    check(denials.every(response => response.status === 403) &&
+      denialBodies.every(text => !text.includes("Pocket Garden") && !text.includes(ids.member)),
+    `P2/P${action === "edit" ? "10" : "11"} signed-out, inactive, expired, Instructor, and wrong-owner ${action} requests get a generic denial`);
+  }
+  check(await snapshot("17101") === protectedBefore,
+    "P10/P11 denied Edit and Delete requests leave the owned project unchanged");
 
   const secondList = await get("/projects", "second");
   const secondListText = await body(secondList);
@@ -334,6 +474,70 @@ export async function checkProjectsWeb({ sql, origin, check }) {
   check(!stillUnavailableText.includes("Hidden Lantern") && !stillUnavailableText.includes("Stored Archive"),
     "P9 restored Hidden and Archived fixtures remain unavailable to Community reads");
 
+  await sql`delete from vibies_private.personal_projects
+             where id in (${hiddenId}::uuid, ${draftId}::uuid, ${archivedId}::uuid, ${disconnectedId}::uuid)`;
+  const deleteTarget = await post("member", { action: "connect", repositoryId: "17102", title: "Delete Target",
+    summary: "This synthetic project proves confirmed deletion.", demoUrl: "" });
+  const capacityAnchor = await post("member", { action: "connect", repositoryId: "17103", title: "Capacity Anchor",
+    summary: "This synthetic project keeps the third place occupied.", demoUrl: "" });
+  const deleteId = projectId(deleteTarget);
+  const anchorId = projectId(capacityAnchor);
+  check(Boolean(deleteId) && Boolean(anchorId), "P11 synthetic setup fills all three retained project places");
+
+  const beforeDelete = await snapshot("17102");
+  const noConfirmation = await post("member", { action: "delete", id: deleteId });
+  const cancelDelete = await get(`/projects/${deleteId}`, "member");
+  const wrongOwnerDelete = await post("second", { action: "delete", id: deleteId, confirm: "yes" });
+  const missingDelete = await post("member", { action: "delete", id: missingId, confirm: "yes" });
+  const wrongOwnerBody = await body(wrongOwnerDelete);
+  const missingDeleteBody = await body(missingDelete);
+  check(noConfirmation.status === 400 && cancelDelete.status === 200 &&
+    (await body(cancelDelete)).includes("Delete Target") && wrongOwnerDelete.status === 403 && missingDelete.status === 403 &&
+    wrongOwnerBody === missingDeleteBody && !wrongOwnerBody.includes("Delete Target") && await snapshot("17102") === beforeDelete,
+  "P11 confirmation, Cancel, wrong-owner, and missing-project Delete requests have no effect or identifying denial");
+
+  await setUsername("synthetic-member-unknown");
+  const beforeDeleteCount = await sql`select count(*)::int as count from vibies_private.personal_projects`;
+  const confirmedDelete = await post("member", { action: "delete", id: deleteId, confirm: "yes" });
+  const repeatedDelete = await post("member", { action: "delete", id: deleteId, confirm: "yes" });
+  const deletedList = await get("/projects?message=deleted", "member");
+  const deletedListText = await body(deletedList);
+  const afterDeleteCount = await sql`select count(*)::int as count from vibies_private.personal_projects`;
+  const deletedRows = await sql`select id from vibies_private.personal_projects where id = ${deleteId}::uuid`;
+  const [memberAfterDelete] = await sql`select onboarding_completed from vibies_private.accounts where github_id = ${ids.member}`;
+  check(location(confirmedDelete) === "/projects?message=deleted" && repeatedDelete.status === 403 &&
+    deletedList.status === 200 && deletedListText.includes("Project deleted. A project place is now free.") &&
+    !deletedListText.includes("Delete Target") && deletedListText.includes("Pocket Garden") &&
+    deletedListText.includes("Capacity Anchor") && afterDeleteCount[0].count === beforeDeleteCount[0].count - 1 &&
+    deletedRows.length === 0 && memberAfterDelete.onboarding_completed === true,
+  "P11 confirmed Delete removes only the project, keeps onboarding, succeeds without GitHub, and makes retry safe");
+
+  await setUsername("synthetic-member");
+  const replacement = await post("member", { action: "connect", repositoryId: "17104", title: "Freed Place",
+    summary: "A new Draft can use the place freed by deletion.", demoUrl: "" });
+  const replacementId = projectId(replacement);
+  const retainedAfterReplacement = await sql`
+    select count(*)::int as count from vibies_private.personal_projects p
+    join vibies_private.accounts a on a.internal_id = p.owner_account_id
+    where a.github_id = ${ids.member}
+  `;
+  check(Boolean(replacementId) && location(replacement).endsWith("?message=created") && retainedAfterReplacement[0].count === 3,
+    "P11 confirmed deletion frees one project place for a new connected Draft");
+
+  await sql`update vibies_private.personal_projects set connection = 'Disconnected', version = version + 1
+             where id = ${mainId}::uuid`;
+  const editRace = await delayedCheckRace({ id: mainId, repositoryId: "17101", action: "edit" });
+  const editWinner = JSON.parse(editRace.afterMutation);
+  check(location(editRace.mutation) === `/projects/${mainId}?message=edited` &&
+    location(editRace.checked) === `/projects/${mainId}?message=stale` && editWinner.title === "Edit Wins" &&
+    editWinner.connection === "Disconnected" && editRace.afterCheck === editRace.afterMutation,
+  "P12 a delayed verified Check cannot restore connection or overwrite a newer Edit");
+
+  const deleteRace = await delayedCheckRace({ id: replacementId, repositoryId: "17104", action: "delete" });
+  check(location(deleteRace.mutation) === "/projects?message=deleted" && deleteRace.checked.status === 403 &&
+    deleteRace.afterMutation === undefined && deleteRace.afterCheck === undefined,
+  "P12 a delayed verified Check gets a generic denial and cannot restore a deleted project");
+
   const [owner] = await sql`select internal_id::text from vibies_private.accounts where github_id = ${ids.member}`;
   const stored = await sql`select to_jsonb(p) as project from vibies_private.personal_projects p`;
   const storedText = JSON.stringify(stored);
@@ -353,5 +557,5 @@ export async function checkProjectsWeb({ sql, origin, check }) {
 
   const demo = await get("/demo");
   check(demo.status === 200, "P14 the existing public demo remains available after project HTTP checks");
-  console.log("Synthetic project HTTP proof complete. P1 and P15 real GitHub Preview checks remain pending.");
+  console.log("Synthetic project HTTP proof complete. Record P1 and P15 real GitHub Preview receipts separately.");
 }

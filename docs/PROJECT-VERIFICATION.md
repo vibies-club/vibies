@@ -13,10 +13,9 @@ application code. Commit `e424566` records D-015 before the first-stage build.
 
 Finding 10 requires Connect, Publish, and Community read proof first, including
 live P1/P15. Edit and Delete follow as P10 to P12. Instructor Hide and Restore
-follows as P16. This branch currently contains the first stage only. The isolated
-Preview and GitHub App are configured. The first-stage local and live receipts,
-including P1/P15, are complete. Edit/Delete may now begin. The PR remains draft
-until the later stages have proof too.
+follows as P16. The first-stage local and live receipts, including P1/P15, were
+committed in `49747ba` before Edit/Delete code. Edit/Delete now have local receipts
+below. Instructor Hide/Restore is the remaining stage. The PR remains draft.
 
 The [owner clarifications](https://github.com/vibies-club/vibies/issues/17#issuecomment-5623179154)
 were answered on 2026-09-10. The owner chose an opaque internal account UUID for
@@ -94,8 +93,8 @@ gate before Edit/Delete implementation.
 | Same-project restoration | PASS: after selected access was restored, Builder confirmed Published, Connected, Visible, and completed onboarding on the existing project; Scout confirmed it returned and opened | Human confirmation of both requested checks. The agent independently confirmed Guide's list and original direct URL, with unchanged shared details. |
 
 The [live procedure](PROJECT-SETUP.md#live-p1-and-p15-procedure) is complete.
-P1, P9, and P15 now have live receipts. The next stage is Edit/Delete, then
-Instructor Hide/Restore.
+P1, P9, and P15 now have live receipts. Edit/Delete local proof follows below.
+Instructor Hide/Restore is next.
 
 ## Local receipts
 
@@ -112,12 +111,37 @@ from these receipts. The clean test server uses an in-memory synthetic key.
 | `npm run typecheck` | PASS | Application and test TypeScript. |
 | `npm run build` | PASS, exit 0 | Next.js 16.3.4 production build from the clean snapshot. |
 | `npm run test:access` | PASS: 10 tests, zero skipped | Existing isolated access regression proof. |
-| `npm run test:projects` | PASS: 22 tests, zero skipped | 14 offline tests plus 8 database tests, including the parent test. |
+| `npm run test:projects` | PASS: 25 tests, zero skipped | 14 offline tests plus 11 database tests, including the parent test. |
 | Database commands without fixtures | PASS: both exit 1 with setup messages, zero skipped | `test:access` and `test:projects` cannot report absent database proof as success. |
-| `npm run check:access-web` | PASS: 98 assertions, exit 0 | Clean built server, synthetic provider, dedicated runtime login, loopback fixture database. |
-| Local Markdown links | PASS: 177 links and fragments in 23 documents | Repository paths and heading fragments, rechecked after the live receipt update. |
+| `npm run check:access-web` | PASS: 122 assertions, exit 0 | Clean built server, synthetic provider, dedicated runtime login, loopback fixture database. |
+| Local Markdown links | PASS: 176 links and fragments in 23 documents | Repository paths and heading fragments, rechecked after the Edit/Delete receipt update. |
 | Browser JavaScript scan | PASS: 9 built JavaScript files, zero private server markers | Clean production snapshot; checked App/database configuration names, private SQL identifiers, and synthetic provider markers. |
 | Changed Mermaid graph | PASS, exit 0 | DOMAIN graph rendered to SVG with installed Mermaid CLI 11.17.0 and Chrome. No dependency added. |
+
+## Edit/Delete milestone
+
+On 2026-09-10, after the first-stage gate commit `49747ba`, the clean production
+build, 24 offline tests, 25 project tests, 10 access tests, and 122 HTTP assertions
+passed with zero skipped tests. P10 to P12 have runnable local receipts. The HTTP
+provider delay uses a bounded advisory lock in the isolated test harness; it is
+never enabled in the Preview. An initial confirmation-text assertion failed
+because React adds invisible HTML comments between text nodes. The assertion
+was corrected and the entire HTTP proof passed from fresh fixtures. No failed
+or skipped check counts as proof.
+
+The Edit/Delete changes use native forms, the existing protected action route,
+and two private functions. The route and database both check current owner
+authorization. The React review found no new client components or hooks. Live
+Edit/Delete confirmation is pending; the required real GitHub gate is already
+complete above.
+
+The isolated Preview received the two exact tested function definitions with
+only their execution grants, in one transaction. This narrow migration ran
+twice. Read-only verification showed both retained project rows unchanged,
+16 runtime functions, zero direct private table grants, NOLOGIN/NOINHERIT, and
+no runtime Instructor-designation privilege. Automatic approval review rejected
+a full schema rerun because its scope was broader; that command did not run.
+The full idempotent SQL is proven locally by the database tests.
 
 ## Acceptance rows
 
@@ -132,11 +156,11 @@ from these receipts. The clean test server uses an in-memory synthetic key.
 | P7 | Database and HTTP checks pass invalid ownership, missing IDs, Archived, Disconnected, and submitted Class-kind attempts. The schema stores Personal Projects only. | Local PASS |
 | P8 | Provider and HTTP checks pass Unknown no-change results, confirmed loss saving Disconnected, and direct requests with untrusted browser verification fields. | Local PASS |
 | P9 | Database and HTTP checks pass explicit loss detection, same-repository restoration, retained publication/moderation, and unavailable Hidden/Archived states. Live selected-access loss and same-project restoration pass above. | Local and live PASS |
-| P10 | Edit is not built. Initial Connect form validation has unit coverage, including maximum Unicode fields, but this does not prove Edit. | Ready for the next stage |
-| P11 | Delete is not built. No deletion claim is made. | Ready for the next stage |
-| P12 | Row versions guard first-stage connection writes. The full Delete/Edit/revocation race row requires the next stage. | Waiting for the next stage |
+| P10 | Database tests pass owner Edit in every retained state with only details, update time, and concurrency version changed. HTTP proof passes Draft/Published edits, maximum Unicode fields and 32,768-byte forms, overflow/control/URL/cross-origin rejection, escaping, link removal, and a server-fetch tripwire for demo destinations. | Local PASS |
+| P11 | Database and HTTP proof pass title/warning/Cancel/Confirm controls, no write without confirmation, physical owned deletion, capacity recovery, safe retries/concurrent deletion, new ID on reconnect, and retained onboarding after deletion/revocation/reapproval. GitHub is not called for Edit or Delete. | Local PASS |
+| P12 | Database proof covers old contexts after Edit/Delete/newer checks and owner writes ordered against revocation. HTTP proof holds a real Check request in the synthetic provider, completes Edit or Delete, then releases the response and verifies it cannot overwrite the edit or recreate the deleted project. | Local PASS |
 | P13 | Database tests pass UUID backfill and stability, runtime/anonymous grant denial, and private shared projection. HTTP responses and stored rows contain no synthetic provider identity/token markers. The clean browser bundle scan passes. | Local PASS |
-| P14 | Typecheck, 24 offline tests, 10 access tests, 22 project tests, 98 HTTP assertions, clean build, 177 local links, and Mermaid render pass. The public demo remains available. | Local PASS |
+| P14 | Typecheck, 24 offline tests, 10 access tests, 25 project tests, 122 HTTP assertions, clean build, 176 local links, and Mermaid render pass. The public demo remains available. | Local PASS |
 | P15 | Real Member access, eligible private selection, publication, onboarding, Community reads, signed-out denial, selected-access loss, and same-project restoration pass above. | Live PASS |
 | P16 | Instructor Hide and Restore actions are not built. They follow Edit/Delete under the approved order. | Waiting for the final stage |
 
@@ -147,7 +171,7 @@ SQL, tests, CI, and approved documentation changes. Review found no unrelated
 files or dependency changes. A scan of all 30 changed files found no environment
 files, static private keys, live-token patterns, or database passwords. The
 first stage matches the approved plan and both owner clarifications. The clean
-build passes. First-stage live Preview acceptance passes. Edit/Delete and
-Instructor Hide/Restore proof remain pending, so the merge gate is incomplete.
+build passes. First-stage live Preview acceptance passes. Edit/Delete local proof passes.
+Instructor Hide/Restore proof remains pending, so the merge gate is incomplete.
 No row is complete because a check was skipped. A Member review and all remaining
 proof are required before the Instructor merges.

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { accessState } from "../../../lib/access";
 import { project } from "../../../lib/projects";
 import { AccessShell, Retry } from "../../access-shell";
-import { ProjectAction, ProjectMessage, SharedDetails } from "../project-ui";
+import { ProjectAction, ProjectFields, ProjectMessage, SharedDetails } from "../project-ui";
 
 export const dynamic = "force-dynamic";
 export default async function ProjectPage({ params, searchParams }: {params:Promise<{id:string}>;searchParams:Promise<{message?:string}>}) {
@@ -27,6 +27,23 @@ export default async function ProjectPage({ params, searchParams }: {params:Prom
       <p>Last successful connection check: {item.lastCheckedAt ? <time dateTime={item.lastCheckedAt}>{new Date(item.lastCheckedAt).toUTCString()}</time> : "No successful check recorded."}</p>
       {item.connection === "Connected" && item.publication === "Draft" && <ProjectAction id={item.id} action="publish">Publish</ProjectAction>}
       <ProjectAction id={item.id} action="check">Check connection</ProjectAction>
+      <details><summary>Edit project</summary>
+        <form action="/projects/action" method="post">
+          <input type="hidden" name="action" value="edit" />
+          <input type="hidden" name="id" value={item.id} />
+          <ProjectFields details={item} /><button type="submit">Save changes</button>
+        </form>
+      </details>
+      <details><summary>Delete project</summary>
+        <p>Delete {item.title}?</p>
+        <p>This permanently removes the project from Vibies and frees one project place. Your GitHub repository stays unchanged. Completed onboarding is kept.</p>
+        <form action="/projects/action" method="post">
+          <input type="hidden" name="action" value="delete" />
+          <input type="hidden" name="id" value={item.id} />
+          <button name="confirm" value="yes">Confirm delete</button>
+        </form>
+        <a href={`/projects/${item.id}`}>Cancel</a>
+      </details>
     </>}
   </section></AccessShell>;
 }

@@ -818,6 +818,114 @@ begin
 end;
 $$;
 
+create or replace function vibies_private.edit_project(
+  p_session_hash text,
+  p_project_id uuid,
+  p_expected_version bigint,
+  p_title text,
+  p_summary text,
+  p_demo_url text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, vibies_private
+as $$
+declare
+  actor_id uuid;
+  project_version bigint;
+begin
+  if not vibies_private._valid_hash(p_session_hash)
+     or p_project_id is null
+     or p_expected_version is null or p_expected_version < 1
+     or not coalesce(vibies_private._valid_project_text(p_title, 80, false), false)
+     or not coalesce(vibies_private._valid_project_text(p_summary, 500, true), false)
+     or not coalesce(vibies_private._valid_project_url(p_demo_url), false) then
+    return jsonb_build_object('kind', 'invalid');
+  end if;
+
+  perform 1 from vibies_private.community where singleton for update;
+  select a.internal_id into actor_id
+    from vibies_private.sessions s
+    join vibies_private.accounts a on a.github_id = s.github_id
+   where s.session_hash = p_session_hash
+     and s.created_at > clock_timestamp() - interval '24 hours'
+     and a.status = 'approved'
+   for update of a;
+  if not found then
+    return jsonb_build_object('kind', 'forbidden');
+  end if;
+
+  select version into project_version
+    from vibies_private.personal_projects
+   where id = p_project_id and owner_account_id = actor_id
+   for update;
+  if not found then
+    return jsonb_build_object('kind', 'forbidden');
+  end if;
+  if project_version <> p_expected_version then
+    return jsonb_build_object('kind', 'stale');
+  end if;
+
+  update vibies_private.personal_projects
+     set title = p_title,
+         summary = p_summary,
+         demo_url = p_demo_url,
+         updated_at = clock_timestamp(),
+         version = version + 1
+   where id = p_project_id;
+  return jsonb_build_object('kind', 'edited');
+end;
+$$;
+
+create or replace function vibies_private.delete_project(
+  p_session_hash text,
+  p_project_id uuid,
+  p_expected_version bigint
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, vibies_private
+as $$
+declare
+  actor_id uuid;
+  project_version bigint;
+begin
+  if not vibies_private._valid_hash(p_session_hash)
+     or p_project_id is null
+     or p_expected_version is null or p_expected_version < 1 then
+    return jsonb_build_object('kind', 'invalid');
+  end if;
+
+  perform 1 from vibies_private.community where singleton for update;
+  select a.internal_id into actor_id
+    from vibies_private.sessions s
+    join vibies_private.accounts a on a.github_id = s.github_id
+   where s.session_hash = p_session_hash
+     and s.created_at > clock_timestamp() - interval '24 hours'
+     and a.status = 'approved'
+   for update of a;
+  if not found then
+    return jsonb_build_object('kind', 'forbidden');
+  end if;
+
+  select version into project_version
+    from vibies_private.personal_projects
+   where id = p_project_id and owner_account_id = actor_id
+   for update;
+  if not found then
+    return jsonb_build_object('kind', 'forbidden');
+  end if;
+  if project_version <> p_expected_version then
+    return jsonb_build_object('kind', 'stale');
+  end if;
+
+  delete from vibies_private.personal_projects where id = p_project_id;
+  return jsonb_build_object('kind', 'deleted');
+end;
+$$;
+
 create or replace function vibies_private.projects(p_session_hash text)
 returns jsonb
 language plpgsql
@@ -1033,6 +1141,8 @@ grant execute on function vibies_private.project_operation_context(text, uuid) t
 grant execute on function vibies_private.connect_project(text, text, text, text, text) to vibies_runtime;
 grant execute on function vibies_private.publish_project(text, uuid, bigint) to vibies_runtime;
 grant execute on function vibies_private.record_project_connection(text, uuid, bigint, boolean) to vibies_runtime;
+grant execute on function vibies_private.edit_project(text, uuid, bigint, text, text, text) to vibies_runtime;
+grant execute on function vibies_private.delete_project(text, uuid, bigint) to vibies_runtime;
 grant execute on function vibies_private.projects(text) to vibies_runtime;
 grant execute on function vibies_private.project(text, uuid) to vibies_runtime;
 

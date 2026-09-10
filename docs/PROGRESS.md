@@ -61,7 +61,7 @@ was committed before application code.
 
 The first stage implements Connect, Publish, Check connection, and private
 Community reading. The [project proof record](PROJECT-VERIFICATION.md) lists the
-actual local results, hosted setup receipts, and pending live rows. The isolated
+actual local results and hosted setup and live receipts. The isolated
 database, Preview, OAuth sign-in, and GitHub App are configured. Guide signed in
 and approved Builder and Scout. Live receipts now show Member access, a private
 repository in the picker, publication and onboarding, Scout's Community list,
@@ -73,6 +73,7 @@ first-stage proof gate is complete.
 
 ## Next step
 
-Build and prove Edit and Delete (P10 to P12), followed
-by Instructor Hide and Restore (P16). Keep one PR draft until every row has a
+Edit and Delete (P10 to P12) now pass local database and HTTP proof, including
+delayed provider responses after edits and deletion. Build and prove Instructor
+Hide and Restore (P16) next. Keep one PR draft until every row has a
 receipt. A Member reviews; only the Instructor merges.

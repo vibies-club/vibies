@@ -19,7 +19,7 @@ if (!databaseUrl) {
     throw new Error("VIBIES_TEST_DATABASE_URL must name the loopback vibies_access_test database");
   }
 
-  test("the private project API enforces issue 17 phase one", { timeout: 30_000 }, async (t) => {
+  test("the private project API enforces issue 17", { timeout: 30_000 }, async (t) => {
     const sql = postgres(databaseUrl, { max: 12, onnotice: () => {} });
     const migrationSql = postgres(databaseUrl, { max: 1, onnotice: () => {} });
     const migration = await readFile(new URL("../supabase/access.sql", import.meta.url), "utf8");
@@ -46,16 +46,34 @@ if (!databaseUrl) {
       tx`select vibies_private.publish_project(${session}, ${id}::uuid, ${version}::bigint) as value`);
     const record = (session: string, id: string, version: string, connected: boolean) => call((tx) =>
       tx`select vibies_private.record_project_connection(${session}, ${id}::uuid, ${version}::bigint, ${connected}) as value`);
+    const edit = (session: string, id: string, version: string, title: string, summary: string, demoUrl: string | null = null) => call((tx) =>
+      tx`select vibies_private.edit_project(${session}, ${id}::uuid, ${version}::bigint, ${title}, ${summary}, ${demoUrl}) as value`);
+    const remove = (session: string, id: string, version: string) => call((tx) =>
+      tx`select vibies_private.delete_project(${session}, ${id}::uuid, ${version}::bigint) as value`);
     const list = (session: string) => call((tx) =>
       tx`select vibies_private.projects(${session}) as value`);
     const read = (session: string, id: string) => call((tx) =>
       tx`select vibies_private.project(${session}, ${id}::uuid) as value`);
+    const stored = async (id: string) => {
+      const [row] = await sql`
+        select p.owner_account_id::text as owner_account_id,
+               p.repository_id, p.title, p.summary, p.demo_url,
+               p.publication, p.connection, p.moderation,
+               p.last_checked_at, p.created_at, p.updated_at,
+               p.version::text as version, a.onboarding_completed
+          from vibies_private.personal_projects p
+          join vibies_private.accounts a on a.internal_id = p.owner_account_id
+         where p.id = ${id}::uuid
+      `;
+      return row;
+    };
 
     const sessions = {
       instructor: hash("project-instructor"), owner: hash("project-owner"),
       reader: hash("project-reader"), other: hash("project-other"),
       revoked: hash("project-revoked"), pending: hash("project-pending"),
       expired: hash("project-expired"), race: hash("project-race"), duplicate: hash("project-duplicate"),
+      editor: hash("project-editor"),
     };
 
     try {
@@ -99,12 +117,14 @@ if (!databaseUrl) {
         ["203", "synthetic-other", sessions.other], ["204", "synthetic-revoked", sessions.revoked],
         ["205", "synthetic-pending", sessions.pending], ["206", "synthetic-expired", sessions.expired],
         ["207", "synthetic-race", sessions.race], ["208", "synthetic-duplicate", sessions.duplicate],
+        ["209", "synthetic-editor", sessions.editor],
       ]) await finish(id, username, session);
       for (const [id, nickname] of [["201", "Builder"], ["202", "Reader"], ["203", "Other"],
         ["204", "Former"], ["206", "Sleeper"], ["207", "Racer"], ["208", "Twin"]]) {
         assert.deepEqual(await change(sessions.instructor, id, "approve", nickname), { kind: "ok" });
       }
       await change(sessions.instructor, "204", "revoke");
+      assert.deepEqual(await change(sessions.instructor, "209", "approve", "Editor"), { kind: "ok" });
       await sql`update vibies_private.sessions set created_at = clock_timestamp() - interval '25 hours' where session_hash = ${sessions.expired}`;
 
       await t.test("setup is repeatable and private", async () => {
@@ -134,6 +154,34 @@ if (!databaseUrl) {
         }
         assert.equal("owner_github_id" in columns.definitions, false);
         assert.equal(columns.definitions.owner_account_id, "uuid");
+        const [runtime] = await sql`
+          select jsonb_agg(
+            format('%s(%s)', p.proname, pg_catalog.oidvectortypes(p.proargtypes))
+            order by p.proname, pg_catalog.oidvectortypes(p.proargtypes)
+          ) as functions
+            from pg_catalog.pg_proc p
+            join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'vibies_private'
+             and has_function_privilege('vibies_runtime', p.oid, 'execute')
+        `;
+        assert.deepEqual(runtime.functions, [
+          "access_state(text)",
+          "begin_sign_in(text, text)",
+          "change_member(text, text, text, text)",
+          "connect_project(text, text, text, text, text)",
+          "consume_sign_in(text, text)",
+          "delete_project(text, uuid, bigint)",
+          "edit_project(text, uuid, bigint, text, text, text)",
+          "end_session(text)",
+          "finish_sign_in(text, text, text, text)",
+          "members(text)",
+          "project(text, uuid)",
+          "project_actor(text)",
+          "project_operation_context(text, uuid)",
+          "projects(text)",
+          "publish_project(text, uuid, bigint)",
+          "record_project_connection(text, uuid, bigint, boolean)",
+        ]);
       });
 
       await t.test("database validation rejects controls and invalid destinations", async () => {
@@ -301,6 +349,204 @@ if (!databaseUrl) {
         assert.deepEqual(await read(sessions.other, project.id), { kind: "missing" });
         assert.equal((await actor(sessions.reader)).kind, "ok");
         assert.equal(Number(restored.version) < Number((await context(sessions.reader, project.id)).version), true);
+      });
+
+      let editorId = "";
+      await t.test("Edit validates details and preserves every other field in all retained states", async () => {
+        const project = await connect(sessions.editor, "6001", "Draft project", "Draft summary");
+        assert.equal(project.kind, "created");
+        editorId = project.id;
+
+        const assertEdit = async (title: string, summary: string, demoUrl: string | null) => {
+          const before = await stored(editorId);
+          const current = await context(sessions.editor, editorId);
+          assert.deepEqual(await edit(sessions.editor, editorId, current.version, title, summary, demoUrl),
+            { kind: "edited" });
+          const after = await stored(editorId);
+          assert.deepEqual({
+            owner_account_id: after.owner_account_id,
+            repository_id: after.repository_id,
+            publication: after.publication,
+            connection: after.connection,
+            moderation: after.moderation,
+            last_checked_at: after.last_checked_at,
+            created_at: after.created_at,
+            onboarding_completed: after.onboarding_completed,
+          }, {
+            owner_account_id: before.owner_account_id,
+            repository_id: before.repository_id,
+            publication: before.publication,
+            connection: before.connection,
+            moderation: before.moderation,
+            last_checked_at: before.last_checked_at,
+            created_at: before.created_at,
+            onboarding_completed: before.onboarding_completed,
+          });
+          assert.deepEqual({ title: after.title, summary: after.summary, demo_url: after.demo_url },
+            { title, summary, demo_url: demoUrl });
+          assert.equal(after.version, String(Number(before.version) + 1));
+          assert.ok(after.updated_at > before.updated_at);
+          return { before, after };
+        };
+
+        const draftEdit = await assertEdit("Edited Draft", "Unicode summary 🌱\nSecond line", "https://demo.invalid/draft");
+        assert.deepEqual(await record(sessions.editor, editorId, draftEdit.before.version, false), { kind: "stale" });
+        assert.deepEqual(await publish(sessions.editor, editorId, draftEdit.before.version), { kind: "stale" });
+
+        let current = await context(sessions.editor, editorId);
+        assert.deepEqual(await publish(sessions.editor, editorId, current.version), { kind: "published" });
+        await assertEdit("Edited Published", "Published summary", null);
+
+        await sql`update vibies_private.personal_projects set moderation = 'Hidden', version = version + 1 where id = ${editorId}::uuid`;
+        await assertEdit("Edited Hidden", "Hidden summary", "https://demo.invalid/hidden");
+
+        await sql`update vibies_private.personal_projects set publication = 'Archived', version = version + 1 where id = ${editorId}::uuid`;
+        await assertEdit("Edited Archived", "Archived summary", null);
+
+        await sql`update vibies_private.personal_projects set connection = 'Disconnected', version = version + 1 where id = ${editorId}::uuid`;
+        await assertEdit("Edited Disconnected", "Disconnected summary", "https://demo.invalid/disconnected");
+
+        current = await context(sessions.editor, editorId);
+        const beforeInvalid = await stored(editorId);
+        for (const [title, summary, demoUrl] of ([
+          ["", "summary", null], ["x".repeat(81), "summary", null],
+          ["Title", "", null], ["Title", "x".repeat(501), null],
+          ["Bad\nTitle", "summary", null], ["Title", "bad\tsummary", null],
+          ["Title", "summary", "http://demo.invalid"],
+          ["Title", "summary", "https://user:pass@demo.invalid"],
+        ] as Array<[string, string, string | null]>)) {
+          assert.deepEqual(await edit(sessions.editor, editorId, current.version, title, summary, demoUrl),
+            { kind: "invalid" });
+        }
+        assert.deepEqual(await call((tx) => tx`
+          select vibies_private.edit_project(${sessions.editor}, null, 1, 'Title', 'Summary', null) as value
+        `), { kind: "invalid" });
+        assert.deepEqual(await edit(sessions.editor, editorId, "0", "Title", "Summary"), { kind: "invalid" });
+
+        for (const session of [hash("signed-out"), sessions.instructor, sessions.other,
+          sessions.pending, sessions.revoked, sessions.expired]) {
+          assert.deepEqual(await edit(session, editorId, current.version, "Blocked", "Blocked"),
+            { kind: "forbidden" });
+        }
+        assert.deepEqual(await edit(sessions.editor, "00000000-0000-4000-8000-000000000001",
+          current.version, "Missing", "Missing"), { kind: "forbidden" });
+        assert.deepEqual(await edit(sessions.editor, editorId, String(Number(current.version) - 1),
+          "Stale", "Stale"), { kind: "stale" });
+        assert.deepEqual(await stored(editorId), beforeInvalid);
+      });
+
+      await t.test("Delete is private, concurrent, frees capacity, and creates a new ID on reconnect", async () => {
+        const current = await context(sessions.editor, editorId);
+        assert.deepEqual(await remove(sessions.other, editorId, current.version), { kind: "forbidden" });
+        assert.deepEqual(await remove(sessions.instructor, editorId, current.version), { kind: "forbidden" });
+        assert.deepEqual(await remove(sessions.editor, "00000000-0000-4000-8000-000000000001", current.version),
+          { kind: "forbidden" });
+        assert.deepEqual(await remove(sessions.editor, editorId, String(Number(current.version) - 1)),
+          { kind: "stale" });
+        assert.deepEqual(await call((tx) => tx`
+          select vibies_private.delete_project(${sessions.editor}, null, 1) as value
+        `), { kind: "invalid" });
+        assert.deepEqual(await remove(sessions.editor, editorId, "0"), { kind: "invalid" });
+
+        const concurrent = await Promise.all([
+          remove(sessions.editor, editorId, current.version),
+          remove(sessions.editor, editorId, current.version),
+        ]);
+        assert.deepEqual(concurrent.map(value => value.kind).sort(), ["deleted", "forbidden"]);
+        assert.equal(await stored(editorId), undefined);
+        assert.deepEqual(await remove(sessions.editor, editorId, current.version), { kind: "forbidden" });
+
+        const [onboarding] = await sql`
+          select onboarding_completed from vibies_private.accounts where github_id = '209'
+        `;
+        assert.equal(onboarding.onboarding_completed, true);
+
+        const replacement = await connect(sessions.editor, "6001", "Reconnected", "Fresh row");
+        assert.equal(replacement.kind, "created");
+        assert.notEqual(replacement.id, editorId);
+        assert.deepEqual(await record(sessions.editor, editorId, current.version, true), { kind: "forbidden" });
+        assert.deepEqual(await publish(sessions.editor, editorId, current.version), { kind: "forbidden" });
+        assert.deepEqual(await edit(sessions.editor, editorId, current.version, "Late edit", "Late edit"),
+          { kind: "forbidden" });
+        assert.equal((await stored(replacement.id)).title, "Reconnected");
+
+        const [capacityBefore] = await sql`
+          select count(*)::int as count from vibies_private.personal_projects p
+          join vibies_private.accounts a on a.internal_id = p.owner_account_id
+          where a.github_id = '207'
+        `;
+        assert.equal(capacityBefore.count, 3);
+        const [capacityTarget] = await sql`
+          select p.id::text as id, p.version::text as version
+            from vibies_private.personal_projects p
+            join vibies_private.accounts a on a.internal_id = p.owner_account_id
+           where a.github_id = '207' order by p.repository_id desc limit 1
+        `;
+        const [deleted, connected] = await Promise.all([
+          remove(sessions.race, capacityTarget.id, capacityTarget.version),
+          connect(sessions.race, "2999", "Capacity replacement", "Capacity proof"),
+        ]);
+        assert.deepEqual(deleted, { kind: "deleted" });
+        assert.ok(["created", "full"].includes(connected.kind));
+        if (connected.kind === "full") {
+          assert.equal((await connect(sessions.race, "2999", "Capacity replacement", "Capacity proof")).kind,
+            "created");
+        }
+        const [capacityAfter] = await sql`
+          select count(*)::int as count from vibies_private.personal_projects p
+          join vibies_private.accounts a on a.internal_id = p.owner_account_id
+          where a.github_id = '207'
+        `;
+        assert.equal(capacityAfter.count, 3);
+      });
+
+      await t.test("Newer checks and Membership revocation serialize with owner writes", async () => {
+        const [replacement] = await sql`
+          select id::text as id from vibies_private.personal_projects where repository_id = '6001'
+        `;
+        const oldContext = await context(sessions.editor, replacement.id);
+        assert.deepEqual(await record(sessions.editor, replacement.id, oldContext.version, false),
+          { kind: "disconnected" });
+        assert.deepEqual(await edit(sessions.editor, replacement.id, oldContext.version, "Old edit", "Old edit"),
+          { kind: "stale" });
+        assert.deepEqual(await remove(sessions.editor, replacement.id, oldContext.version), { kind: "stale" });
+
+        const disconnected = await context(sessions.editor, replacement.id);
+        assert.deepEqual(await record(sessions.editor, replacement.id, disconnected.version, true),
+          { kind: "connected" });
+        assert.deepEqual(await publish(sessions.editor, replacement.id, disconnected.version), { kind: "stale" });
+
+        let current = await context(sessions.editor, replacement.id);
+        const [edited, revoked] = await Promise.all([
+          edit(sessions.editor, replacement.id, current.version, "Concurrent edit", "Revocation race"),
+          change(sessions.instructor, "209", "revoke"),
+        ]);
+        assert.deepEqual(revoked, { kind: "ok" });
+        assert.ok(["edited", "forbidden"].includes(edited.kind));
+        assert.equal((await stored(replacement.id)).title,
+          edited.kind === "edited" ? "Concurrent edit" : "Reconnected");
+        assert.deepEqual(await context(sessions.editor, replacement.id), { kind: "forbidden" });
+        assert.equal((await stored(replacement.id)).onboarding_completed, true);
+
+        assert.deepEqual(await change(sessions.instructor, "209", "reapprove"), { kind: "ok" });
+        current = await context(sessions.editor, replacement.id);
+        const [removed, revokedAgain] = await Promise.all([
+          remove(sessions.editor, replacement.id, current.version),
+          change(sessions.instructor, "209", "revoke"),
+        ]);
+        assert.deepEqual(revokedAgain, { kind: "ok" });
+        assert.ok(["deleted", "forbidden"].includes(removed.kind));
+        assert.equal((await stored(replacement.id) === undefined), removed.kind === "deleted");
+
+        const [afterRevocation] = await sql`
+          select onboarding_completed from vibies_private.accounts where github_id = '209'
+        `;
+        assert.equal(afterRevocation.onboarding_completed, true);
+        assert.deepEqual(await change(sessions.instructor, "209", "reapprove"), { kind: "ok" });
+        const [afterReapproval] = await sql`
+          select onboarding_completed from vibies_private.accounts where github_id = '209'
+        `;
+        assert.equal(afterReapproval.onboarding_completed, true);
       });
 
       await t.test("Archived and Disconnected projects cannot publish", async () => {
