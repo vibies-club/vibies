@@ -14,9 +14,9 @@ application code. Commit `e424566` records D-015 before the first-stage build.
 Finding 10 requires Connect, Publish, and Community read proof first, including
 live P1/P15. Edit and Delete follow as P10 to P12. Instructor Hide and Restore
 follows as P16. This branch currently contains the first stage only. The isolated
-Preview and GitHub App are configured. Member access through Vercel and live
-P1/P15 are still pending. The PR remains draft. Synthetic provider results do
-not satisfy live installation or hosted Preview proof.
+Preview and GitHub App are configured. Members have reached the Preview, and
+the live P1/P15 journey is in progress. The PR remains draft. Synthetic provider
+results do not satisfy live installation or hosted Preview proof.
 
 The [owner clarifications](https://github.com/vibies-club/vibies/issues/17#issuecomment-5623179154)
 were answered on 2026-09-10. The owner chose an opaque internal account UUID for
@@ -43,20 +43,45 @@ account identifiers, or private repository links are included in this record.
 | Isolated database | PASS: a new data-less branch reached healthy status; private schema and runtime role were initially absent | `personal-projects-review-17`, separate from the main database. |
 | SQL and runtime boundary | PASS: `supabase/access.sql` applied twice; runtime is NOLOGIN/NOINHERIT; no direct private table grants; exactly 14 runtime functions; Instructor designation denied to runtime | Setup queries against the isolated branch. A dedicated login returned signed-out access state and direct account SELECT failed with SQLSTATE 42501. |
 | TLS | PASS: database connection verified with the Supabase CA | Certificate verification stayed enabled. |
-| GitHub App | PASS: authenticated App metadata reports only Metadata read and no events; settings show no webhook or user authorization during installation | Public App registration exists. A Member installation has not run. |
+| GitHub App | PASS: authenticated App metadata reports only Metadata read and no events; settings show no webhook or user authorization during installation | Registration check. Member installation evidence follows below. |
 | Preview configuration | PASS: ten configuration entries target Preview and only `feature/personal-projects-17` | Metadata check confirms branch scope. Separate OAuth callback and application origin use the fixed Preview URL; public demo configuration points to the isolated database. |
 | Instructor sign-in | PASS: real GitHub OAuth returned to the Preview and displayed Guide | Hosted browser journey. |
-| Member approval | PASS: Guide approved Builder and Scout through membership management; the page showed two of seven places filled and no unapproved accounts | Hosted Instructor actions. Member sign-ins remain pending. |
+| Member approval | PASS: Guide approved Builder and Scout through membership management; the page showed two of seven places filled and no unapproved accounts | Hosted Instructor actions. Member access evidence follows below. |
 | Instructor Community read | PASS: `/projects` displayed an empty Community list | No published project existed for the three-person read proof. |
 | Signed-out app boundary | PASS: after application sign-out, `/projects` and a synthetic direct project URL both redirected to `/sign-in?message=expired` | Browser retained Vercel access but had no Vibies session. This does not prove denial of a real published project's details. |
 | Public demo | PASS: `/demo` displayed the fixed fictional sample while signed out of Vibies | Hosted browser read from isolated demo setup. |
 | Temporary setup cleanup | PASS: local helper stopped and its temporary credential files were removed | Live credentials remain in the scoped Preview configuration. |
-| Vercel participant access | PENDING: sharing lists only team members; unauthenticated requests redirect to Vercel SSO | Builder and Scout must obtain Preview access. The Vercel redirect is not application-denial proof. |
+| Vercel protection | At setup, sharing listed only team members and unauthenticated requests redirected to Vercel SSO | The Vercel redirect is not application-denial proof. Subsequent participant access is recorded below. |
 
-The remaining live work is the owning Member's selected private installation,
-Connect and Publish, the second Member and Instructor reads, and access loss
-and restoration. Follow the [live procedure](PROJECT-SETUP.md#live-p1-and-p15-procedure).
-Setup receipts do not complete P1 or P15.
+## Live journey receipts
+
+The user supplied four screenshots on 2026-09-10 at about 20:04 UTC and confirmed
+that image 1 came from Scout's signed-in session. The user also confirmed that
+the private repository contains only test data, with no real user or customer
+data. The record calls it **Project A**. Its repository name, chosen demo URL,
+and raw screenshots are omitted to keep this record limited to Nicknames and
+synthetic examples.
+
+The checks used the fixed Preview for commit
+`0f821f21a2b83388a0182bc2d77d96ece4345c2d`, with its
+[successful deployment](https://vercel.com/beta-momo/vibies/B7UHu4FJxxPemrVyTB6d3GDD5n9t).
+The application code is unchanged from `1bbcaa2`. Agent browser checks ran
+between 20:05 and 20:08 UTC.
+
+| Check | Observed result | Receipt |
+| --- | --- | --- |
+| Member Preview access | PASS: Builder and Scout reached authenticated Member pages | User report and screenshots of owner and non-owner views. |
+| Eligible private repository | PASS: the refreshed picker offered Project A's private repository | User screenshot 3; screenshot 4 shows the App setup and refresh controls. |
+| Publication and onboarding | PASS: Builder's project showed Published, Connected, Visible, and Onboarding complete | User screenshot 2 also reports a successful connection check at 20:01:17 UTC. |
+| Scout Community list | PASS: Project A appeared with Builder's Nickname and the chosen shared details | User screenshot 1; the user confirmed Scout was signed in. |
+| Scout direct project read | PENDING: the supplied Scout screenshot shows the list only | Scout must open the project and confirm the shared details. |
+| Instructor reads | PASS: Guide read Project A in the Community list and opened its direct page; both showed the same chosen shared details and Builder's Nickname | Agent browser observation. No owner controls appeared. |
+| Signed-out private reads | PASS: after application sign-out, both Project A's actual direct URL and `/projects` redirected to `/sign-in?message=expired`; no project details appeared | Agent browser observation with Vercel access retained. Guide then signed in again. |
+| Access loss and restoration | PENDING | Builder must remove selected repository access, check the connection, restore access, and check again. Scout and Guide must verify the Community changes. |
+
+Follow the [live procedure](PROJECT-SETUP.md#live-p1-and-p15-procedure) for the
+remaining direct read and access-loss/restoration checks. Partial live receipts
+do not complete P1 or P15.
 
 ## Local receipts
 
@@ -76,7 +101,7 @@ from these receipts. The clean test server uses an in-memory synthetic key.
 | `npm run test:projects` | PASS: 22 tests, zero skipped | 14 offline tests plus 8 database tests, including the parent test. |
 | Database commands without fixtures | PASS: both exit 1 with setup messages, zero skipped | `test:access` and `test:projects` cannot report absent database proof as success. |
 | `npm run check:access-web` | PASS: 98 assertions, exit 0 | Clean built server, synthetic provider, dedicated runtime login, loopback fixture database. |
-| Local Markdown links | PASS: 178 links and fragments in 23 documents | Repository paths and heading fragments. |
+| Local Markdown links | PASS: 177 links and fragments in 23 documents | Repository paths and heading fragments, rechecked after the live receipt update. |
 | Browser JavaScript scan | PASS: 9 built JavaScript files, zero private server markers | Clean production snapshot; checked App/database configuration names, private SQL identifiers, and synthetic provider markers. |
 | Changed Mermaid graph | PASS, exit 0 | DOMAIN graph rendered to SVG with installed Mermaid CLI 11.17.0 and Chrome. No dependency added. |
 
@@ -84,7 +109,7 @@ from these receipts. The clean test server uses an in-memory synthetic key.
 
 | Row | Evidence and remaining work | Status |
 | --- | --- | --- |
-| P1 | [HTTP proof](../scripts/check-projects-web.mjs) passes the synthetic picker, Draft review, Publish, onboarding, second Member and Instructor reads. Real selected installation and hosted Preview require the [live procedure](PROJECT-SETUP.md#live-p1-and-p15-procedure). | Local PASS; live pending |
+| P1 | [HTTP proof](../scripts/check-projects-web.mjs) passes the synthetic journey. Live receipts above show the eligible private repository, Published state, onboarding, Scout's list, and Guide's list and direct page. Scout's direct read remains pending. | Local PASS; live partial |
 | P2 | [Database tests](../tests/projects-database.test.ts) and HTTP proof pass signed-out, unapproved, revoked, expired, Instructor owner-action, wrong-owner, and cross-origin denial. | Local PASS |
 | P3 | [Provider tests](../tests/project-github.test.ts) pass public, organization, wrong-owner, missing, suspended, All repositories, renamed/mismatched account, later pages, unrelated installations, and incomplete or malformed scans. HTTP checks confirm ineligible results create no project. | Local PASS |
 | P4 | Database and HTTP checks pass duplicate connection, unchanged details, competing last-place requests, and capacity enforcement. The database counts all retained rows. | Local PASS |
@@ -97,8 +122,8 @@ from these receipts. The clean test server uses an in-memory synthetic key.
 | P11 | Delete is not built. No deletion claim is made. | Waiting for first-stage live receipts |
 | P12 | Row versions guard first-stage connection writes. The full Delete/Edit/revocation race row requires the next stage. | Waiting for the next stage |
 | P13 | Database tests pass UUID backfill and stability, runtime/anonymous grant denial, and private shared projection. HTTP responses and stored rows contain no synthetic provider identity/token markers. The clean browser bundle scan passes. | Local PASS |
-| P14 | Typecheck, 24 offline tests, 10 access tests, 22 project tests, 98 HTTP assertions, clean build, 178 local links, and Mermaid render pass. The public demo remains available. | Local PASS |
-| P15 | Hosted setup, Instructor sign-in, Member approval, signed-out routing, and demo checks pass above. The real Member installation and complete three-person journey have not run. | Pending participant access and live proof |
+| P14 | Typecheck, 24 offline tests, 10 access tests, 22 project tests, 98 HTTP assertions, clean build, 177 local links, and Mermaid render pass. The public demo remains available. | Local PASS |
+| P15 | Real Member access, eligible private selection, publication, onboarding, Community reads, and signed-out denial pass above. Scout's direct read and the access-loss/restoration cycle remain pending. | Live partial |
 | P16 | Instructor Hide and Restore actions are not built. They follow Edit/Delete under the approved order. | Waiting for the final stage |
 
 ## Merge gate

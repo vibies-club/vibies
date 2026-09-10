@@ -63,13 +63,14 @@ The first stage implements Connect, Publish, Check connection, and private
 Community reading. The [project proof record](PROJECT-VERIFICATION.md) lists the
 actual local results, hosted setup receipts, and pending live rows. The isolated
 database, Preview, OAuth sign-in, and GitHub App are configured. Guide signed in
-and approved Builder and Scout. Their Vercel access, Member sign-ins, and real
-installation journey remain pending. Local provider fakes do not prove that
-journey.
+and approved Builder and Scout. Live receipts now show Member access, a private
+repository in the picker, publication and onboarding, Scout's Community list,
+Guide's list and direct read, and signed-out denial. Scout's direct read and
+the access-loss/restoration cycle remain pending.
 
 ## Next step
 
-Complete participant access and the
+Complete the remaining checks in the
 [live P1/P15 procedure](PROJECT-SETUP.md#live-p1-and-p15-procedure).
 Then build and prove Edit and Delete (P10 to P12), followed
 by Instructor Hide and Restore (P16). Keep one PR draft until every row has a

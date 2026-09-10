@@ -10,8 +10,8 @@ chosen.
 
 - Implement issue #17 on `feature/personal-projects-17` in its approved order.
 - Prove Connect, Publish, and Community reading with local checks and live P1/P15
-  receipts. Hosted setup is configured. Participant access, Member sign-ins,
-  and the real installation journey are pending.
+  receipts. Hosted setup and the first live checks pass. Scout's direct read
+  and the access-loss/restoration cycle remain pending.
 - Then build Edit and Delete (P10 to P12), followed by Instructor Hide and
   Restore (P16). Keep one PR draft until every proof row has a receipt.
 - Obtain a Member review after the six merge-gate checks pass. Only the
