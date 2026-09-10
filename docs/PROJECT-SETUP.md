@@ -26,7 +26,11 @@ definitions. The [workflows](WORKFLOWS.md) own user behavior.
    `feature/personal-projects-17`. Set `VIBIES_APP_ORIGIN` to the fixed Preview
    origin. Configure the OAuth callback as that origin plus `/auth/callback`.
    Redeploy after configuration changes.
-5. The Instructor and two approved Members sign in in separate browser sessions.
+5. Confirm that both Members can pass Vercel's separate Preview access gate.
+   If Vercel asks for access, each participant signs in to Vercel and requests
+   access to this branch Preview. The deployment owner grants access before
+   application testing. A Vercel SSO redirect does not prove a Vibies access rule.
+6. The Instructor and two approved Members sign in in separate browser sessions.
    Use a private personal repository with synthetic content for the live proof.
    The owning Member selects only that repository in the App installation and
    returns to `/projects/connect` to refresh the eligible list. The repository

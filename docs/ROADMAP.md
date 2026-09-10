@@ -10,7 +10,8 @@ chosen.
 
 - Implement issue #17 on `feature/personal-projects-17` in its approved order.
 - Prove Connect, Publish, and Community reading with local checks and live P1/P15
-  receipts. Human GitHub App and isolated Preview setup are pending.
+  receipts. Hosted setup is configured. Participant access, Member sign-ins,
+  and the real installation journey are pending.
 - Then build Edit and Delete (P10 to P12), followed by Instructor Hide and
   Restore (P16). Keep one PR draft until every proof row has a receipt.
 - Obtain a Member review after the six merge-gate checks pass. Only the

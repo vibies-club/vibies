@@ -60,8 +60,11 @@ select has_function_privilege(
 
 The runtime role must show `rolcanlogin = false` and `rolinherit = false`. The
 table-grant query must return no rows. Runtime routine grants must contain only
-`access_state`, `begin_sign_in`, `change_member`, `consume_sign_in`,
-`end_session`, `finish_sign_in`, and `members`. The final value must be `false`.
+`access_state`, `begin_sign_in`, `change_member`, `connect_project`,
+`consume_sign_in`, `end_session`, `finish_sign_in`, `members`, `project`,
+`project_actor`, `project_operation_context`, `projects`, `publish_project`, and
+`record_project_connection`. Both database proof commands and the live setup use
+this same expanded function API. The final value must be `false`.
 
 Nickname validation requires PostgreSQL 17 with UTF-8 and its `unicode` ICU
 collation. The SQL pins validation and case-insensitive uniqueness to this

@@ -61,13 +61,16 @@ was committed before application code.
 
 The first stage implements Connect, Publish, Check connection, and private
 Community reading. The [project proof record](PROJECT-VERIFICATION.md) lists the
-actual local results and pending live rows. The user confirmed that GitHub App
-and isolated Preview setup are still needed. Local provider fakes do not prove
-the real installation journey.
+actual local results, hosted setup receipts, and pending live rows. The isolated
+database, Preview, OAuth sign-in, and GitHub App are configured. Guide signed in
+and approved Builder and Scout. Their Vercel access, Member sign-ins, and real
+installation journey remain pending. Local provider fakes do not prove that
+journey.
 
 ## Next step
 
-Complete the [human setup](PROJECT-SETUP.md#human-setup-for-the-live-preview) and
-live P1/P15 procedure. Then build and prove Edit and Delete (P10 to P12), followed
+Complete participant access and the
+[live P1/P15 procedure](PROJECT-SETUP.md#live-p1-and-p15-procedure).
+Then build and prove Edit and Delete (P10 to P12), followed
 by Instructor Hide and Restore (P16). Keep one PR draft until every row has a
 receipt. A Member reviews; only the Instructor merges.
