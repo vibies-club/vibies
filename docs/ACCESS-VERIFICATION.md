@@ -10,15 +10,16 @@ or private recovery reason.
 
 Local results below were rechecked on 2026-09-10 using synthetic accounts.
 Hosted staging is configured. Real Instructor sign-in and cancellation pass.
-The Member welcome receipt is recorded below. First-time denial and complete
-trusted recovery receipts remain pending.
+Dated Member welcome, first-time denial, and recovery/restoration receipts are
+recorded below. A1 through A16 pass with the stated evidence sources. Member
+re-review is still required before the Instructor merges.
 Change a pending entry only after its procedure completes and attach a privacy-safe receipt in the PR. A hidden control is insufficient proof;
 direct protected requests and actions must also be denied.
 
 ## Skeptic findings
 
 The required Skeptic pass found eight risks. The approved plan has a resolution
-for each risk. Verification is still required.
+for each risk. The receipts below record verification.
 
 | Risk found | Required resolution | Proof target |
 | --- | --- | --- |
@@ -122,7 +123,8 @@ denial, the Member welcome page, or the Instructor replacement and restoration
 procedure. The [Member review](https://github.com/vibies-club/vibies/pull/16#issuecomment-5618348112)
 correctly identified this evidence gap. The PR's completed Preview checkbox was
 premature. That review required dated results for A1, A3, A5, and A16. The later
-Member welcome receipt below completes A5. A1, A3, and full A16 remain pending.
+Member welcome, first-time denial, and full recovery receipts below now complete
+those checks. The earlier owner completion report alone was insufficient.
 
 ### Live recovery rejection check on 2026-09-10
 
@@ -138,10 +140,8 @@ Instructor`. An explicit rollback and count query at 12:33 UTC showed the same
 five counts. Reloading administration with the existing Instructor Session still
 showed one active Member and allowed Instructor access.
 
-This proves the live Member-target rejection part of A16. A separate verified
-non-Member account is still required for replacement, old-Instructor denial,
-and restoration. A1 and A3 need a real first-time account. This rejection check
-does not replace those pending procedures.
+This proves the live Member-target rejection part of A16. The later first-time
+account and full recovery checks below complete the separate-account procedures.
 
 ### Member welcome receipt on 2026-09-10
 
@@ -154,6 +154,47 @@ The read-only staging checks above confirm approved Membership, a valid Session,
 and incomplete onboarding. Together these observations complete A5. The image
 was reviewed in the conversation; no image or account identifier was added to
 the repository.
+
+### First-time account denial on 2026-09-10
+
+The owner followed the separate-browser first-time sign-in procedure and
+confirmed denial. Supplied screenshots show the fixed Preview origin at
+`/access-denied`, the message that approval is required, Check access again,
+and Sign out. No Member approval was given to this test account.
+
+The agent reloaded Instructor administration and observed one unapproved Access
+entry for the test account and the existing approved Member. A read-only database
+query at 12:50 UTC confirmed the intended Instructor, one active Member, and one
+unapproved account. Before this sign-in, the 12:33 UTC baseline had the same
+Instructor and Member count with zero unapproved accounts. Authentication did
+not grant Membership or replace the Instructor. These are the live A1 and A3
+receipts; direct-request and sign-out coverage remains in the automated and
+earlier hosted receipts.
+
+### Instructor replacement and restoration on 2026-09-10
+
+The owner ran the provided recovery procedure with the separate unapproved
+GitHub test account in Incognito and retained the original Instructor browser.
+Replacement identity verification passed, as confirmed privately by the
+Instructor. Account ownership details are excluded from this public receipt.
+The database owner performed both designation calls; the agent did not grant
+Instructor access. The private audit records retain the reasons.
+
+| Procedure | Observed result | Evidence source |
+| --- | --- | --- |
+| Designate the separate test account with the temporary Nickname `RecoveryCheck`, then sign in again. | Welcome displays `RecoveryCheck` and Manage member access. | Owner-supplied screenshot; read-only audit timestamp 12:53:34 UTC. |
+| Request `/welcome` using the original Instructor's existing Session before restoration. | Redirects to `/sign-in?message=expired` and shows the sign-in-again message. | Agent directly navigated the existing browser Session. |
+| Check active Membership during replacement. | Active Member count remains one. | Owner-supplied database result, compared with the earlier baseline. |
+| Restore the intended Instructor and sign in again. | Welcome displays the original Instructor Nickname and Manage member access. | Owner-supplied screenshot; read-only audit timestamp 12:56:14 UTC. |
+| Reload `/welcome` in the temporary Instructor browser after restoration. | The supplied result shows the sign-in-again page. | Owner-supplied screenshot in response to this test step. |
+| Verify final database state. | Exactly one Instructor, the intended Nickname restored, one active Member, zero temporary-Instructor Sessions, and Member onboarding still false. | Owner-supplied combined result and agent-run read-only query of `community`, `accounts`, `sessions`, and audit transition timestamps. |
+
+Both audit timestamps are on 2026-09-10. The original Instructor's Session was
+invalidated at replacement, and replacement Sessions were invalidated on
+restoration. Member access and onboarding were retained. Together with the
+Member-target rejection and runtime-denial checks, these observations complete
+A16. Screenshots were reviewed in the conversation; account identifiers,
+Session values, private reasons, and image files are excluded from the repository.
 
 ### Earlier hosted checks
 
@@ -194,19 +235,17 @@ the regex adds the Unicode letter-number ranges. The migration rebuilds the
 nickname index inside its transaction. See
 [PostgreSQL collation support](https://www.postgresql.org/docs/17/collation.html).
 
-A synthetic account does not prove a second verified GitHub account's browser
-flow. A real Member now has an approved entry and an unexpired Session, as recorded
-above. The Member welcome screenshot completes A5. Dated receipts for
-unknown-account denial and trusted replacement recovery remain required before merge. Review can continue
-on this configured Preview. No claim below treats those procedures as passed.
+The earlier synthetic results remain separate from the real-account evidence.
+The dated owner-supplied screenshots and direct browser/database observations
+above complete the missing live checks. Member re-review remains required.
 
 ## Issue #14 acceptance record
 
 | Check | Procedure | Observed result | Receipt |
 | --- | --- | --- | --- |
-| **A1: Instructor setup** | On clean staging, designate the verified Instructor before opening sign-in. Sign in as that account, then as a different first visitor. Compare the active Member count before and after. | Hosted setup, real designated-Instructor sign-in, repeat sign-in, and zero Member count pass. A separate first visitor remains pending. | Automated commands above; live procedures remain as stated. |
+| **A1: Instructor setup** | On clean staging, designate the verified Instructor before opening sign-in. Sign in as that account, then as a different first visitor. Compare the active Member count before and after. | PASS: initial hosted setup and real Instructor sign-in; the later first-time account produced one unapproved entry, retained the intended Instructor, and left the active Member count unchanged at one. See the dated denial receipt above. | Automated commands above; live procedures remain as stated. |
 | **A2: Account matching** | In the database proof, sign in twice with one stable identifier, change only its GitHub username, then use a different identifier. Confirm one reused entry, preserved approval, and no inherited approval. | PASS locally: stable ID reuses the account; rename preserves approval; distinct IDs remain unapproved. | Automated commands above; live procedures remain as stated. |
-| **A3: Unapproved access** | Complete first real sign-in with an unknown test account. Confirm one unapproved entry, access denied, and sign-out. Use the HTTP fixture to request `/welcome` and a Member action directly with that Session. | Local and hosted synthetic denial checks pass. First real sign-in with an unknown GitHub account pending. | Automated commands above; live procedures remain as stated. |
+| **A3: Unapproved access** | Complete first real sign-in with an unknown test account. Confirm one unapproved entry, access denied, and sign-out. Use the HTTP fixture to request `/welcome` and a Member action directly with that Session. | PASS: owner-confirmed first real sign-in denial with Preview screenshots and a directly observed unapproved entry. Direct protected-request and sign-out checks are covered by the automated and earlier hosted receipts. See the dated denial receipt above. | Automated commands above; live procedures remain as stated. |
 | **A4: Administration boundary** | Open `/admin/members` and submit each administration action as Instructor, Member, unapproved, revoked, and signed-out fixtures. Confirm only the Instructor can read account details or change state. Repeat the page check in Preview. | PASS: local and hosted direct HTTP checks cover all access states. The real Instructor can open administration. | Automated commands above; live procedures remain as stated. |
 | **A5: Approval and landing** | Approve an identified unapproved account with a valid agreed Nickname. Sign in as that Member and open `/welcome`. Confirm it shows the Nickname, allows browsing with incomplete onboarding, and does not mark onboarding complete. | PASS: local and hosted synthetic approval and welcome checks; live approved Membership and Session with onboarding false; owner-supplied screenshot of the Member welcome page showing the agreed Nickname. See the dated Member welcome receipt above. | Automated commands above; live procedures remain as stated. |
 | **A6: Capacity** | Run the database proof for seven active Members, an eighth rejection, two competing approvals from a count of six, repeated submissions, and the Instructor exclusion. Confirm only one competing approval succeeds and no duplicate is created. | PASS: seven allowed, competing approvals from six yield one success and one full result; Instructor excluded. | Automated commands above; live procedures remain as stated. |
@@ -219,7 +258,7 @@ on this configured Preview. No claim below treats those procedures as passed.
 | **A13: Failure behavior** | Cancel real GitHub sign-in. Exercise invalid, expired, replayed, and provider-error callbacks. Force a Membership lookup failure in the isolated fixture. Confirm each path denies access, offers a safe retry, hides private data and raw details, and does not claim revocation without a lookup. | PASS: local callback, provider-error, replay, and lookup-failure checks; hosted invalid callback and real GitHub cancellation. | Automated commands above; live procedures remain as stated. |
 | **A14: Sign-in limit** | Start sign-in 11 times within 10 minutes using one fixture browser, including concurrent starts. Confirm the first 10 redirects are allowed, later starts show retry, and repeated successful sign-ins reuse one Access entry. | PASS: ten starts allowed, eleventh denied; concurrent database starts also yield exactly ten successes; expiry permits retry. | Automated commands above; live procedures remain as stated. |
 | **A15: Public demo separation** | As a signed-out Preview visitor, open `/` and `/demo`, follow the `/sign-in` link, and request each private route directly. Confirm the demo remains public and provides no path into private content. | PASS: local and hosted public demo and private-route denial. Hosted HTTP checks passed through unchanged Vercel Preview protection. | Automated commands above; live procedures remain as stated. |
-| **A16: Recovery** | On clean staging, verify a separate replacement outside Vibies and record the reason privately. First try a Member target and confirm rejection. Designate the valid replacement, then retry a protected request from the old Instructor Session. Confirm one Instructor, no old access, unchanged Member count, invalidated affected Sessions, and no self-service transfer path. Restore the intended staging Instructor through the same verified procedure. | Local owner-only replacement, audit, invalidation, and count preservation pass. Hosted runtime recovery denial and the live Member-target rejection check above pass. Trusted-channel recovery with a separate verified participant remains pending. | Automated commands above; live procedures remain as stated. |
+| **A16: Recovery** | On clean staging, verify a separate replacement outside Vibies and record the reason privately. First try a Member target and confirm rejection. Designate the valid replacement, then retry a protected request from the old Instructor Session. Confirm one Instructor, no old access, unchanged Member count, invalidated affected Sessions, and no self-service transfer path. Restore the intended staging Instructor through the same verified procedure. | PASS: owner-run separate-account replacement and restoration, old-Instructor browser denial directly observed, replacement/restored welcome screenshots, one remaining Instructor, unchanged Member count, zero replacement Sessions after restoration, and dated private audit transitions. Live Member-target rejection and runtime denial also pass. See the dated recovery receipts above. | Automated commands above; live procedures remain as stated. |
 
 ## Merge gate record
 
@@ -230,4 +269,4 @@ on this configured Preview. No claim below treats those procedures as passed.
 | No secrets or personal data | PASS | Staged diff and browser bundle scanned; only synthetic fixtures and placeholder configuration appear. No environment files or credentials staged. Configuration was handled privately under the owner's one-run authorization. |
 | Matches the approved plan | PASS | Root review reconciled both worker results and all Skeptic findings. |
 | Build succeeded | PASS | Production build, typecheck, unit tests, PostgreSQL tests, HTTP checks, links, and Mermaid rendering. |
-| Preview satisfies A1 through A16 | PARTIAL: ready for review, merge blocked | Setup, real Instructor OAuth, and 34 hosted synthetic checks pass. The dated Member welcome receipt completes A5. A1, A3, and complete A16 still need live results. The Preview gate stays pending until those procedures are recorded and the Member reviews the update. |
+| Preview satisfies A1 through A16 | PASS: ready for Member re-review | A1 through A16 now have the dated automated, hosted, and owner-assisted live receipts above. The reported page error is fixed. The Member must review these changes and receipts before the Instructor merges. |
