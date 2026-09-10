@@ -34,6 +34,7 @@ test("mutations require a same-origin form POST", () => {
   assert.ok(sameOriginPost(request("POST", config.origin), config.origin));
   assert.equal(sameOriginPost(request("GET", config.origin), config.origin), false);
   assert.equal(sameOriginPost(request("POST", "https://other.test"), config.origin), false);
+  assert.equal(sameOriginPost(request("POST", "null"), config.origin), false);
   assert.equal(sameOriginPost(request("POST", config.origin, "text/plain"), config.origin), false);
 });
 

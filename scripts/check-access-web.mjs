@@ -44,6 +44,7 @@ try {
     const welcomeText = await welcome.text();
     check(welcome.status === 200 && welcomeText.includes("Builder") && !welcomeText.includes("synthetic-member") && !welcomeText.includes(ids.member), "member welcome exposes nickname only");
     check(welcome.headers.get("cache-control")?.includes("no-store"), "private response cannot be cached");
+    check(welcome.headers.get("referrer-policy") === "same-origin", "page policy preserves same-origin form POSTs and hides cross-origin referrers");
     check(welcomeText.includes("/auth/sign-out"), "welcome offers sign-out");
     check((await get("/welcome", "unapproved")).headers.get("location") === "/access-denied", "unapproved visitor cannot enter welcome");
     check((await get("/welcome", "revoked")).headers.get("location") === "/access-denied", "revoked session cannot enter welcome");
@@ -73,6 +74,7 @@ try {
       if (i < 10) {
         check(location?.startsWith("https://github.com/login/oauth/authorize?"), `sign-in start ${i + 1} is allowed`);
         if (i === 0) {
+          check(start.headers.get("referrer-policy") === "no-referrer", "OAuth redirect hides referrer data");
           firstState = new URL(location).searchParams.get("state");
           firstOAuth = start.headers.getSetCookie().find(c => c.startsWith("__Host-vibies-oauth="))?.split(";")[0];
         }

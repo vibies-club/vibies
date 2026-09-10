@@ -8,7 +8,7 @@ the observed result for every acceptance check. Use synthetic identifiers and
 Nicknames. Never record a credential, GitHub profile, real name, contact detail,
 or private recovery reason.
 
-Local results below were observed on 2026-09-07 using synthetic accounts.
+Local results below were rechecked on 2026-09-10 using synthetic accounts.
 Hosted Preview and real GitHub results remain pending until human setup is complete.
 Change a pending entry only after its procedure completes and attach a privacy-safe receipt in the PR. A hidden control is insufficient proof;
 direct protected requests and actions must also be denied.
@@ -31,6 +31,45 @@ for each risk. Verification is still required.
 
 No product blocker remained after these resolutions were added to the plan.
 
+### Browser form regression found during PR completion
+
+The native Instructor approval form returned HTTP 403 even though all 38 original
+HTTP checks passed. The global `no-referrer` policy caused browser form POSTs to
+send a null Origin. The HTTP fixture supplied its own Origin and missed this
+failure. See the [browser policy reference](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Referrer-Policy#effect_on_the_origin_header).
+
+Pages now use `same-origin`, which preserves the Origin needed by the form guard
+and sends no referrer to other origins. The `/auth/*` header rule retains
+`no-referrer` for OAuth redirects; Next.js applies configured headers after the
+route response, so the route helper alone cannot override the page policy.
+The guard still rejects null and foreign origins. The HTTP proof checks the page
+policy, and the unit proof explicitly rejects a null Origin.
+
+Browser receipt: the same synthetic approval form now saves `Learner` and returns
+to `/admin/members?message=ok`. Native sign-out returns to
+`/sign-in?message=signedout`. The native sign-in form reaches GitHub with the
+fixture client. This last result proves the local redirect only; real GitHub
+authorization and callback remain pending. The Instructor phone view at 390 by
+844 pixels has no horizontal overflow.
+
+## Session 10 alignment
+
+The Session 10 slides were checked on 2026-09-10. This PR demonstrates identity,
+permission checks, denied direct requests, and the six-check merge gate. Use the
+following corrections when teaching this PR from that deck:
+
+| Slide topic | Implemented behavior in this PR |
+| --- | --- |
+| GitHub sign-in through Supabase Auth and `@supabase/ssr` | Direct GitHub OAuth with PKCE. The server checks an opaque Session through the private database API. See [D-014](DECISIONS.md#d-014-use-direct-github-oauth-and-a-private-database-api). |
+| `auth.users.id`, `public.members`, and a self-created Nickname | A stable GitHub account ID identifies an unapproved entry. The Instructor approves access with a Member-agreed Nickname. See [people and access](DOMAIN.md#people-and-access). |
+| Public `projects` table and visitor-readable saved project pages | The only public data is the synthetic `public.demo_projects` row. See [Demo data model](DATA-MODEL.md). Product publishing and ownership are outside the approved scope of [issue #5](https://github.com/vibies-club/vibies/issues/5). |
+| Ownership RLS rejects another Member's project insert | This PR proves access permissions through function-only database grants, Instructor-only actions, capacity checks, and immediate revocation. It has no project insert route or ownership policy. |
+
+The slides' complete publishing journey cannot be demonstrated with this PR.
+For this access walkthrough, use sign-in, unapproved denial, Instructor approval,
+Member welcome, revocation, and sign-out. Keep Preview proof before merge and
+Production proof after the reviewed merge.
+
 ## Automated receipts
 
 Run these checks as described in [Access setup](ACCESS-SETUP.md). Record the pass
@@ -40,10 +79,10 @@ count or build result, with no environment values.
 | --- | --- | --- |
 | `npm test` | PASS: 9 tests | Core access, OAuth failure, identity projection, nickname, and existing demo checks. |
 | `npm run test:access` against `vibies_access_test` | PASS: 10 tests, no skips | PostgreSQL 17: nine scenario groups plus their parent test, including a full migration under a non-superuser owner, real concurrent approvals, and sign-in starts. |
-| `npm run check:access-web` against `vibies_access_web_test` | PASS: 38 HTTP checks | Production Next.js build, dedicated runtime login, synthetic sessions, direct requests, revocation, expiry, and forced database failures. |
+| `npm run check:access-web` against `vibies_access_web_test` | PASS: 40 HTTP checks | Production Next.js build, dedicated runtime login, synthetic sessions, direct requests, form-compatible page policy, private OAuth redirects, revocation, expiry, and forced database failures. Now included in `app-check` CI. |
 | `npm run typecheck` | PASS | TypeScript completed with no errors. |
 | `npm run build` with access configuration absent | PASS | Node.js 24.15.0 and Next.js 16.3.4 Turbopack. Clean temporary copy excluded all environment files; all private routes are dynamic. |
-| Links and Mermaid rendering | PASS | 142 local Markdown links resolved, including fragments. Mermaid CLI rendered the domain graph to SVG with installed Chrome. |
+| Links and Mermaid rendering | PASS | 145 local Markdown links resolved, including fragments. Mermaid CLI rendered the domain graph to SVG with installed Chrome. |
 
 ## Issue #14 acceptance record
 

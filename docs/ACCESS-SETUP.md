@@ -80,9 +80,10 @@ from (values
 ) as samples(value);
 ```
 
-The encoding must be `UTF8`. The first two values must be accepted. Superscript,
-fraction, and Roman-numeral number categories must return `null`. Stop if staging
-differs from the automated parity test.
+The encoding must be `UTF8`. `Builder 2`, `Büild۲`, and `BuilderⅣ` must be
+accepted. Roman numerals belong to the accepted Unicode letter-number category.
+`Builder²` and `Builder½` must return `null`. Stop if staging differs from the
+automated parity test.
 
 ## 3. Create the server login role
 
@@ -172,6 +173,10 @@ docker exec vibies-access-test-5 createdb -U postgres vibies_access_test
 docker exec vibies-access-test-5 createdb -U postgres vibies_access_web_test
 ```
 
+For a later run, start the same stopped container with
+`docker start vibies-access-test-5`. Its two fixture databases already exist;
+skip the container and database creation commands above.
+
 Run the database proof. The test refuses any host except loopback and any
 database name except `vibies_access_test`:
 
@@ -216,6 +221,10 @@ docker stop vibies-access-test-5
 These checks use synthetic accounts and fixed local databases. They must never
 target staging or production. Record their pass counts, without configuration
 values, in [Access verification](ACCESS-VERIFICATION.md).
+
+The `app-check` CI job runs the unit, database, build, and HTTP checks on each PR
+update. It creates a separate web-test database and uses synthetic configuration.
+The build runs before access configuration is provided to the web-test step.
 
 ## 8. Deploy and prove Preview
 
