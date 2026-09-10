@@ -10,7 +10,8 @@ or private recovery reason.
 
 Local results below were rechecked on 2026-09-10 using synthetic accounts.
 Hosted staging is configured. Real Instructor sign-in and cancellation pass.
-The complete separate-account Member and trusted recovery receipts remain pending.
+The Member welcome receipt is recorded below. First-time denial and complete
+trusted recovery receipts remain pending.
 Change a pending entry only after its procedure completes and attach a privacy-safe receipt in the PR. A hidden control is insufficient proof;
 direct protected requests and actions must also be denied.
 
@@ -120,8 +121,8 @@ This confirms current database state. It does not show the earlier unknown-accou
 denial, the Member welcome page, or the Instructor replacement and restoration
 procedure. The [Member review](https://github.com/vibies-club/vibies/pull/16#issuecomment-5618348112)
 correctly identified this evidence gap. The PR's completed Preview checkbox was
-premature. A1, A3, A5, and A16 need dated procedures and observed results before
-the Preview gate can pass. The results below remain pending where indicated.
+premature. That review required dated results for A1, A3, A5, and A16. The later
+Member welcome receipt below completes A5. A1, A3, and full A16 remain pending.
 
 ### Live recovery rejection check on 2026-09-10
 
@@ -139,9 +140,20 @@ showed one active Member and allowed Instructor access.
 
 This proves the live Member-target rejection part of A16. A separate verified
 non-Member account is still required for replacement, old-Instructor denial,
-and restoration. A1 and A3 need a real first-time account; A5 needs the approved
-Member's own browser welcome-page result. None of those pending procedures is
-replaced by this rejection check.
+and restoration. A1 and A3 need a real first-time account. This rejection check
+does not replace those pending procedures.
+
+### Member welcome receipt on 2026-09-10
+
+The owner supplied a screenshot in response to the request for the approved
+Member to open the Preview welcome page in their own browser. It shows the
+Member's agreed Nickname, the welcome message granting access, a Sign out
+control, and the public demo link. It shows no Instructor administration link.
+The image has no address bar; its Preview context is supplied by the owner.
+The read-only staging checks above confirm approved Membership, a valid Session,
+and incomplete onboarding. Together these observations complete A5. The image
+was reviewed in the conversation; no image or account identifier was added to
+the repository.
 
 ### Earlier hosted checks
 
@@ -184,8 +196,8 @@ nickname index inside its transaction. See
 
 A synthetic account does not prove a second verified GitHub account's browser
 flow. A real Member now has an approved entry and an unexpired Session, as recorded
-above. Dated receipts for unknown-account denial, the Member welcome page, and
-trusted replacement recovery remain required before merge. Review can continue
+above. The Member welcome screenshot completes A5. Dated receipts for
+unknown-account denial and trusted replacement recovery remain required before merge. Review can continue
 on this configured Preview. No claim below treats those procedures as passed.
 
 ## Issue #14 acceptance record
@@ -196,7 +208,7 @@ on this configured Preview. No claim below treats those procedures as passed.
 | **A2: Account matching** | In the database proof, sign in twice with one stable identifier, change only its GitHub username, then use a different identifier. Confirm one reused entry, preserved approval, and no inherited approval. | PASS locally: stable ID reuses the account; rename preserves approval; distinct IDs remain unapproved. | Automated commands above; live procedures remain as stated. |
 | **A3: Unapproved access** | Complete first real sign-in with an unknown test account. Confirm one unapproved entry, access denied, and sign-out. Use the HTTP fixture to request `/welcome` and a Member action directly with that Session. | Local and hosted synthetic denial checks pass. First real sign-in with an unknown GitHub account pending. | Automated commands above; live procedures remain as stated. |
 | **A4: Administration boundary** | Open `/admin/members` and submit each administration action as Instructor, Member, unapproved, revoked, and signed-out fixtures. Confirm only the Instructor can read account details or change state. Repeat the page check in Preview. | PASS: local and hosted direct HTTP checks cover all access states. The real Instructor can open administration. | Automated commands above; live procedures remain as stated. |
-| **A5: Approval and landing** | Approve an identified unapproved account with a valid agreed Nickname. Sign in as that Member and open `/welcome`. Confirm it shows the Nickname, allows browsing with incomplete onboarding, and does not mark onboarding complete. | Local and hosted synthetic approval and welcome pass; onboarding stays false. The read-only live check confirms one approved Member with an unexpired Session and onboarding false; the real welcome-page receipt remains pending. | Automated commands above; live procedures remain as stated. |
+| **A5: Approval and landing** | Approve an identified unapproved account with a valid agreed Nickname. Sign in as that Member and open `/welcome`. Confirm it shows the Nickname, allows browsing with incomplete onboarding, and does not mark onboarding complete. | PASS: local and hosted synthetic approval and welcome checks; live approved Membership and Session with onboarding false; owner-supplied screenshot of the Member welcome page showing the agreed Nickname. See the dated Member welcome receipt above. | Automated commands above; live procedures remain as stated. |
 | **A6: Capacity** | Run the database proof for seven active Members, an eighth rejection, two competing approvals from a count of six, repeated submissions, and the Instructor exclusion. Confirm only one competing approval succeeds and no duplicate is created. | PASS: seven allowed, competing approvals from six yield one success and one full result; Instructor excluded. | Automated commands above; live procedures remain as stated. |
 | **A7: Nicknames** | Run unit and database checks for outer ASCII-space trimming, Unicode code-point length, Unicode letters and decimal digits, rejected other number categories, case-insensitive duplicates, revoked reservations, and no Membership after rejection. Run the staging locale parity check. In Preview, confirm the privacy instruction appears before approval. | PASS: unit, database, hosted locale parity, Unicode approval, and Preview privacy instruction. Validation and uniqueness use an explicit collation. | Automated commands above; live procedures remain as stated. |
 | **A8: Identity privacy** | Inspect Member pages and responses for Nicknames only. Confirm only the Instructor page contains GitHub username and stable identifier. Inspect the private table columns and server bundle to confirm no profile name, avatar, email, biography, OAuth token, or secret is stored or sent to the browser. | PASS for implemented storage and responses: real GitHub requests public data only; role denial, hosted nickname-only responses, and local/hosted browser bundle scans pass. | Automated commands above; live procedures remain as stated. |
@@ -218,4 +230,4 @@ on this configured Preview. No claim below treats those procedures as passed.
 | No secrets or personal data | PASS | Staged diff and browser bundle scanned; only synthetic fixtures and placeholder configuration appear. No environment files or credentials staged. Configuration was handled privately under the owner's one-run authorization. |
 | Matches the approved plan | PASS | Root review reconciled both worker results and all Skeptic findings. |
 | Build succeeded | PASS | Production build, typecheck, unit tests, PostgreSQL tests, HTTP checks, links, and Mermaid rendering. |
-| Preview satisfies A1 through A16 | PARTIAL: ready for review, merge blocked | Setup, real Instructor OAuth, and 34 hosted synthetic checks pass. The Member review found missing dated receipts for A1, A3, A5, and A16. Current Member database state is confirmed, but the Preview gate stays pending until those procedures are recorded and the Member reviews the update. |
+| Preview satisfies A1 through A16 | PARTIAL: ready for review, merge blocked | Setup, real Instructor OAuth, and 34 hosted synthetic checks pass. The dated Member welcome receipt completes A5. A1, A3, and complete A16 still need live results. The Preview gate stays pending until those procedures are recorded and the Member reviews the update. |
