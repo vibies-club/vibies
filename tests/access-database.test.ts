@@ -150,8 +150,8 @@ if (!databaseUrl) {
 
       await t.test("nickname rules match Unicode letters and decimal numbers", async () => {
         const samples = [
-          "Éclair", "دانشجو_۱", "学生_1", "N²", "N½", "NⅧ",
-          "e\u0301", "A\u00a0B", "A😀", "a", "a".repeat(31),
+          "Éclair", "دانشجو_۱", "学生_1", "BuilderⅣ", "A𐅀", "A\u{16FF4}", "N²", "N½",
+          "e\u0301", "A\u0345", "A\u05b0", "A\u00a0B", "A😀", "a", "a".repeat(31),
         ];
         for (const value of samples) {
           const trimmed = value.replace(/^ +| +$/g, "");

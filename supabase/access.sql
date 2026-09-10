@@ -76,8 +76,9 @@ create table if not exists vibies_private.accounts (
     or (status in ('approved', 'revoked') and nickname is not null)
   )
 );
-create unique index if not exists accounts_nickname_unique
-  on vibies_private.accounts (lower(nickname))
+drop index if exists vibies_private.accounts_nickname_unique;
+create unique index accounts_nickname_unique
+  on vibies_private.accounts (lower(nickname collate pg_catalog."unicode"))
   where nickname is not null;
 
 create table if not exists vibies_private.sessions (
@@ -123,7 +124,9 @@ declare
 begin
   if normalized is null
      or char_length(normalized) not between 2 and 30
-     or normalized !~ '^[[:alnum:] _-]+$' then
+     -- ICU alnum covers Unicode L and Nd; these Unicode 17 ranges add Nl.
+     or normalized collate pg_catalog."unicode" !~
+       U&'^[-[:alnum:] _\16EE-\16F0\2160-\2182\2185-\2188\3007\3021-\3029\3038-\303A\A6E6-\A6EF\+010140-\+010174\+010341\+01034A\+0103D1-\+0103D5\+012400-\+01246E\+016FF4-\+016FF6]+$' then
     return null;
   end if;
   return normalized;
@@ -285,11 +288,13 @@ begin
     if account_row.status <> 'unapproved' then
       return jsonb_build_object('kind', 'invalid');
     end if;
-    if lower(normalized) = lower(instructor_name)
+    if lower(normalized collate pg_catalog."unicode") =
+       lower(instructor_name collate pg_catalog."unicode")
        or exists (
          select 1 from vibies_private.accounts
           where nickname is not null
-            and lower(nickname) = lower(normalized)
+            and lower(nickname collate pg_catalog."unicode") =
+                lower(normalized collate pg_catalog."unicode")
             and github_id <> p_github_id
        ) then
       return jsonb_build_object('kind', 'duplicate');
@@ -515,7 +520,9 @@ begin
   end if;
   if exists (
     select 1 from vibies_private.accounts
-     where nickname is not null and lower(nickname) = lower(normalized)
+     where nickname is not null
+       and lower(nickname collate pg_catalog."unicode") =
+           lower(normalized collate pg_catalog."unicode")
        and github_id <> p_github_id
   ) then
     raise exception 'Instructor nickname is already reserved';

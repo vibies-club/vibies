@@ -9,7 +9,8 @@ Nicknames. Never record a credential, GitHub profile, real name, contact detail,
 or private recovery reason.
 
 Local results below were rechecked on 2026-09-10 using synthetic accounts.
-Hosted Preview and real GitHub results remain pending until human setup is complete.
+Hosted staging is configured. Real Instructor sign-in and cancellation pass.
+The separate-account Member and trusted recovery procedures remain pending.
 Change a pending entry only after its procedure completes and attach a privacy-safe receipt in the PR. A hidden control is insufficient proof;
 direct protected requests and actions must also be denied.
 
@@ -48,8 +49,8 @@ policy, and the unit proof explicitly rejects a null Origin.
 Browser receipt: the same synthetic approval form now saves `Learner` and returns
 to `/admin/members?message=ok`. Native sign-out returns to
 `/sign-in?message=signedout`. The native sign-in form reaches GitHub with the
-fixture client. This last result proves the local redirect only; real GitHub
-authorization and callback remain pending. The Instructor phone view at 390 by
+fixture client. This local result proves the redirect only. The real GitHub callback also
+passed during the hosted staging procedure below. The Instructor phone view at 390 by
 844 pixels has no horizontal overflow.
 
 ## Session 10 alignment
@@ -77,33 +78,78 @@ count or build result, with no environment values.
 
 | Check | Observed result | Receipt |
 | --- | --- | --- |
-| `npm test` | PASS: 9 tests | Core access, OAuth failure, identity projection, nickname, and existing demo checks. |
+| `npm test` | PASS: 10 tests | Core access, OAuth failure, identity projection, nickname, and existing demo checks. |
 | `npm run test:access` against `vibies_access_test` | PASS: 10 tests, no skips | PostgreSQL 17: nine scenario groups plus their parent test, including a full migration under a non-superuser owner, real concurrent approvals, and sign-in starts. |
 | `npm run check:access-web` against `vibies_access_web_test` | PASS: 40 HTTP checks | Production Next.js build, dedicated runtime login, synthetic sessions, direct requests, form-compatible page policy, private OAuth redirects, revocation, expiry, and forced database failures. Now included in `app-check` CI. |
 | `npm run typecheck` | PASS | TypeScript completed with no errors. |
 | `npm run build` with access configuration absent | PASS | Node.js 24.15.0 and Next.js 16.3.4 Turbopack. Clean temporary copy excluded all environment files; all private routes are dynamic. |
 | Links and Mermaid rendering | PASS | 145 local Markdown links resolved, including fragments. Mermaid CLI rendered the domain graph to SVG with installed Chrome. |
 
+## Hosted staging receipts
+
+Checked on 2026-09-10 at the fixed
+[PR Preview](https://vibies-git-feature-sign-in-access-5-beta-momo.vercel.app/sign-in).
+Vercel authentication still protects this Preview. The HTTP checks used existing
+Preview access without changing that protection.
+
+- The approved clean Supabase branch is `access-review-5`. The access SQL,
+  including the locale correction, succeeded twice. Catalog checks found no
+  public or runtime table grants, exactly seven runtime function grants, and no
+  runtime Instructor-designation right.
+- The dedicated server login connects with certificate and hostname verification.
+  It can call the access API and cannot read private tables or designate an
+  Instructor. All five access settings are scoped to Preview and
+  `feature/sign-in-access-5`; the database URL and OAuth secret use secret storage.
+- Real GitHub authorization displayed public-data-only access. Cancellation
+  returned to sign-in. Successful authorization and repeat sign-in reached the
+  Instructor welcome page. Administration showed zero active Members. Native
+  sign-out returned to `message=signedout`; a direct welcome request then required
+  sign-in again.
+- All 34 hosted HTTP checks passed with temporary synthetic accounts and Sessions:
+  public demo, private route and action denial, Instructor privacy instruction,
+  approval with `BuilderⅣ`, nickname-only welcome, revocation confirmation,
+  next-request denial, reapproval, retained onboarding, 24-hour expiry, sign-out,
+  invalid callback, and the 11-request sign-in limit. The synthetic accounts,
+  Sessions, OAuth flows, and attempt records were removed afterwards.
+- Hosted nickname parity passed for ASCII, accented letters, Persian decimal
+  digits, Roman and other letter numbers, rejected fractions and superscripts,
+  and rejected combining marks. The deployed browser script scan found no private
+  schema, database configuration, OAuth secret, or certificate markers.
+
+Two hosted-only defects were corrected. Supabase required its public root CA,
+which is now accepted without disabling TLS verification. Its default ICU locale
+also classified nicknames differently from the local database. Validation and
+case-insensitive uniqueness now use PostgreSQL's `unicode` collation explicitly;
+the regex adds the Unicode letter-number ranges. The migration rebuilds the
+nickname index inside its transaction. See
+[PostgreSQL collation support](https://www.postgresql.org/docs/17/collation.html).
+
+A synthetic account is not a second verified GitHub account. The owner has one
+controlled GitHub account. A separate class participant must complete the real
+unknown-account denial, Member sign-in after approval, and trusted replacement
+recovery procedures before merge. Review can begin on this configured Preview.
+No claim below treats those procedures as passed.
+
 ## Issue #14 acceptance record
 
 | Check | Procedure | Observed result | Receipt |
 | --- | --- | --- | --- |
-| **A1: Instructor setup** | On clean staging, designate the verified Instructor before opening sign-in. Sign in as that account, then as a different first visitor. Compare the active Member count before and after. | Local database setup and Instructor exclusion pass. Real designated-account sign-in pending. | Automated commands above; live procedures remain as stated. |
+| **A1: Instructor setup** | On clean staging, designate the verified Instructor before opening sign-in. Sign in as that account, then as a different first visitor. Compare the active Member count before and after. | Hosted setup, real designated-Instructor sign-in, repeat sign-in, and zero Member count pass. A separate first visitor remains pending. | Automated commands above; live procedures remain as stated. |
 | **A2: Account matching** | In the database proof, sign in twice with one stable identifier, change only its GitHub username, then use a different identifier. Confirm one reused entry, preserved approval, and no inherited approval. | PASS locally: stable ID reuses the account; rename preserves approval; distinct IDs remain unapproved. | Automated commands above; live procedures remain as stated. |
-| **A3: Unapproved access** | Complete first real sign-in with an unknown test account. Confirm one unapproved entry, access denied, and sign-out. Use the HTTP fixture to request `/welcome` and a Member action directly with that Session. | Local database and HTTP denial checks pass. First real GitHub sign-in pending. | Automated commands above; live procedures remain as stated. |
-| **A4: Administration boundary** | Open `/admin/members` and submit each administration action as Instructor, Member, unapproved, revoked, and signed-out fixtures. Confirm only the Instructor can read account details or change state. Repeat the page check in Preview. | Local database and direct HTTP checks pass for all access states. Hosted Preview pending. | Automated commands above; live procedures remain as stated. |
-| **A5: Approval and landing** | Approve an identified unapproved account with a valid agreed Nickname. Sign in as that Member and open `/welcome`. Confirm it shows the Nickname, allows browsing with incomplete onboarding, and does not mark onboarding complete. | Local approval and welcome checks pass; onboarding stays false. Real GitHub and Preview pending. | Automated commands above; live procedures remain as stated. |
+| **A3: Unapproved access** | Complete first real sign-in with an unknown test account. Confirm one unapproved entry, access denied, and sign-out. Use the HTTP fixture to request `/welcome` and a Member action directly with that Session. | Local and hosted synthetic denial checks pass. First real sign-in with an unknown GitHub account pending. | Automated commands above; live procedures remain as stated. |
+| **A4: Administration boundary** | Open `/admin/members` and submit each administration action as Instructor, Member, unapproved, revoked, and signed-out fixtures. Confirm only the Instructor can read account details or change state. Repeat the page check in Preview. | PASS: local and hosted direct HTTP checks cover all access states. The real Instructor can open administration. | Automated commands above; live procedures remain as stated. |
+| **A5: Approval and landing** | Approve an identified unapproved account with a valid agreed Nickname. Sign in as that Member and open `/welcome`. Confirm it shows the Nickname, allows browsing with incomplete onboarding, and does not mark onboarding complete. | Local and hosted synthetic approval and welcome pass; onboarding stays false. Real Member GitHub sign-in pending. | Automated commands above; live procedures remain as stated. |
 | **A6: Capacity** | Run the database proof for seven active Members, an eighth rejection, two competing approvals from a count of six, repeated submissions, and the Instructor exclusion. Confirm only one competing approval succeeds and no duplicate is created. | PASS: seven allowed, competing approvals from six yield one success and one full result; Instructor excluded. | Automated commands above; live procedures remain as stated. |
-| **A7: Nicknames** | Run unit and database checks for outer ASCII-space trimming, Unicode code-point length, Unicode letters and decimal digits, rejected other number categories, case-insensitive duplicates, revoked reservations, and no Membership after rejection. Run the staging locale parity check. In Preview, confirm the privacy instruction appears before approval. | Unit/database validation and reservation checks pass. UTF-8 letters, letter numbers, decimal digits, and case-insensitive duplicates checked. Local privacy instruction verified; staging locale and Preview pending. | Automated commands above; live procedures remain as stated. |
-| **A8: Identity privacy** | Inspect Member pages and responses for Nicknames only. Confirm only the Instructor page contains GitHub username and stable identifier. Inspect the private table columns and server bundle to confirm no profile name, avatar, email, biography, OAuth token, or secret is stored or sent to the browser. | Local identity projection, private role denial, and nickname-only HTTP responses pass. Live provider and hosted verification pending. Local browser bundles contain no private schema or server configuration markers. | Automated commands above; live procedures remain as stated. |
-| **A9: Revocation** | With an active Member Session, cancel revocation and confirm no change. Confirm revocation, then make a protected request and action from the existing browser. Compare active count, Role, ownership, authorship, content states, and onboarding fields before and after. | Local confirmation and next-request denial pass while the session remains valid. Nickname and onboarding are retained. Project/content tables are not implemented in this feature; their live workflows are outside this proof. | Automated commands above; live procedures remain as stated. |
+| **A7: Nicknames** | Run unit and database checks for outer ASCII-space trimming, Unicode code-point length, Unicode letters and decimal digits, rejected other number categories, case-insensitive duplicates, revoked reservations, and no Membership after rejection. Run the staging locale parity check. In Preview, confirm the privacy instruction appears before approval. | PASS: unit, database, hosted locale parity, Unicode approval, and Preview privacy instruction. Validation and uniqueness use an explicit collation. | Automated commands above; live procedures remain as stated. |
+| **A8: Identity privacy** | Inspect Member pages and responses for Nicknames only. Confirm only the Instructor page contains GitHub username and stable identifier. Inspect the private table columns and server bundle to confirm no profile name, avatar, email, biography, OAuth token, or secret is stored or sent to the browser. | PASS for implemented storage and responses: real GitHub requests public data only; role denial, hosted nickname-only responses, and local/hosted browser bundle scans pass. | Automated commands above; live procedures remain as stated. |
+| **A9: Revocation** | With an active Member Session, cancel revocation and confirm no change. Confirm revocation, then make a protected request and action from the existing browser. Compare active count, Role, ownership, authorship, content states, and onboarding fields before and after. | Local and hosted confirmation and next-request denial pass while the session remains valid. Nickname and onboarding are retained. Project/content tables are not implemented in this feature; their live workflows are outside this proof. | Automated commands above; live procedures remain as stated. |
 | **A10: Reapproval** | Reapprove the revoked fixture with an available place. Confirm the existing Session regains access and the same Nickname, onboarding value, ownership, and authorship remain. Confirm no new ownership row appears. | PASS for existing access records: full-capacity rejection, same nickname, and completed onboarding retained on reapproval. No ownership or content tables are added or changed. | Automated commands above; live procedures remain as stated. |
 | **A11: Dismissal** | Dismiss an unapproved entry and confirm it is removed without access. Sign in again and confirm one entry returns. Attempt dismissal on a revoked Member and confirm the Membership and retained state remain. | PASS: unapproved entry removed, later sign-in recreates it; revoked dismissal rejected. | Automated commands above; live procedures remain as stated. |
-| **A12: Session lifetime and sign-out** | Move a synthetic Session to the 24-hour boundary and request a protected page. In Preview, sign out and retry a protected request from that browser. Confirm every signed-in page offers sign-out and approval remains unchanged. | Local absolute expiry, sign-out, and cookie cleanup during database failure pass. Hosted cookie/browser proof pending. | Automated commands above; live procedures remain as stated. |
-| **A13: Failure behavior** | Cancel real GitHub sign-in. Exercise invalid, expired, replayed, and provider-error callbacks. Force a Membership lookup failure in the isolated fixture. Confirm each path denies access, offers a safe retry, hides private data and raw details, and does not claim revocation without a lookup. | Local HTTP and unit failure checks pass, including 200-error response, cancellation callback, replay, and lookup failure. Real GitHub cancellation pending. | Automated commands above; live procedures remain as stated. |
+| **A12: Session lifetime and sign-out** | Move a synthetic Session to the 24-hour boundary and request a protected page. In Preview, sign out and retry a protected request from that browser. Confirm every signed-in page offers sign-out and approval remains unchanged. | PASS: local failure cleanup, hosted absolute expiry, hosted sign-out cookie deletion and session invalidation, and real browser sign-out with direct welcome denial. | Automated commands above; live procedures remain as stated. |
+| **A13: Failure behavior** | Cancel real GitHub sign-in. Exercise invalid, expired, replayed, and provider-error callbacks. Force a Membership lookup failure in the isolated fixture. Confirm each path denies access, offers a safe retry, hides private data and raw details, and does not claim revocation without a lookup. | PASS: local callback, provider-error, replay, and lookup-failure checks; hosted invalid callback and real GitHub cancellation. | Automated commands above; live procedures remain as stated. |
 | **A14: Sign-in limit** | Start sign-in 11 times within 10 minutes using one fixture browser, including concurrent starts. Confirm the first 10 redirects are allowed, later starts show retry, and repeated successful sign-ins reuse one Access entry. | PASS: ten starts allowed, eleventh denied; concurrent database starts also yield exactly ten successes; expiry permits retry. | Automated commands above; live procedures remain as stated. |
-| **A15: Public demo separation** | As a signed-out Preview visitor, open `/` and `/demo`, follow the `/sign-in` link, and request each private route directly. Confirm the demo remains public and provides no path into private content. | Local public demo and private-route denial pass. Hosted Preview pending. | Automated commands above; live procedures remain as stated. |
-| **A16: Recovery** | On clean staging, verify a separate replacement outside Vibies and record the reason privately. First try a Member target and confirm rejection. Designate the valid replacement, then retry a protected request from the old Instructor Session. Confirm one Instructor, no old access, unchanged Member count, invalidated affected Sessions, and no self-service transfer path. Restore the intended staging Instructor through the same verified procedure. | Local owner-only replacement, audit, invalidation, and count preservation pass. Trusted-channel staging recovery exercise pending. | Automated commands above; live procedures remain as stated. |
+| **A15: Public demo separation** | As a signed-out Preview visitor, open `/` and `/demo`, follow the `/sign-in` link, and request each private route directly. Confirm the demo remains public and provides no path into private content. | PASS: local and hosted public demo and private-route denial. Hosted HTTP checks passed through unchanged Vercel Preview protection. | Automated commands above; live procedures remain as stated. |
+| **A16: Recovery** | On clean staging, verify a separate replacement outside Vibies and record the reason privately. First try a Member target and confirm rejection. Designate the valid replacement, then retry a protected request from the old Instructor Session. Confirm one Instructor, no old access, unchanged Member count, invalidated affected Sessions, and no self-service transfer path. Restore the intended staging Instructor through the same verified procedure. | Local owner-only replacement, audit, invalidation, and count preservation pass. Hosted runtime recovery denial passes. Trusted-channel recovery with a separate verified participant remains pending. | Automated commands above; live procedures remain as stated. |
 
 ## Merge gate record
 
@@ -111,7 +157,7 @@ count or build result, with no environment values.
 | --- | --- | --- |
 | Expected files only | PASS | Diff reviewed: access routes, private SQL, checks, scoped styles, dependencies, CI, and required documentation. |
 | Nothing unrelated | PASS | Public demo query and grants remain unchanged; no project or discussion feature added. |
-| No secrets or personal data | PASS | Staged diff and browser bundle scanned; only synthetic fixtures and placeholder configuration appear. No environment files read or staged. |
+| No secrets or personal data | PASS | Staged diff and browser bundle scanned; only synthetic fixtures and placeholder configuration appear. No environment files or credentials staged. Configuration was handled privately under the owner's one-run authorization. |
 | Matches the approved plan | PASS | Root review reconciled both worker results and all Skeptic findings. |
 | Build succeeded | PASS | Production build, typecheck, unit tests, PostgreSQL tests, HTTP checks, links, and Mermaid rendering. |
-| Preview satisfies A1 through A16 | BLOCKED: human setup and live verification required | GitHub OAuth, private staging database/runtime login, Instructor designation, and four server configuration values must be supplied by the human owner. Keep the PR draft until the live checklist passes. |
+| Preview satisfies A1 through A16 | PARTIAL: ready for review, merge blocked | Setup, real Instructor OAuth, and 34 hosted synthetic checks pass. A separate participant must complete real Member sign-in and trusted recovery. A Member review is also required before Instructor merge. |

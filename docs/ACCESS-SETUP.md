@@ -63,8 +63,10 @@ table-grant query must return no rows. Runtime routine grants must contain only
 `access_state`, `begin_sign_in`, `change_member`, `consume_sign_in`,
 `end_session`, `finish_sign_in`, and `members`. The final value must be `false`.
 
-Nickname validation needs a UTF-8 database locale whose character and lowercase
-rules match the application. Check staging with synthetic values:
+Nickname validation requires PostgreSQL 17 with UTF-8 and its `unicode` ICU
+collation. The SQL pins validation and case-insensitive uniqueness to this
+collation, so the database default locale does not change access behavior.
+Check staging with synthetic values:
 
 ```sql
 select pg_encoding_to_char(encoding) as encoding, datctype as locale,
@@ -132,7 +134,8 @@ not create or document a shared environment file for this feature.
 In the Supabase Dashboard, open Database Settings and find SSL Configuration.
 Download the certificate and put the complete PEM value, including its BEGIN
 and END lines, in `VIBIES_DATABASE_CA`. The application still requires a valid
-certificate and hostname for every remote database connection.
+certificate and hostname for every remote database connection. See the
+[Supabase SSL guide](https://supabase.com/docs/guides/platform/ssl-enforcement).
 
 No access value uses a `NEXT_PUBLIC_` prefix. The existing public demo values
 remain separate and continue to control only `/demo`.
@@ -236,7 +239,8 @@ The build runs before access configuration is provided to the web-test step.
 
 ## 8. Deploy and prove Preview
 
-Add the required server values to the Vercel Preview environment. Add
+Add the required server values to the Vercel Preview environment for the
+feature branch only. Add
 `VIBIES_DATABASE_CA` when the database certificate needs the Supabase CA. Keep
 the existing public demo values. Deploy the feature branch and complete every
 human procedure in [Access verification](ACCESS-VERIFICATION.md), including the
@@ -251,7 +255,7 @@ and the active Member count is unchanged. A Member account must be rejected as a
 replacement. Restore the intended staging Instructor through the same verified
 procedure after the exercise.
 
-Keep the implementation PR in draft while any live check is pending. After all
-A1 through A16 results are recorded, request Member review. The Instructor
-performs the merge. Configure and verify Production only after that
-reviewed merge.
+When implementation, automated checks, and the configured Preview are ready,
+mark the PR ready for Member review. Record any remaining participant checks
+explicitly. A1 through A16 and Member review must all pass before the Instructor
+merges. Configure and verify Production only after that reviewed merge.
