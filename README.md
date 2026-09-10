@@ -39,6 +39,7 @@ definition instead of creating a different version of it.
 | [Progress](docs/PROGRESS.md) | The current development snapshot and immediate next step |
 | [Roadmap](docs/ROADMAP.md) | The `Now`, `Next`, and `Later` sequence |
 | [Supabase setup](docs/SUPABASE-SETUP.md) | Human setup, safety checks, local verification, and Vercel deployment |
+| [Database deployment](docs/DATABASE-DEPLOYMENT.md) | Reviewed migrations, automatic main deployment, local checks, and retry receipts |
 | [Access setup](docs/ACCESS-SETUP.md) | Human database, GitHub OAuth, Instructor, recovery, and deployment setup |
 | [Access verification](docs/ACCESS-VERIFICATION.md) | Skeptic findings and evidence for issue #14 checks A1 through A16 |
 | [Personal Project setup](docs/PROJECT-SETUP.md) | Human App/Preview setup and exact isolated proof commands |

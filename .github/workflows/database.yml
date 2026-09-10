@@ -1,0 +1,36 @@
+name: database
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  migration-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.109.1
+      - run: npm ci
+      - run: node --test tests/migrations.test.mjs
+      - name: Check snapshots and migration history
+        env:
+          MIGRATION_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: npm run check:migrations -- --base "$MIGRATION_BASE"
+      - run: supabase db start
+      - run: npm run check:database-migrations
+      - name: Remove the disposable local database
+        if: always()
+        run: supabase stop --no-backup

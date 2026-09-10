@@ -7,3 +7,4 @@ node_modules/
 *.tsbuildinfo
 graphify-out/
 supabase/.temp/
+supabase/.branches/

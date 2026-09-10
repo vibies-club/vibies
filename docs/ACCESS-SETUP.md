@@ -273,16 +273,18 @@ merges. Configure and verify Production only after that reviewed merge.
 
 ## 9. Move the approved change to Production, then remove Preview
 
-Keep `access-review-5` until the Instructor has merged the reviewed PR and the
-Production checks below pass. This project has no Supabase GitHub connection,
-so a GitHub merge does not apply the database change automatically.
+Keep the legacy unlinked `access-review-5` until the Instructor has merged the
+reviewed PR and the Production checks below pass. Linked ephemeral feature
+Previews now follow the owner's automatic cleanup decision: they are deleted
+at PR merge or close. [Database deployment](DATABASE-DEPLOYMENT.md) owns
+the automatic migration setup, required checks, initial rollout order, and
+failure recovery. Automation starts after its separate setup PR merges.
 
-1. Review the Supabase merge request from `access-review-5` to `main` before
-   applying it. Compare its SQL with the merged `access.sql`. The dashboard
-   documents [public schema changes and custom-role limitations](https://supabase.com/docs/guides/deployment/branching/dashboard).
-   Verify the private schema, functions, and role grants explicitly. If the
-   merge omits them, follow steps 1 and 2 above on Production with the merged
-   `access.sql`. Stop on unrelated or destructive differences.
+1. After the reviewed GitHub merge, wait for the native Supabase deployment and
+   verify the expected versions in main's migration history. The committed
+   migrations include the private schema, functions, and runtime role grants.
+   Verify those grants explicitly. Do not also merge a Preview database or
+   manually replay the same SQL. Follow the deployment guide if a check fails.
 2. Have the database owner configure the dedicated Production login, TLS,
    fixed Production OAuth origin and callback, and server settings using steps
    3 through 6. Keep all secret values in the providers' private settings.
