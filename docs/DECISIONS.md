@@ -106,6 +106,10 @@ first published project do not reset onboarding.
 
 **Status:** Accepted.
 
+**Supplemented by:** [D-015](#d-015-share-member-written-personal-projects-with-checked-repository-access),
+which replaces imported Personal Project descriptions with Member-written details
+and defines explicit connection checks for issue #17.
+
 **Decision:** Members connect selected private personal repositories through a
 GitHub App with metadata-only access. Source files and README contents are not
 imported. Metadata updates only through a manual Sync action that exposes a
@@ -319,3 +323,73 @@ This feature does not change the grants accepted in D-012.
 
 **Related documents:** [Access setup](ACCESS-SETUP.md),
 [access verification](ACCESS-VERIFICATION.md), and [access workflows](WORKFLOWS.md).
+
+## D-015: Share Member-written Personal Projects with checked repository access
+
+**Status:** Accepted in [issue #17](https://github.com/vibies-club/vibies/issues/17),
+through the [interview plan](https://github.com/vibies-club/vibies/issues/17#issuecomment-5622731491),
+[Skeptic pass and Owner answers](https://github.com/vibies-club/vibies/issues/17#issuecomment-5622944893),
+and [plan amendments](https://github.com/vibies-club/vibies/issues/17#issuecomment-5623003691).
+
+**Decision:** A Personal Project stores its stable repository ID and a
+Member-written title, summary, and optional HTTPS demo link. This changes DOMAIN's
+Personal Project and GitHub Repository definitions and `syncs_from` relationship,
+PRODUCT's Projects and GitHub section, WORKFLOWS 3 outcome 1, and D-006's imported
+metadata and manual Sync model for this feature. GitHub metadata is transient
+eligibility evidence. Repository descriptions, URLs, source, and README contents
+are not imported. Members control the shared description, and provider data
+storage stays small.
+
+PRODUCT's owner operations and WORKFLOWS gain Edit and Check connection. Edit
+changes only the three authored fields in any retained state. Check connection
+detects loss or restores the same repository. DOMAIN's Connected definition is
+last known status. There are no background checks. Manual Sync, deliberate owner
+Disconnect, and Archive actions remain outside #17.
+
+WORKFLOWS 5 and 9 gain the accepted Q9 exception: every Publish request verifies
+GitHub on the server. Confirmed loss saves Disconnected and rejects publication
+while preserving publication, moderation, and onboarding. A repository that
+becomes public is confirmed loss. Unknown failures change nothing. The pages
+state that the repository must stay private. This distinguishes established
+access loss from uncertain provider failure.
+
+D-004, D-013, and PRODUCT's privacy boundaries gain one explicit exception:
+Members may choose any valid HTTPS demo host, including GitHub Pages. A chosen
+destination can contain a GitHub username. Application-supplied shared identity
+remains Nickname-only. The form retains the privacy instruction because automated
+checks cannot identify every personal detail in arbitrary text or destinations.
+
+WORKFLOWS 8 and PRODUCT's feature scope include minimal Instructor Hide and
+Restore actions on the project page, including access to a Hidden target for
+restoration. They change only moderation state and the concurrency
+version. This makes the existing moderation promise usable when Community reads
+ship. A full moderation screen remains outside #17.
+
+**Why:** These changes deliver the approved connection-to-publication journey,
+keep shared descriptions under Member control, handle access loss explicitly,
+and give the Instructor a working response to rule-breaking shared content.
+
+**Consequence:** Publication, connection, and moderation stay independent.
+Publishing and permanent onboarding complete in one transaction. Session,
+Membership, ownership, and row version are checked at each protected write;
+fresh GitHub verification is the server route's responsibility. Source import,
+automatic sync, webhooks, Comments, Feedback, Class Project lifecycle, repository
+transfer, and GitHub repository modification remain outside this issue.
+
+**Related documents:** [Product](PRODUCT.md), [domain](DOMAIN.md), and
+[workflows](WORKFLOWS.md).
+
+**Owner clarifications on 2026-09-10:** The [implementation review answers](https://github.com/vibies-club/vibies/issues/17#issuecomment-5623179154)
+require an opaque internal account UUID as the project owner reference. The
+stable GitHub account ID remains in the access account, and project records
+reference only its internal UUID. This satisfies P13 without copying GitHub
+identity into project records. The Instructor can read available projects plus
+Hidden targets for restoration. Visible Draft, Archived, and Disconnected
+projects remain unavailable to non-owners, including the Instructor.
+
+**Moderation version answer on 2026-09-10 UTC:** The owner
+[requires review of the current version](https://github.com/vibies-club/vibies/issues/17#issuecomment-5625398735).
+Hide and Restore submit the version shown on the Instructor's project page.
+The database compares it with the current locked row and rejects any intervening
+change without a write. The Instructor then reviews the current content before
+trying again. This prevents an old Restore form from exposing unseen edits.

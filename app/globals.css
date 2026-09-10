@@ -36,3 +36,6 @@ button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px 
 .members h2 { margin-top: 40px; }
 .members h3 { font-size: 22px; margin-top: 0; }
 summary { cursor: pointer; text-decoration: underline; padding: 12px 0; }
+.access textarea, .access select { display: block; width: 100%; max-width: 560px; font: inherit; padding: 12px; border: 1px solid #727d6b; border-radius: 4px; }
+.access textarea:focus-visible, .access select:focus-visible { outline: 3px solid #49793b; outline-offset: 4px; }
+.project-summary { white-space: pre-wrap; overflow-wrap: anywhere; }

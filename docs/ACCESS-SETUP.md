@@ -60,8 +60,12 @@ select has_function_privilege(
 
 The runtime role must show `rolcanlogin = false` and `rolinherit = false`. The
 table-grant query must return no rows. Runtime routine grants must contain only
-`access_state`, `begin_sign_in`, `change_member`, `consume_sign_in`,
-`end_session`, `finish_sign_in`, and `members`. The final value must be `false`.
+`access_state`, `begin_sign_in`, `change_member`, `connect_project`,
+`consume_sign_in`, `delete_project`, `edit_project`, `end_session`,
+`finish_sign_in`, `members`, `moderate_project`, `project`,
+`project_actor`, `project_operation_context`, `projects`, `publish_project`, and
+`record_project_connection`. Both database proof commands and the live setup use
+this same expanded function API. The final value must be `false`.
 
 Nickname validation requires PostgreSQL 17 with UTF-8 and its `unicode` ICU
 collation. The SQL pins validation and case-insensitive uniqueness to this
@@ -188,7 +192,8 @@ For a later run, start the same stopped container with
 `docker start vibies-access-test-5`. Its two fixture databases already exist;
 skip the container and database creation commands above.
 
-Run the database proof. The test refuses any host except loopback and any
+Run the database proof. It fails with a setup message when the fixture URL is
+absent; `npm test` remains offline. The test refuses any host except loopback and any
 database name except `vibies_access_test`:
 
 ```sh
@@ -209,11 +214,17 @@ Start the built application in one terminal with synthetic local values:
 ```sh
 NODE_ENV=production PORT=3105 \
 VIBIES_APP_ORIGIN=http://127.0.0.1:3105 \
+VIBIES_TEST_APP_ORIGIN=http://127.0.0.1:3105 \
 VIBIES_DATABASE_URL=postgresql://vibies_web_test@127.0.0.1:55435/vibies_access_web_test \
 VIBIES_GITHUB_CLIENT_ID=fixture-client \
 VIBIES_GITHUB_CLIENT_SECRET=fixture-secret \
-  npm start
+  node --import ./tests/project-provider-hook.mjs node_modules/next/dist/bin/next start --hostname 127.0.0.1
 ```
+
+The test-only hook supplies synthetic GitHub App results and refuses any
+non-fixture database. Application code never imports it. See
+[project setup](PROJECT-SETUP.md#local-and-ci-commands) for the added project
+database command and clean-build instructions.
 
 In a second terminal, run the HTTP proof:
 

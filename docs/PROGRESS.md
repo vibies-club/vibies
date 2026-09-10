@@ -3,7 +3,7 @@
 [Documentation home](../README.md) · [Decisions](DECISIONS.md) ·
 [Roadmap](ROADMAP.md)
 
-**Updated:** 2026-09-07
+**Updated:** 2026-09-11
 
 ## Repository setup
 
@@ -49,24 +49,34 @@ safe error states also pass. The original sample and read grants are restored.
 [PR #15](https://github.com/vibies-club/vibies/pull/15) holds the demo verification
 receipts and [Preview link](https://vibies-git-feature-supabase-demo-13-beta-momo.vercel.app/demo).
 
-Issue #5 is implemented locally on `feature/sign-in-access-5` from the accepted
-[issue #14 specification](https://github.com/vibies-club/vibies/issues/14). Its
-scope is GitHub sign-in, unapproved access denial, Instructor membership
-administration, a minimal protected welcome page, absolute 24-hour Sessions,
-sign-out, and owner-run Instructor setup and recovery. The public demo and its
-anonymous Supabase client remain separate.
+Issue #5 merged through [PR #16](https://github.com/vibies-club/vibies/pull/16).
+GitHub sign-in, private access, Instructor membership management, and live access
+receipts are in [Access verification](ACCESS-VERIFICATION.md).
 
-The approved implementation uses direct GitHub OAuth, opaque hashed Sessions,
-and a private PostgreSQL API in `vibies_private`. The required human setup is in
-[Access setup](ACCESS-SETUP.md). The Skeptic findings and issue checks A1 through
-A16 are in [Access verification](ACCESS-VERIFICATION.md). Unit, database, HTTP,
-local browser, build, link, and diagram checks pass. Live GitHub, hosted Preview,
-and trusted-channel recovery checks remain pending human-owned setup.
+Issue #17 is in draft implementation on `feature/personal-projects-17`, based on
+main `39fda5a`. The [approved issue](https://github.com/vibies-club/vibies/issues/17)
+now points to the interview plan, required Skeptic pass, and explicit plan
+amendments. [D-015](DECISIONS.md#d-015-share-member-written-personal-projects-with-checked-repository-access)
+was committed before application code.
+
+The first stage implements Connect, Publish, Check connection, and private
+Community reading. The [project proof record](PROJECT-VERIFICATION.md) lists the
+actual local results and hosted setup and live receipts. The isolated
+database, Preview, OAuth sign-in, and GitHub App are configured. Guide signed in
+and approved Builder and Scout. Live receipts now show Member access, a private
+repository in the picker, publication and onboarding, Scout's Community list,
+Guide's list and direct read, and signed-out denial. Scout's direct read is
+human-confirmed. Selected-access loss preserves publication and onboarding and
+removes the project from shared reads. Builder and Scout confirmed restoration
+of the original project; Guide's list and original direct URL also pass. The
+first-stage proof gate is complete.
 
 ## Next step
 
-On a clean staging database, run the access SQL twice and inspect the grants.
-Complete the real GitHub Preview and recovery procedures. The automated database
-proof runs only against its isolated local fixture database. Record privacy-safe receipts for A1
-through A16. Keep the implementation PR draft until the live checks pass, then request Member review. The Instructor merges only after
-the six merge-gate checks pass.
+All issue #17 proof rows now have receipts. Edit/Delete pass local proof and
+Builder's live confirmation. Instructor Hide/Restore and rejection of an old
+Restore form pass in Guide's live session. The project was left Visible. The
+owner-approved version fix passes Standards and Spec review.
+
+[Draft PR #18](https://github.com/vibies-club/vibies/pull/18) is ready for the
+required Member review. Only the Instructor merges.
