@@ -94,7 +94,7 @@ This opens a Member place but preserves the Member Role, Nickname, project
 ownership, content authorship, onboarding milestone, and existing content states.
 Separate moderation and deletion rules continue to apply.
 
-**Outcome — dismissal:** The Instructor may dismiss an unapproved Access entry.
+**Outcome: dismissal:** The Instructor may dismiss an unapproved Access entry.
 The entry is removed without granting access. A later successful sign-in may
 create it again. Dismissal cannot remove a revoked Member or retained content.
 

@@ -16,7 +16,7 @@ export default async function MembersPage({ searchParams }: {searchParams: Promi
     invalid: "The change was not applied. Check the form and try again.", error: "We could not save the change. Please try again." };
   return <AccessShell><section className="members"><p className="eyebrow">INSTRUCTOR</p><h1>Member access</h1>
     <p className="intro">{state.activeCount} of 7 Member places filled.</p><a href="/welcome">Back to welcome</a>
-    {message && messages[message] && <p role="status">{messages[message]}</p>}
+    {message && Object.hasOwn(messages, message) && <p role="status">{messages[message]}</p>}
     <p className="privacy">Agree on a nickname with the Member before approval. Check it for real names and contact details. Automatic checks cannot detect every real name.</p>
     {(["unapproved", "approved", "revoked"] as const).map(status => <div key={status}>
       <h2>{status === "approved" ? "Active Members" : status === "revoked" ? "Revoked Members" : "Unapproved accounts"}</h2>

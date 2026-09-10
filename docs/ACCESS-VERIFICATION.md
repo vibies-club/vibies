@@ -10,7 +10,7 @@ or private recovery reason.
 
 Local results below were rechecked on 2026-09-10 using synthetic accounts.
 Hosted staging is configured. Real Instructor sign-in and cancellation pass.
-The separate-account Member and trusted recovery procedures remain pending.
+The complete separate-account Member and trusted recovery receipts remain pending.
 Change a pending entry only after its procedure completes and attach a privacy-safe receipt in the PR. A hidden control is insufficient proof;
 direct protected requests and actions must also be denied.
 
@@ -53,6 +53,27 @@ fixture client. This local result proves the redirect only. The real GitHub call
 passed during the hosted staging procedure below. The Instructor phone view at 390 by
 844 pixels has no horizontal overflow.
 
+## Status-message regression found during Member review
+
+On 2026-09-10, the original PR head `db8274d` was built in a clean temporary
+copy that excluded environment files. The local server used only the isolated
+`vibies_access_web_test` database and synthetic browser and Instructor Sessions.
+Manual-redirect HTTP requests reproduced the review finding on both `/sign-in`
+and `/admin/members`:
+
+| Message query value | Original build | Fixed build |
+| --- | --- | --- |
+| `__proto__`, `constructor`, `toString` | HTTP 500 on both pages | HTTP 200 on both pages, no status message |
+| `unknown` | HTTP 200, no status message | HTTP 200, no status message |
+| `failed` on sign-in; `ok` on administration | HTTP 200 with the expected status message | HTTP 200 with the expected status message |
+
+Both pages now use `Object.hasOwn` before rendering a URL-selected message.
+`npm run check:access-web` checks all ten requests above and requires HTTP 200
+with either the expected status text or no status element. Redirects cannot pass
+these checks. The full fixed-build run passed all 50 HTTP checks. Typecheck,
+10 unit tests, 10 PostgreSQL tests without skips, and the production build also
+passed. The original code was not changed during reproduction.
+
 ## Session 10 alignment
 
 The Session 10 slides were checked on 2026-09-10. This PR demonstrates identity,
@@ -80,12 +101,29 @@ count or build result, with no environment values.
 | --- | --- | --- |
 | `npm test` | PASS: 10 tests | Core access, OAuth failure, identity projection, nickname, and existing demo checks. |
 | `npm run test:access` against `vibies_access_test` | PASS: 10 tests, no skips | PostgreSQL 17: nine scenario groups plus their parent test, including a full migration under a non-superuser owner, real concurrent approvals, and sign-in starts. |
-| `npm run check:access-web` against `vibies_access_web_test` | PASS: 40 HTTP checks | Production Next.js build, dedicated runtime login, synthetic sessions, direct requests, form-compatible page policy, private OAuth redirects, revocation, expiry, and forced database failures. Now included in `app-check` CI. |
+| `npm run check:access-web` against `vibies_access_web_test` | PASS: 50 HTTP checks | Production Next.js build, dedicated runtime login, synthetic sessions, direct requests, form-compatible page policy, private OAuth redirects, inherited message-key regression, revocation, expiry, and forced database failures. Now included in `app-check` CI. |
 | `npm run typecheck` | PASS | TypeScript completed with no errors. |
 | `npm run build` with access configuration absent | PASS | Node.js 24.15.0 and Next.js 16.3.4 Turbopack. Clean temporary copy excluded all environment files; all private routes are dynamic. |
 | Links and Mermaid rendering | PASS | 145 local Markdown links resolved, including fragments. Mermaid CLI rendered the domain graph to SVG with installed Chrome. |
 
 ## Hosted staging receipts
+
+### Member check and review follow-up on 2026-09-10
+
+The owner reported that live testing was complete. A read-only query of
+`vibies_private.accounts`, `community`, and `sessions` confirmed one approved
+Member with incomplete onboarding, one designated Instructor, and one unexpired
+Session for each. The Member Session was created at 11:32 UTC and the Instructor
+Session at 11:29 UTC. No account identifiers or Session values are included here.
+
+This confirms current database state. It does not show the earlier unknown-account
+denial, the Member welcome page, or the Instructor replacement and restoration
+procedure. The [Member review](https://github.com/vibies-club/vibies/pull/16#issuecomment-5618348112)
+correctly identified this evidence gap. The PR's completed Preview checkbox was
+premature. A1, A3, A5, and A16 need dated procedures and observed results before
+the Preview gate can pass. The results below remain pending where indicated.
+
+### Earlier hosted checks
 
 Checked on 2026-09-10 at the fixed
 [PR Preview](https://vibies-git-feature-sign-in-access-5-beta-momo.vercel.app/sign-in).
@@ -124,11 +162,11 @@ the regex adds the Unicode letter-number ranges. The migration rebuilds the
 nickname index inside its transaction. See
 [PostgreSQL collation support](https://www.postgresql.org/docs/17/collation.html).
 
-A synthetic account is not a second verified GitHub account. The owner has one
-controlled GitHub account. A separate class participant must complete the real
-unknown-account denial, Member sign-in after approval, and trusted replacement
-recovery procedures before merge. Review can begin on this configured Preview.
-No claim below treats those procedures as passed.
+A synthetic account does not prove a second verified GitHub account's browser
+flow. A real Member now has an approved entry and an unexpired Session, as recorded
+above. Dated receipts for unknown-account denial, the Member welcome page, and
+trusted replacement recovery remain required before merge. Review can continue
+on this configured Preview. No claim below treats those procedures as passed.
 
 ## Issue #14 acceptance record
 
@@ -138,7 +176,7 @@ No claim below treats those procedures as passed.
 | **A2: Account matching** | In the database proof, sign in twice with one stable identifier, change only its GitHub username, then use a different identifier. Confirm one reused entry, preserved approval, and no inherited approval. | PASS locally: stable ID reuses the account; rename preserves approval; distinct IDs remain unapproved. | Automated commands above; live procedures remain as stated. |
 | **A3: Unapproved access** | Complete first real sign-in with an unknown test account. Confirm one unapproved entry, access denied, and sign-out. Use the HTTP fixture to request `/welcome` and a Member action directly with that Session. | Local and hosted synthetic denial checks pass. First real sign-in with an unknown GitHub account pending. | Automated commands above; live procedures remain as stated. |
 | **A4: Administration boundary** | Open `/admin/members` and submit each administration action as Instructor, Member, unapproved, revoked, and signed-out fixtures. Confirm only the Instructor can read account details or change state. Repeat the page check in Preview. | PASS: local and hosted direct HTTP checks cover all access states. The real Instructor can open administration. | Automated commands above; live procedures remain as stated. |
-| **A5: Approval and landing** | Approve an identified unapproved account with a valid agreed Nickname. Sign in as that Member and open `/welcome`. Confirm it shows the Nickname, allows browsing with incomplete onboarding, and does not mark onboarding complete. | Local and hosted synthetic approval and welcome pass; onboarding stays false. Real Member GitHub sign-in pending. | Automated commands above; live procedures remain as stated. |
+| **A5: Approval and landing** | Approve an identified unapproved account with a valid agreed Nickname. Sign in as that Member and open `/welcome`. Confirm it shows the Nickname, allows browsing with incomplete onboarding, and does not mark onboarding complete. | Local and hosted synthetic approval and welcome pass; onboarding stays false. The read-only live check confirms one approved Member with an unexpired Session and onboarding false; the real welcome-page receipt remains pending. | Automated commands above; live procedures remain as stated. |
 | **A6: Capacity** | Run the database proof for seven active Members, an eighth rejection, two competing approvals from a count of six, repeated submissions, and the Instructor exclusion. Confirm only one competing approval succeeds and no duplicate is created. | PASS: seven allowed, competing approvals from six yield one success and one full result; Instructor excluded. | Automated commands above; live procedures remain as stated. |
 | **A7: Nicknames** | Run unit and database checks for outer ASCII-space trimming, Unicode code-point length, Unicode letters and decimal digits, rejected other number categories, case-insensitive duplicates, revoked reservations, and no Membership after rejection. Run the staging locale parity check. In Preview, confirm the privacy instruction appears before approval. | PASS: unit, database, hosted locale parity, Unicode approval, and Preview privacy instruction. Validation and uniqueness use an explicit collation. | Automated commands above; live procedures remain as stated. |
 | **A8: Identity privacy** | Inspect Member pages and responses for Nicknames only. Confirm only the Instructor page contains GitHub username and stable identifier. Inspect the private table columns and server bundle to confirm no profile name, avatar, email, biography, OAuth token, or secret is stored or sent to the browser. | PASS for implemented storage and responses: real GitHub requests public data only; role denial, hosted nickname-only responses, and local/hosted browser bundle scans pass. | Automated commands above; live procedures remain as stated. |
@@ -160,4 +198,4 @@ No claim below treats those procedures as passed.
 | No secrets or personal data | PASS | Staged diff and browser bundle scanned; only synthetic fixtures and placeholder configuration appear. No environment files or credentials staged. Configuration was handled privately under the owner's one-run authorization. |
 | Matches the approved plan | PASS | Root review reconciled both worker results and all Skeptic findings. |
 | Build succeeded | PASS | Production build, typecheck, unit tests, PostgreSQL tests, HTTP checks, links, and Mermaid rendering. |
-| Preview satisfies A1 through A16 | PARTIAL: ready for review, merge blocked | Setup, real Instructor OAuth, and 34 hosted synthetic checks pass. A separate participant must complete real Member sign-in and trusted recovery. A Member review is also required before Instructor merge. |
+| Preview satisfies A1 through A16 | PARTIAL: ready for review, merge blocked | Setup, real Instructor OAuth, and 34 hosted synthetic checks pass. The Member review found missing dated receipts for A1, A3, A5, and A16. Current Member database state is confirmed, but the Preview gate stays pending until those procedures are recorded and the Member reviews the update. |

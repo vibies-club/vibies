@@ -33,6 +33,21 @@ try {
       method: "POST", redirect: "manual", headers: { Origin: requestOrigin, "Content-Type": "application/x-www-form-urlencoded",
         Cookie: `${role ? `__Host-vibies-session=${sessions[role]};` : ""}${extraCookie}` }, body: new URLSearchParams(body),
     });
+    const browser = "e".repeat(64);
+    for (const [message, expected] of [["__proto__"], ["constructor"], ["toString"], ["unknown"],
+      ["failed", "Sign-in did not finish. Please try again."]]) {
+      const response = await fetch(new URL(`/sign-in?message=${encodeURIComponent(message)}`, origin), { redirect: "manual",
+        headers: {Cookie: `__Host-vibies-browser=${browser}`} });
+      const body = await response.text();
+      check(response.status === 200 && (expected ? body.includes('role="status"') && body.includes(expected) : !body.includes('role="status"')),
+        `sign-in ${expected ? "renders the known" : "ignores the unrecognized"} ${message} message`);
+    }
+    for (const [message, expected] of [["__proto__"], ["constructor"], ["toString"], ["unknown"], ["ok", "Access updated."]]) {
+      const response = await get(`/admin/members?message=${encodeURIComponent(message)}`, "instructor");
+      const body = await response.text();
+      check(response.status === 200 && (expected ? body.includes('role="status"') && body.includes(expected) : !body.includes('role="status"')),
+        `administration ${expected ? "renders the known" : "ignores the unrecognized"} ${message} message`);
+    }
     for (const role of [undefined, "member", "unapproved", "revoked"]) {
       const response = await get("/admin/members", role);
       const body = await response.text();
@@ -66,7 +81,6 @@ try {
       const failure = await (await get("/welcome", "member")).text();
       check(failure.includes("We could not check your access") && !failure.includes("Builder") && !failure.includes("revoked") && !failure.includes("permission denied"), "lookup failure is safe and does not mislabel the member");
     } finally { await sql.unsafe("grant execute on function vibies_private.access_state(text) to vibies_runtime"); }
-    const browser = "e".repeat(64);
     let firstState, firstOAuth;
     for (let i = 0; i < 11; i++) {
       const start = await post("/auth/start", undefined, {}, origin.origin, `__Host-vibies-browser=${browser}`);

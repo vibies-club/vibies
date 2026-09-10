@@ -259,3 +259,32 @@ When implementation, automated checks, and the configured Preview are ready,
 mark the PR ready for Member review. Record any remaining participant checks
 explicitly. A1 through A16 and Member review must all pass before the Instructor
 merges. Configure and verify Production only after that reviewed merge.
+
+## 9. Move the approved change to Production, then remove Preview
+
+Keep `access-review-5` until the Instructor has merged the reviewed PR and the
+Production checks below pass. This project has no Supabase GitHub connection,
+so a GitHub merge does not apply the database change automatically.
+
+1. Review the Supabase merge request from `access-review-5` to `main` before
+   applying it. Compare its SQL with the merged `access.sql`. The dashboard
+   documents [public schema changes and custom-role limitations](https://supabase.com/docs/guides/deployment/branching/dashboard).
+   Verify the private schema, functions, and role grants explicitly. If the
+   merge omits them, follow steps 1 and 2 above on Production with the merged
+   `access.sql`. Stop on unrelated or destructive differences.
+2. Have the database owner configure the dedicated Production login, TLS,
+   fixed Production OAuth origin and callback, and server settings using steps
+   3 through 6. Keep all secret values in the providers' private settings.
+3. Account for the intended Instructor and each Member before removing Preview.
+   [Branch data does not move with a merge](https://supabase.com/docs/guides/deployment/branching/troubleshooting#data-issues).
+   The owner must preserve durable access records privately or repeat verified
+   Instructor setup and Member sign-in/approval on Production. Compare Nicknames,
+   approval status, onboarding state, and active Member count. Keep private audit
+   records if they are needed. Use new Production Sessions.
+4. Check Production grants, real Instructor and Member sign-in, welcome,
+   unapproved and signed-out denial, sign-out, and the public demo. Confirm that
+   Production connects to the main database and no required deployment still
+   uses the Preview branch. Record dated results without private identifiers.
+5. Only after these checks pass, remove `access-review-5` through Branching.
+   Review the deletion warning at that time. Deletion loses branch-only data;
+   leave the branch intact if any required record or verification is missing.

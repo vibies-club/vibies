@@ -21,7 +21,7 @@ export default async function SignInPage({ searchParams }: {searchParams: Promis
   };
   return <AccessShell><section><p className="eyebrow">VIBIES COMMUNITY</p><h1>A place to build together.</h1>
     <p className="intro">Sign in with GitHub. The Instructor must approve your access before you can enter.</p>
-    {message && messages[message] && <p role="status">{messages[message]}</p>}
+    {message && Object.hasOwn(messages, message) && <p role="status">{messages[message]}</p>}
     <form action="/auth/start" method="post"><button type="submit">Continue with GitHub</button></form>
     <p className="hint">We keep your GitHub account ID and username for access checks. Members see your agreed nickname.</p>
   </section></AccessShell>;
