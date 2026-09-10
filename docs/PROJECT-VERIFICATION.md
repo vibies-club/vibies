@@ -68,20 +68,27 @@ The checks used the fixed Preview for commit
 The application code is unchanged from `1bbcaa2`. Agent browser checks ran
 between 20:05 and 20:08 UTC.
 
+At about 20:23 UTC, the user supplied the loss-check screenshot and confirmed
+the Builder and Scout journeys and the intended GitHub App. The agent checked
+Guide's list and the original project URL at about 20:24 UTC. These follow-up
+checks used the [deployment of documentation commit `45b9353`](https://vercel.com/beta-momo/vibies/EKc8d3SqPGykrst5z1u2NyzNbW2T),
+with the same application code.
+
 | Check | Observed result | Receipt |
 | --- | --- | --- |
 | Member Preview access | PASS: Builder and Scout reached authenticated Member pages | User report and screenshots of owner and non-owner views. |
 | Eligible private repository | PASS: the refreshed picker offered Project A's private repository | User screenshot 3; screenshot 4 shows the App setup and refresh controls. |
 | Publication and onboarding | PASS: Builder's project showed Published, Connected, Visible, and Onboarding complete | User screenshot 2 also reports a successful connection check at 20:01:17 UTC. |
 | Scout Community list | PASS: Project A appeared with Builder's Nickname and the chosen shared details | User screenshot 1; the user confirmed Scout was signed in. |
-| Scout direct project read | PENDING: the supplied Scout screenshot shows the list only | Scout must open the project and confirm the shared details. |
+| Scout direct project read | PASS, human-confirmed: the user confirmed the requested Member journey, including opening the shared project | User confirmation at about 20:23 UTC. The agent did not control Scout's browser. |
 | Instructor reads | PASS: Guide read Project A in the Community list and opened its direct page; both showed the same chosen shared details and Builder's Nickname | Agent browser observation. No owner controls appeared. |
 | Signed-out private reads | PASS: after application sign-out, both Project A's actual direct URL and `/projects` redirected to `/sign-in?message=expired`; no project details appeared | Agent browser observation with Vercel access retained. Guide then signed in again. |
-| Access loss and restoration | PENDING | Builder must remove selected repository access, check the connection, restore access, and check again. Scout and Guide must verify the Community changes. |
+| Selected-access loss | PASS: Builder's Check connection returned lost and showed Published, Disconnected, Visible, and Onboarding complete; the last successful check remained 20:01:17 UTC | User loss-check screenshot for the same Project A URL. Scout's loss check was human-confirmed. Guide's list omitted Project A and its direct page showed Project unavailable in the agent browser. |
+| Same-project restoration | PENDING | Builder must restore selected repository access and check the existing project again. Scout and Guide must verify that the original project returns. |
 
 Follow the [live procedure](PROJECT-SETUP.md#live-p1-and-p15-procedure) for the
-remaining direct read and access-loss/restoration checks. Partial live receipts
-do not complete P1 or P15.
+remaining restoration check. P1 has live receipts. P15 remains incomplete until
+the original project is restored and read again.
 
 ## Local receipts
 
@@ -109,7 +116,7 @@ from these receipts. The clean test server uses an in-memory synthetic key.
 
 | Row | Evidence and remaining work | Status |
 | --- | --- | --- |
-| P1 | [HTTP proof](../scripts/check-projects-web.mjs) passes the synthetic journey. Live receipts above show the eligible private repository, Published state, onboarding, Scout's list, and Guide's list and direct page. Scout's direct read remains pending. | Local PASS; live partial |
+| P1 | [HTTP proof](../scripts/check-projects-web.mjs) passes the synthetic journey. Live receipts above show eligible private selection, publication and onboarding, Scout's list with a human-confirmed direct read, and Guide's list and direct page. | Local and live PASS |
 | P2 | [Database tests](../tests/projects-database.test.ts) and HTTP proof pass signed-out, unapproved, revoked, expired, Instructor owner-action, wrong-owner, and cross-origin denial. | Local PASS |
 | P3 | [Provider tests](../tests/project-github.test.ts) pass public, organization, wrong-owner, missing, suspended, All repositories, renamed/mismatched account, later pages, unrelated installations, and incomplete or malformed scans. HTTP checks confirm ineligible results create no project. | Local PASS |
 | P4 | Database and HTTP checks pass duplicate connection, unchanged details, competing last-place requests, and capacity enforcement. The database counts all retained rows. | Local PASS |
@@ -117,13 +124,13 @@ from these receipts. The clean test server uses an in-memory synthetic key.
 | P6 | Database and HTTP checks pass Hidden publication and unavailable direct reads. Instructor reads pass for available projects and Hidden targets; Visible Draft, Archived, and Disconnected targets stay unavailable. | Local PASS |
 | P7 | Database and HTTP checks pass invalid ownership, missing IDs, Archived, Disconnected, and submitted Class-kind attempts. The schema stores Personal Projects only. | Local PASS |
 | P8 | Provider and HTTP checks pass Unknown no-change results, confirmed loss saving Disconnected, and direct requests with untrusted browser verification fields. | Local PASS |
-| P9 | Database and HTTP checks pass explicit loss detection, same-repository restoration, retained publication/moderation, and unavailable Hidden/Archived states. | Local PASS |
+| P9 | Database and HTTP checks pass explicit loss detection, same-repository restoration, retained publication/moderation, and unavailable Hidden/Archived states. Live selected-access loss also passes; live restoration remains pending. | Local PASS; live partial |
 | P10 | Edit is not built. Initial Connect form validation has unit coverage, including maximum Unicode fields, but this does not prove Edit. | Waiting for first-stage live receipts |
 | P11 | Delete is not built. No deletion claim is made. | Waiting for first-stage live receipts |
 | P12 | Row versions guard first-stage connection writes. The full Delete/Edit/revocation race row requires the next stage. | Waiting for the next stage |
 | P13 | Database tests pass UUID backfill and stability, runtime/anonymous grant denial, and private shared projection. HTTP responses and stored rows contain no synthetic provider identity/token markers. The clean browser bundle scan passes. | Local PASS |
 | P14 | Typecheck, 24 offline tests, 10 access tests, 22 project tests, 98 HTTP assertions, clean build, 177 local links, and Mermaid render pass. The public demo remains available. | Local PASS |
-| P15 | Real Member access, eligible private selection, publication, onboarding, Community reads, and signed-out denial pass above. Scout's direct read and the access-loss/restoration cycle remain pending. | Live partial |
+| P15 | Real Member access, eligible private selection, publication, onboarding, Community reads, signed-out denial, and selected-access loss pass above. Same-project restoration remains pending. | Live partial |
 | P16 | Instructor Hide and Restore actions are not built. They follow Edit/Delete under the approved order. | Waiting for the final stage |
 
 ## Merge gate

@@ -65,8 +65,9 @@ actual local results, hosted setup receipts, and pending live rows. The isolated
 database, Preview, OAuth sign-in, and GitHub App are configured. Guide signed in
 and approved Builder and Scout. Live receipts now show Member access, a private
 repository in the picker, publication and onboarding, Scout's Community list,
-Guide's list and direct read, and signed-out denial. Scout's direct read and
-the access-loss/restoration cycle remain pending.
+Guide's list and direct read, and signed-out denial. Scout's direct read is
+human-confirmed. Selected-access loss preserves publication and onboarding and
+removes the project from shared reads. Same-project restoration remains pending.
 
 ## Next step
 
