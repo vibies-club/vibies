@@ -67,8 +67,10 @@ Nickname validation needs a UTF-8 database locale whose character and lowercase
 rules match the application. Check staging with synthetic values:
 
 ```sql
-show server_encoding;
-show lc_ctype;
+select pg_encoding_to_char(encoding) as encoding, datctype as locale,
+       datlocprovider
+from pg_database
+where datname = current_database();
 
 select value, vibies_private._normalized_nickname(value) as normalized
 from (values
@@ -119,12 +121,18 @@ callback while a deployment is in use.
 Provide these values to the server process through the hosting environment. Do
 not create or document a shared environment file for this feature.
 
-| Name | Required value |
+| Name | Value |
 | --- | --- |
 | `VIBIES_APP_ORIGIN` | The exact fixed HTTPS origin, with no path, query, fragment, username, password, or trailing path. Loopback HTTP is accepted only by local fixture checks. |
 | `VIBIES_DATABASE_URL` | The dedicated `vibies_app_login` Supabase pooler connection, with TLS. This value is server-only and must never be printed. |
+| `VIBIES_DATABASE_CA` | Optional public Supabase certificate authority in PEM format. Use it when the database TLS certificate is not in the server's default trust store. |
 | `VIBIES_GITHUB_CLIENT_ID` | The GitHub OAuth App client ID for this exact origin. |
 | `VIBIES_GITHUB_CLIENT_SECRET` | The matching GitHub OAuth App client secret. This value is server-only and must never be printed. |
+
+In the Supabase Dashboard, open Database Settings and find SSL Configuration.
+Download the certificate and put the complete PEM value, including its BEGIN
+and END lines, in `VIBIES_DATABASE_CA`. The application still requires a valid
+certificate and hostname for every remote database connection.
 
 No access value uses a `NEXT_PUBLIC_` prefix. The existing public demo values
 remain separate and continue to control only `/demo`.
@@ -228,10 +236,12 @@ The build runs before access configuration is provided to the web-test step.
 
 ## 8. Deploy and prove Preview
 
-Add the four server values to the Vercel Preview environment. Keep the existing
-public demo values. Deploy the feature branch and complete every human procedure
-in [Access verification](ACCESS-VERIFICATION.md), including the real GitHub
-flow, direct access denials, privacy inspection, Session expiry, and recovery.
+Add the required server values to the Vercel Preview environment. Add
+`VIBIES_DATABASE_CA` when the database certificate needs the Supabase CA. Keep
+the existing public demo values. Deploy the feature branch and complete every
+human procedure in [Access verification](ACCESS-VERIFICATION.md), including the
+real GitHub flow, direct access denials, privacy inspection, Session expiry, and
+recovery.
 
 For the recovery exercise, use clean staging and separate privacy-safe test
 accounts. Verify the replacement through the trusted channel, record the reason

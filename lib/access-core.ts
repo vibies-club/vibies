@@ -5,6 +5,11 @@ export const validToken = (value: unknown): value is string => typeof value === 
 export const digest = (value: string) => createHash("sha256").update(value).digest("hex");
 export const challenge = (value: string) => createHash("sha256").update(value).digest("base64url");
 
+export function databaseSSL(hostname: string, ca?: string) {
+  return ["localhost", "127.0.0.1", "[::1]"].includes(hostname) ? false :
+    { rejectUnauthorized: true, ...(ca ? { ca } : {}) };
+}
+
 export function appOrigin(value: string | undefined) {
   if (!value) throw new Error("Sign-in unavailable");
   const url = new URL(value);

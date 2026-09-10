@@ -1,8 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { appOrigin, authorizationURL, challenge, digest, exchangeGitHub, githubAccount, nickname, readAccess, sameOriginPost, token, validToken } from "../lib/access-core.ts";
+import { appOrigin, authorizationURL, challenge, databaseSSL, digest, exchangeGitHub, githubAccount, nickname, readAccess, sameOriginPost, token, validToken } from "../lib/access-core.ts";
 
 const config = { origin: "https://example.test", clientId: "synthetic-client", clientSecret: "synthetic-test-value" };
+
+test("database TLS stays verified and accepts an optional CA", () => {
+  assert.equal(databaseSSL("127.0.0.1", "ignored"), false);
+  assert.deepEqual(databaseSSL("db.example.test"), { rejectUnauthorized: true });
+  assert.deepEqual(databaseSSL("db.example.test", "synthetic-ca"), { rejectUnauthorized: true, ca: "synthetic-ca" });
+});
 
 test("unknown access results fail closed and extra identity fields never escape", () => {
   for (const value of [null, {}, {kind:"admin"}, {kind:"member"}, {kind:"member",nickname:"Builder"}]) assert.deepEqual(readAccess(value), {kind:"error"});

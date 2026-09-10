@@ -1,7 +1,7 @@
 import "server-only";
 import postgres from "postgres";
 import { cookies } from "next/headers";
-import { appOrigin, digest, readAccess, validToken, type Access } from "./access-core";
+import { appOrigin, databaseSSL, digest, readAccess, validToken, type Access } from "./access-core";
 
 let sql: ReturnType<typeof postgres> | undefined;
 export function database() {
@@ -10,8 +10,8 @@ export function database() {
   if (!address) throw new Error("Access unavailable");
   const url = new URL(address);
   if (!["postgres:", "postgresql:"].includes(url.protocol)) throw new Error("Access unavailable");
-  const local = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
-  sql = postgres(address, { max: 3, prepare: false, ssl: local ? false : "verify-full",
+  sql = postgres(address, { max: 3, prepare: false,
+    ssl: databaseSSL(url.hostname, process.env.VIBIES_DATABASE_CA),
     connect_timeout: 10, idle_timeout: 20, connection: { statement_timeout: 10000 }, onnotice: () => {} });
   return sql;
 }
