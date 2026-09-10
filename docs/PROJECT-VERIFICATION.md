@@ -16,8 +16,8 @@ live P1/P15. Edit and Delete follow as P10 to P12. Instructor Hide and Restore
 follows as P16. The first-stage local and live receipts, including P1/P15, were
 committed in `49747ba` before Edit/Delete code. Edit/Delete now have local receipts
 below. Instructor Hide/Restore was built last. Its reviewed-version fix and
-hosted check also pass. All acceptance rows now have receipts. The PR remains
-draft for the required Member review.
+hosted check also pass. All acceptance rows now have receipts. The owner asked
+to mark PR #18 ready for review on 2026-09-10 UTC, and GitHub confirmed the change.
 
 The [owner clarifications](https://github.com/vibies-club/vibies/issues/17#issuecomment-5623179154)
 were answered on 2026-09-10. The owner chose an opaque internal account UUID for
@@ -243,5 +243,5 @@ implementation matches the approved plan and all owner clarifications. The clean
 build, local acceptance checks, and required live Preview journeys pass. Both
 agent review axes have no remaining findings after the version fix. All P1 to P16
 rows have receipts; no skipped check is counted as proof. The implementation
-checks are complete. The PR remains draft and still needs a formal Member
-review. Only the Instructor merges.
+checks are complete. [PR #18](https://github.com/vibies-club/vibies/pull/18) is
+ready for the required formal Member review. Only the Instructor merges.
