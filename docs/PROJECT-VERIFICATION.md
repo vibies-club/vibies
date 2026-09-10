@@ -15,9 +15,9 @@ Finding 10 requires Connect, Publish, and Community read proof first, including
 live P1/P15. Edit and Delete follow as P10 to P12. Instructor Hide and Restore
 follows as P16. The first-stage local and live receipts, including P1/P15, were
 committed in `49747ba` before Edit/Delete code. Edit/Delete now have local receipts
-below. Instructor Hide/Restore was built last and now has local receipts. The
-PR remains draft. The final review raised the owner decision below before the
-hosted moderation check.
+below. Instructor Hide/Restore was built last. Its reviewed-version fix and
+hosted check also pass. All acceptance rows now have receipts. The PR remains
+draft for the required Member review.
 
 The [owner clarifications](https://github.com/vibies-club/vibies/issues/17#issuecomment-5623179154)
 were answered on 2026-09-10. The owner chose an opaque internal account UUID for
@@ -96,7 +96,7 @@ gate before Edit/Delete implementation.
 
 The [live procedure](PROJECT-SETUP.md#live-p1-and-p15-procedure) is complete.
 P1, P9, and P15 now have live receipts. Edit/Delete local proof follows below.
-Instructor Hide/Restore local proof follows below.
+Instructor Hide/Restore local and hosted proof follows below.
 
 ## Local receipts
 
@@ -165,14 +165,14 @@ zero private server markers. The isolated Preview received only the tested
 moderation function and its specific execution grants. That migration ran twice;
 both project rows stayed unchanged, the runtime allowlist contains 17 functions,
 and direct table access and Instructor designation remain denied. Hosted browser
-moderation proof remains pending.
+moderation proof is recorded below.
 
 Final review identified that an old Instructor Restore form can restore content
 edited since the page was opened. D-015 requires version checks at protected
 writes, but the current moderation function has no expected-version argument.
 The [owner question](https://github.com/vibies-club/vibies/issues/17#issuecomment-5625343850)
 asks whether Hide/Restore must match the version displayed to the Instructor.
-The owner answered on 2026-09-11: [require the current reviewed version](https://github.com/vibies-club/vibies/issues/17#issuecomment-5625398735).
+The owner answered: [require the current reviewed version](https://github.com/vibies-club/vibies/issues/17#issuecomment-5625398735).
 The reviewed-version fix now passes database tests and the complete 140-check
 HTTP run. The form carries the reviewed version, the route validates it, and SQL
 compares it under the project lock before any no-op or change. Old Hide and
@@ -185,7 +185,32 @@ A clean build and a fresh 134-check HTTP run pass after that fix. The reviewer
 confirmed the route fix. Both Standards and Spec reviewers checked the fix and closed their findings;
 neither found a new issue. The narrow Preview migration ran twice with both project rows unchanged, 17
 runtime functions, zero direct table grants, and the obsolete moderation
-signature removed. Hosted moderation is the remaining proof step.
+signature removed. Hosted moderation passed as recorded below.
+
+## Hosted moderation receipt
+
+On 2026-09-10 at about 21:09 to 21:12 UTC, Guide used the real signed-in browser
+against application commit `bb5711d` and its
+[ready deployment](https://vercel.com/beta-momo/vibies/WXwwgwkjsgNoU9RvFf26EecJVocf).
+[App CI](https://github.com/vibies-club/vibies/actions/runs/34530438930/job/103049573020)
+and [documentation CI](https://github.com/vibies-club/vibies/actions/runs/34530439000/job/103049573045)
+also pass for that commit.
+
+Project A had been deleted by this time. A read-only existence
+check confirmed it was absent and two test projects were available. Guide used
+the remaining **Project B**. Its raw title and project URL are omitted here.
+
+| Check | Observed result | Receipt |
+| --- | --- | --- |
+| Hide | PASS: Guide selected Hide; the result said Project hidden from the Community and offered Restore. A new Community-list request omitted Project B. Its direct Hidden page remained reachable by Guide. | Real browser action and next-page reads. |
+| State preservation | PASS: the project stayed Published and Connected with onboarding complete. Only moderation and version changed, from Visible/version 5 to Hidden/version 6. | Read-only state query and equality of an aggregate fingerprint over all other project fields, including timestamps. No content or account identifiers were returned. |
+| Restore | PASS: Guide restored Project B in a second browser tab. The success message and Community card appeared again. | Real browser action and list read. |
+| Old Restore form | PASS: the first tab still held the older Hidden page. Its Restore action returned the review-and-retry message. The project remained Visible at version 7 with onboarding and all other fields unchanged. | Real old-form submission plus read-only state/fingerprint check. Local HTTP proof separately covers old forms after owner edits. |
+
+The live moderation check used Guide's session. Member denial and Hidden Draft,
+Archived, and Disconnected restoration rules are proven in the isolated database
+and HTTP tests, not represented as additional human-run journeys. Project B was
+left Published, Connected, and Visible.
 
 ## Acceptance rows
 
@@ -200,23 +225,23 @@ signature removed. Hosted moderation is the remaining proof step.
 | P7 | Database and HTTP checks pass invalid ownership, missing IDs, Archived, Disconnected, and submitted Class-kind attempts. The schema stores Personal Projects only. | Local PASS |
 | P8 | Provider and HTTP checks pass Unknown no-change results, confirmed loss saving Disconnected, and direct requests with untrusted browser verification fields. | Local PASS |
 | P9 | Database and HTTP checks pass explicit loss detection, same-repository restoration, retained publication/moderation, and unavailable Hidden/Archived states. Live selected-access loss and same-project restoration pass above. | Local and live PASS |
-| P10 | Database tests pass owner Edit in every retained state with only details, update time, and concurrency version changed. HTTP proof passes Draft/Published edits, maximum Unicode fields and 32,768-byte forms, overflow/control/URL/cross-origin rejection, escaping, link removal, and a server-fetch tripwire for demo destinations. | Local PASS |
-| P11 | Database and HTTP proof pass title/warning/Cancel/Confirm controls, no write without confirmation, physical owned deletion, capacity recovery, safe retries/concurrent deletion, new ID on reconnect, and retained onboarding after deletion/revocation/reapproval. GitHub is not called for Edit or Delete. | Local PASS |
+| P10 | Builder confirmed the live Edit save above. Database tests pass owner Edit in every retained state with only details, update time, and concurrency version changed. HTTP proof passes Draft/Published edits, maximum Unicode fields and 32,768-byte forms, overflow/control/URL/cross-origin rejection, escaping, link removal, and a server-fetch tripwire for demo destinations. | Local PASS |
+| P11 | Builder confirmed live Cancel, confirmed deletion, and retained onboarding above. Database and HTTP proof pass title/warning/Cancel/Confirm controls, no write without confirmation, physical owned deletion, capacity recovery, safe retries/concurrent deletion, new ID on reconnect, and retained onboarding after deletion/revocation/reapproval. GitHub is not called for Edit or Delete. | Local PASS |
 | P12 | Database proof covers old contexts after Edit/Delete/newer checks and owner writes ordered against revocation. HTTP proof holds a real Check request in the synthetic provider, completes Edit or Delete, then releases the response and verifies it cannot overwrite the edit or recreate the deleted project. | Local PASS |
 | P13 | Database tests pass UUID backfill and stability, runtime/anonymous grant denial, and private shared projection. HTTP responses and stored rows contain no synthetic provider identity/token markers. The clean browser bundle scan passes. | Local PASS |
 | P14 | Typecheck, 24 offline tests, 10 access tests, 26 project tests, 140 HTTP assertions, clean build, 176 local links, and Mermaid render pass. The public demo remains available. | Local PASS |
 | P15 | Real Member access, eligible private selection, publication, onboarding, Community reads, signed-out denial, selected-access loss, and same-project restoration pass above. | Live PASS |
-| P16 | Database and HTTP proof pass Instructor-only Hide/Restore, generic unauthorized and cross-origin denial, reachable Hidden targets, unchanged details/timestamps/publication/connection/onboarding, same-state no-ops, stale forms after owner edits, and late owner-check rejection. Restored Draft, Archived, and Disconnected fixtures remain unavailable. | Local PASS; hosted check pending |
+| P16 | Database and HTTP proof pass Instructor-only Hide/Restore, generic unauthorized and cross-origin denial, reachable Hidden targets, unchanged details/timestamps/publication/connection/onboarding, same-state no-ops, stale forms after owner edits, and late owner-check rejection. Restored Draft, Archived, and Disconnected fixtures remain unavailable. | Local and hosted PASS |
 
 ## Merge gate
 
-The first-stage diff contains the expected project UI, server checks, private
+The complete diff contains the expected project UI, server checks, private
 SQL, tests, CI, and approved documentation changes. Review found no unrelated
 files or dependency changes. A scan of all 30 changed files found no environment
 files, static private keys, live-token patterns, or database passwords. The
-first stage matches the approved plan and both owner clarifications. The clean
-build passes. First-stage live Preview acceptance passes. Edit/Delete local proof passes.
-Local checks and final code review pass. The hosted moderation check remains
-open, so the merge gate is incomplete.
-No row is complete because a check was skipped. A Member review and all remaining
-proof are required before the Instructor merges.
+implementation matches the approved plan and all owner clarifications. The clean
+build, local acceptance checks, and required live Preview journeys pass. Both
+agent review axes have no remaining findings after the version fix. All P1 to P16
+rows have receipts; no skipped check is counted as proof. The implementation
+checks are complete. The PR remains draft and still needs a formal Member
+review. Only the Instructor merges.

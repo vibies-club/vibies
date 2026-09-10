@@ -8,14 +8,11 @@ chosen.
 
 ## Now
 
-- Implement issue #17 on `feature/personal-projects-17` in its approved order.
-- Connect, Publish, Community reading, and connection loss/restoration have
-  local and live receipts, including P1/P15.
-- Edit and Delete (P10 to P12) have local database and HTTP receipts.
-- Instructor Hide and Restore (P16) were built last and pass local proof.
-  The reviewed-version fix passes review and local proof. Complete its hosted check.
-- Obtain a Member review after the six merge-gate checks pass. Only the
-  Instructor merges. See [project verification](PROJECT-VERIFICATION.md).
+- Issue #17 is implemented on `feature/personal-projects-17` in its approved order.
+- All P1 to P16 rows have receipts, including the required real GitHub journey,
+  human-confirmed Edit/Delete, and Guide's hosted Hide/Restore and old-form check.
+- Obtain a Member review of the draft PR. Only the Instructor merges. See
+  [project verification](PROJECT-VERIFICATION.md).
 
 ## Next
 

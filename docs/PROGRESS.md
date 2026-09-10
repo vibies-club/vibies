@@ -3,7 +3,7 @@
 [Documentation home](../README.md) · [Decisions](DECISIONS.md) ·
 [Roadmap](ROADMAP.md)
 
-**Updated:** 2026-09-10
+**Updated:** 2026-09-11
 
 ## Repository setup
 
@@ -73,9 +73,10 @@ first-stage proof gate is complete.
 
 ## Next step
 
-Edit and Delete (P10 to P12) now pass local database and HTTP proof, including
-delayed provider responses after edits and deletion. Instructor Hide and Restore
-(P16) pass local proof too. The owner-approved version fix passes review and local proof. Complete the hosted
-moderation check.
-Keep the PR draft until every row has a receipt. A Member reviews; only the
-Instructor merges.
+All issue #17 proof rows now have receipts. Edit/Delete pass local proof and
+Builder's live confirmation. Instructor Hide/Restore and rejection of an old
+Restore form pass in Guide's live session. The project was left Visible. The
+owner-approved version fix passes Standards and Spec review.
+
+[Draft PR #18](https://github.com/vibies-club/vibies/pull/18) is ready for the
+required Member review. Only the Instructor merges.
