@@ -8,14 +8,18 @@ chosen.
 
 ## Now
 
-- Issue #17 is implemented on `feature/personal-projects-17` in its approved order.
-- All P1 to P16 rows have receipts, including the required real GitHub journey,
-  human-confirmed Edit/Delete, and Guide's hosted Hide/Restore and old-form check.
-- Obtain a Member review of the draft PR. Only the Instructor merges. See
-  [project verification](PROJECT-VERIFICATION.md).
+- Issue #17 merged through [PR #18](https://github.com/vibies-club/vibies/pull/18).
+  All P1 to P16 rows have receipts in [Project verification](PROJECT-VERIFICATION.md).
+- Obtain a Member review of [PR #30](https://github.com/vibies-club/vibies/pull/30)
+  for automatic database migrations and feature Preview cleanup. It is ready
+  for review, with local, CI, and native Preview proof recorded in
+  [Database deployment](DATABASE-DEPLOYMENT.md). Only the Instructor merges.
 
 ## Next
 
+- After PR #30 merges, verify the Production deployment, migration history,
+  runtime setup, and removal of its ephemeral Preview. Keep these outcomes
+  separate from passing Preview proof.
 - Select the next feature through the class planning workflow.
 - Manual Sync, deliberate owner Disconnect, and Archive actions remain outside
   #17. Resolve their feature plans before implementation.

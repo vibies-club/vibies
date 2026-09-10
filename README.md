@@ -41,23 +41,29 @@ definition instead of creating a different version of it.
 | [Supabase setup](docs/SUPABASE-SETUP.md) | Human setup, safety checks, local verification, and Vercel deployment |
 | [Database deployment](docs/DATABASE-DEPLOYMENT.md) | Reviewed migrations, automatic main deployment, local checks, and retry receipts |
 | [Access setup](docs/ACCESS-SETUP.md) | Human database, GitHub OAuth, Instructor, recovery, and deployment setup |
-| [Access verification](docs/ACCESS-VERIFICATION.md) | Skeptic findings and evidence for issue #14 checks A1 through A16 |
+| [Access verification](docs/ACCESS-VERIFICATION.md) | Issue #5 implementation receipts for the A1 through A16 checks specified in issue #14 |
 | [Personal Project setup](docs/PROJECT-SETUP.md) | Human App/Preview setup and exact isolated proof commands |
 | [Personal Project verification](docs/PROJECT-VERIFICATION.md) | Phase order and receipts for issue #17 |
 
 ## Current status
 
-The repository contains the product foundation, a small public demo, and the
-first private sign-in and access feature. The demo still reads one synthetic row
+The repository contains the product foundation, a small public demo, private
+sign-in and access, and Personal Projects. The demo still reads one synthetic row
 from Supabase and stays public. GitHub sign-in, approval, revocation, and the
 protected welcome and membership pages are separate from it. See the
 [access setup guide](docs/ACCESS-SETUP.md), [access verification](docs/ACCESS-VERIFICATION.md),
 and [progress](docs/PROGRESS.md).
 
-Issue #17 adds private Personal Project connection, publication, connection
-checks, Community reading, owner Edit/Delete, and Instructor Hide/Restore.
+Issue #17 merged through [PR #18](https://github.com/vibies-club/vibies/pull/18).
+It adds private Personal Project connection, publication, connection checks,
+Community reading, owner Edit/Delete, and Instructor Hide/Restore.
 The [project proof record](docs/PROJECT-VERIFICATION.md) lists local and live
-receipts in the approved stage order, plus the current review status.
+receipts in the approved stage order, plus the Member review and merge receipt.
+
+[PR #30](https://github.com/vibies-club/vibies/pull/30) is ready for Member review
+of automatic main database migrations and feature Preview cleanup. Production
+deployment and runtime verification remain pending. See
+[Database deployment](docs/DATABASE-DEPLOYMENT.md) for the proof and rollout steps.
 
 ## Run the demo locally
 

@@ -244,9 +244,10 @@ product features add more risk and decisions.
 Class Project. It contains synthetic data only. It adds no authentication,
 write feature, ORM, GitHub integration, or real product data. The `anon` role
 can select the demo row and cannot write. The `authenticated` role receives no
-demo access while issue #5 remains pending. Humans supply public configuration
-locally and in Vercel. This decision does not define the full Vibies product or
-its future production data model.
+demo access; private access was outside issue #13's scope and was later
+implemented by [D-014](#d-014-use-direct-github-oauth-and-a-private-database-api).
+Humans supply public configuration locally and in Vercel. This decision does not
+define the full Vibies product or its future production data model.
 
 **Related documents:** [Demo data model](DATA-MODEL.md),
 [Supabase setup](SUPABASE-SETUP.md), and [progress](PROGRESS.md).

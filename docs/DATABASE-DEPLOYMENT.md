@@ -23,8 +23,8 @@ functions until the old app no longer needs them.
 
 For the initial rollout, PR #18 merged after Member review; this automation
 follow-up has a separate review. Production is ready only after both merge,
-the migration deployment passes, and the one-time Production setup is verified. The owner requested
-automatic feature Preview cleanup at merge; it does not wait for Production
+the migration deployment passes, and the one-time Production setup is verified.
+The owner requested automatic feature Preview cleanup at merge; it does not wait for Production
 verification. Complete the needed Preview proof before merging. Do not treat an
 early Vercel success as database proof.
 
@@ -163,8 +163,8 @@ define the checks. Status is recorded separately for each boundary:
 | Required GitHub migration check | [PASS after explicit owner approval](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922): main requires `migration-check`, `app-check`, and `links`, bound to GitHub Actions. One approving Member review and administrator enforcement are retained. |
 | Main deployment | Pending PR #30's reviewed merge and provider deployment. The Preview result does not prove Production migration or runtime setup. |
 
-The final local review found no remaining code or documentation defect. A scan
-of all 14 changed files found no environment files, private keys, live token
+The implementation review at `17ecba5` found no remaining code defect. A scan
+of its 14 changed files found no environment files, private keys, live token
 patterns, or non-loopback database connection literals. The two new SQL snapshots
 retain their source's separator blank line after removing `commit;`; Git's
 blank-at-EOF warning is intentional so the snapshot comparison remains exact.

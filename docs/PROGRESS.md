@@ -14,12 +14,12 @@ The open-source readiness work from issue #8 merged through PR #9 on
 - The repository is public at `vibies-club/vibies` under the Apache
   License 2.0.
 - Main is protected: every change arrives through a PR with one approving
-  review and passing `links` and `app-check` checks, and only the instructor can push or
-  merge. The protection applies to the instructor too.
+  Member review and passing `links`, `app-check`, and `migration-check` checks.
+  Only the Instructor merges. The protection applies to the Instructor too.
+  The [verified settings](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922)
+  record the added migration requirement.
 - The reviewers team holds Write access, the organization requires 2FA, and
   members cannot create repositories.
-- Seven member invitations are pending. Accepting one joins the reviewers
-  team.
 
 ## Product status
 
@@ -53,30 +53,26 @@ Issue #5 merged through [PR #16](https://github.com/vibies-club/vibies/pull/16).
 GitHub sign-in, private access, Instructor membership management, and live access
 receipts are in [Access verification](ACCESS-VERIFICATION.md).
 
-Issue #17 is in draft implementation on `feature/personal-projects-17`, based on
-main `39fda5a`. The [approved issue](https://github.com/vibies-club/vibies/issues/17)
-now points to the interview plan, required Skeptic pass, and explicit plan
-amendments. [D-015](DECISIONS.md#d-015-share-member-written-personal-projects-with-checked-repository-access)
-was committed before application code.
+Issue #17 merged through [PR #18](https://github.com/vibies-club/vibies/pull/18)
+on 2026-09-10 UTC at `5e55642`, after Scout approved the completed implementation.
+It adds Connect, Publish, Check connection, Community reading, owner Edit/Delete,
+and Instructor Hide/Restore. All P1 to P16 receipts and the approved stage order
+are in [Project verification](PROJECT-VERIFICATION.md).
 
-The first stage implements Connect, Publish, Check connection, and private
-Community reading. The [project proof record](PROJECT-VERIFICATION.md) lists the
-actual local results and hosted setup and live receipts. The isolated
-database, Preview, OAuth sign-in, and GitHub App are configured. Guide signed in
-and approved Builder and Scout. Live receipts now show Member access, a private
-repository in the picker, publication and onboarding, Scout's Community list,
-Guide's list and direct read, and signed-out denial. Scout's direct read is
-human-confirmed. Selected-access loss preserves publication and onboarding and
-removes the project from shared reads. Builder and Scout confirmed restoration
-of the original project; Guide's list and original direct URL also pass. The
-first-stage proof gate is complete.
+Issue #29 adds automatic main database migrations and feature Preview cleanup.
+[PR #30](https://github.com/vibies-club/vibies/pull/30) targets main and is ready
+for Member review. Local and CI migration proof and the native Supabase Preview
+deployment pass. Automatic Preview branching stays on, with limit 3.
+[Database deployment](DATABASE-DEPLOYMENT.md) owns the setup and receipts.
+
+The issue #17 Preview database was removed automatically after merge. The legacy
+`access-review-5` was deleted separately with the owner's explicit approval.
+Main was retained. These [cleanup receipts](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922)
+do not establish full Production readiness.
 
 ## Next step
 
-All issue #17 proof rows now have receipts. Edit/Delete pass local proof and
-Builder's live confirmation. Instructor Hide/Restore and rejection of an old
-Restore form pass in Guide's live session. The project was left Visible. The
-owner-approved version fix passes Standards and Spec review.
-
-[Draft PR #18](https://github.com/vibies-club/vibies/pull/18) is ready for the
-required Member review. Only the Instructor merges.
+Obtain a Member review of PR #30. Only the Instructor merges. After that reviewed
+merge, verify the native Production deployment, main's migration history,
+Production runtime setup, and deletion of PR #30's ephemeral Preview. Those
+post-merge checks remain pending in the deployment guide.

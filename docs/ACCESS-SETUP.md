@@ -8,6 +8,11 @@ Use a clean staging database and privacy-safe test accounts first. Never put a
 credential, real name, contact detail, or private recovery reason in this
 repository, a command transcript, an issue, or a PR.
 
+For main and GitHub-linked Previews, use [Database deployment](DATABASE-DEPLOYMENT.md)
+to apply the schema. The manual SQL application in step 2 is for a separate
+staging proof. Runtime login, TLS, OAuth, and Instructor setup remain one-time
+environment setup after the migrations pass.
+
 ## 1. Inspect the staging database
 
 In the Supabase SQL Editor, confirm that the private schema and runtime role do
