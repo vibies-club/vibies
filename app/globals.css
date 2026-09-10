@@ -18,3 +18,21 @@ li { margin: 10px 0; }
 code { font-size: 12px; }
 a:focus-visible { outline: 3px solid #49793b; outline-offset: 5px; }
 @media (max-width: 440px) { main { width: calc(100% - 32px); } h1 { letter-spacing: -1px; } }
+button, .button { display: inline-block; font: inherit; font-weight: 700; background: #38582b; color: #fff; border: 1px solid #38582b; border-radius: 6px; padding: 12px 18px; cursor: pointer; text-decoration: none; }
+button.secondary, .button.secondary { color: #38582b; background: #fff; }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid #49793b; outline-offset: 4px; }
+.access header nav a, header > a:not(:first-child) { font-size: 16px; letter-spacing: normal; }
+.access h1 { font-size: clamp(36px, 6vw, 60px); }
+.access p { line-height: 1.6; }
+.access form { margin: 18px 0; }
+.access label { display: block; font-weight: 700; margin: 12px 0 8px; }
+.access input:not([type=hidden], [type=checkbox]) { display: block; max-width: 100%; width: 320px; font: inherit; padding: 12px; border: 1px solid #727d6b; border-radius: 4px; margin-bottom: 16px; }
+.access .confirmation { font-weight: 400; }
+.access input[type=checkbox] { width: 20px; height: 20px; vertical-align: middle; }
+.access .hint { font-size: 14px; color: #535d50; margin-top: 24px; }
+.access .privacy { padding: 18px; background: #edf3e7; border-left: 3px solid #49793b; }
+.access [role=status] { padding: 16px; border: 1px solid #727d6b; border-radius: 4px; }
+.members article { margin: 16px 0 28px; }
+.members h2 { margin-top: 40px; }
+.members h3 { font-size: 22px; margin-top: 0; }
+summary { cursor: pointer; text-decoration: underline; padding: 12px 0; }

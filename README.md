@@ -39,14 +39,17 @@ definition instead of creating a different version of it.
 | [Progress](docs/PROGRESS.md) | The current development snapshot and immediate next step |
 | [Roadmap](docs/ROADMAP.md) | The `Now`, `Next`, and `Later` sequence |
 | [Supabase setup](docs/SUPABASE-SETUP.md) | Human setup, safety checks, local verification, and Vercel deployment |
+| [Access setup](docs/ACCESS-SETUP.md) | Human database, GitHub OAuth, Instructor, recovery, and deployment setup |
+| [Access verification](docs/ACCESS-VERIFICATION.md) | Skeptic findings and evidence for issue #14 checks A1 through A16 |
 
 ## Current status
 
-The repository contains the product foundation and a small public demo. The demo
-reads one synthetic row from Supabase. It does not use real Personal Projects or
-Class Projects, authentication, writes, repository import, or synchronization.
-See the [Supabase setup guide](docs/SUPABASE-SETUP.md), the
-[demo data model](docs/DATA-MODEL.md), and [progress](docs/PROGRESS.md).
+The repository contains the product foundation, a small public demo, and the
+first private sign-in and access feature. The demo still reads one synthetic row
+from Supabase and stays public. GitHub sign-in, approval, revocation, and the
+protected welcome and membership pages are separate from it. See the
+[access setup guide](docs/ACCESS-SETUP.md), [access verification](docs/ACCESS-VERIFICATION.md),
+and [progress](docs/PROGRESS.md).
 
 ## Run the demo locally
 
@@ -59,6 +62,7 @@ npm run dev
 ```
 
 Open `http://localhost:3000`. The root path redirects to `/demo`.
+The demo links to `/sign-in` for private Community access.
 
 Run the local checks with:
 
@@ -68,6 +72,9 @@ npm test
 npm run build
 npm start
 ```
+
+The access database and HTTP checks need isolated local fixtures. Run them with
+the commands in the [access setup guide](docs/ACCESS-SETUP.md).
 
 The live Supabase check is a separate human-run command because it needs the
 values in `.env.local`:
@@ -82,7 +89,8 @@ Vibies is invite-only. GitHub authentication proves identity, but a prospective
 member also needs instructor approval. The sole instructor's access is
 pre-established when the private Community is created. Before joining, read the
 [community rules](RULES.md) to learn how we build, share feedback, and keep the
-community safe.
+community safe. The human owner follows the [access setup guide](docs/ACCESS-SETUP.md)
+before opening sign-in.
 
 ## License
 

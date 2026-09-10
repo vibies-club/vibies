@@ -27,9 +27,9 @@ approval cannot enter or browse the Community as a Member.
 
 The sole Instructor also authenticates with GitHub, but Instructor access is
 pre-established when the private Community is created. The Instructor does not
-approve themselves and does not occupy one of the seven Member places. How that
-initial Instructor access is technically provisioned is outside this
-documentation-only foundation.
+approve themselves and does not occupy one of the seven Member places. The
+deployment owner designates this account before sign-in opens. The first visitor
+cannot become Instructor.
 
 The Instructor may revoke Membership under the [community rules](../RULES.md).
 The person then becomes a Former Member: they retain the Member Role, project
@@ -40,6 +40,43 @@ Former Member's Projects, Comments, or Feedback. Those remain subject to the
 separate moderation and deletion rules. Reapproval fills an available Member
 place and restores access to the same ownership, authorship, and onboarding
 milestone.
+
+The Instructor membership screen separates unapproved accounts, active Members,
+and revoked Members. It shows the active count out of seven. Only the Instructor
+can read its private identity details or perform approval, revocation, and
+dismissal actions. Approval records the Member-agreed Nickname. Revocation needs
+confirmation and blocks the next protected request or action. Dismissal removes
+only an unapproved entry; a later successful sign-in may create it again.
+
+Instructor recovery is an owner-run procedure. The owner verifies the Instructor
+through an existing trusted channel, records a private reason, and designates a
+separate replacement account. Recovery invalidates the old Instructor's
+sessions, preserves one Instructor, and does not change the Member count. A
+Member account cannot become the replacement through this procedure. Account
+transfer and self-service role transfer are outside this feature.
+
+## Sign-in and sessions
+
+A successful GitHub sign-in identifies an account by its stable GitHub account
+identifier. A changed GitHub username keeps the same access. A different account
+does not inherit approval. The first successful sign-in for an unknown account
+creates one unapproved entry. Repeated sign-ins reuse it.
+
+An authenticated person without approval sees an access-denied page with a
+sign-out action. Approved Members may open a minimal welcome page while
+onboarding is incomplete. The Instructor can also open membership administration.
+Every signed-in page provides sign-out.
+
+Private access expires 24 hours after sign-in. Sign-out ends the current browser
+session without changing Membership. Each protected request and action checks
+the current session and access status, so revocation takes effect on the next
+one. A cancelled sign-in returns to sign-in. Authentication and membership
+lookup failures deny access and show a safe retry without exposing internal
+details or claiming the person is revoked.
+
+One browser session may start sign-in 10 times in 10 minutes. Further starts wait
+until the limit permits another attempt. This is repeated-click protection. It
+is not complete abuse prevention.
 
 ## Member journey
 
@@ -141,28 +178,39 @@ deleted Project no longer counts toward the owner's limit.
 
 ## Privacy boundaries
 
-- Only Vibies nicknames are displayed as identity.
-- GitHub usernames, avatars, and personal details remain private.
+- Member-facing pages display only Vibies nicknames as identity.
+- The Instructor membership screen may show a GitHub username and stable account
+  identifier only to identify an account for an access decision.
+- Member-facing pages do not show GitHub account details.
+- Profile names, avatars, email addresses, and biographies are not imported or
+  stored. Authentication responses are discarded after the stable identifier and
+  current GitHub username are projected for access management.
 - Repository access is limited to selected repositories and metadata only.
 - Source files and README contents are never imported.
 - Real names, avatars, secrets, tokens, and installation IDs do not belong in
   product records or this documentation.
+
+The Instructor checks an agreed Nickname for real names or contact information
+before approval. Automatic validation follows the canonical
+[Nickname rules](DOMAIN.md#people-and-access) and cannot identify every real
+name.
 
 Behavioral rules about personal information and credentials are defined in the
 [community rules](../RULES.md).
 
 ## Out of scope
 
-This knowledge foundation does not include:
+The first sign-in and access feature does not include:
 
-- application code, user interfaces, APIs, or database schemas;
-- real Member, Project, Comment, or Feedback records;
-- GitHub App creation or configuration;
-- authentication or synchronization implementation;
+- real Project, Comment, or Feedback records;
+- GitHub repository App creation or configuration;
 - source-code or README importing;
 - automatic sync or webhooks;
 - threads, reactions, mentions, or notifications;
-- real names, avatars, secrets, tokens, or installation IDs.
+- real names, avatars, secrets, tokens, or installation IDs;
+- membership requests, nickname editing, or account transfers;
+- Personal Project, Class Project, Comment, Feedback, or repository features;
+- stronger abuse protection beyond the browser sign-in limit.
 
 The Class Project lifecycle authority and individual Comment or Feedback edit
 and delete operations are also deliberately undecided. They require later

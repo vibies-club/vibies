@@ -18,8 +18,10 @@ terms instead of creating alternative definitions.
 | **Member** | A User with the Member Role who owns Personal Projects and collaborates on the Class Project. An approved Member occupies one of seven active Member places. |
 | **Former Member** | A User who retains the Member Role, project ownership, content authorship, and onboarding milestone after Membership is revoked, but has no Community access or owner-action permission. A Former Member does not occupy an active Member place. |
 | **Membership** | Instructor-controlled Member access with `Approved` or `Revoked` status. Approval fills an available Member place and grants an authenticated Member access; revocation removes access and opens that place. Authentication alone is not Membership. |
-| **GitHub Account** | The external identity used for authentication. Its username, avatar, and personal details are not displayed in Vibies. |
-| **Nickname** | The only User identity displayed inside the Community. |
+| **Access entry** | The private account-matching record created after a first successful sign-in. Before approval it is unapproved and has no Membership. Repeated sign-ins with the same stable GitHub account identifier reuse it. The Instructor may dismiss an unapproved entry. |
+| **GitHub Account** | The external identity used for authentication. Its stable identifier controls matching. Its current username is private and is visible only to the Instructor for access decisions. A profile name, avatar, email address, or biography is not imported. |
+| **Nickname** | The only identity displayed on Member-facing pages. The Instructor records the Member-agreed value during approval. Outer ASCII spaces are trimmed. It must contain 2 through 30 Unicode code points made from Unicode letters (including letter numbers), Unicode decimal digits, spaces, hyphens, or underscores. It is unique without regard to letter case and remains reserved after revocation. |
+| **Session** | Opaque browser access created after successful GitHub authentication. It expires 24 hours after sign-in, ends in that browser on sign-out, and never replaces a current Membership or Instructor check. |
 | **Onboarding completion** | The permanent Member milestone reached by publishing a first Personal Project. It gates Comments and Feedback, but not browsing. |
 
 ## Projects and repositories
@@ -62,6 +64,8 @@ it is not a fourth state.
 - Community `has` User.
 - User `has` Role: Instructor or Member.
 - User `authenticates_with` GitHub Account.
+- GitHub Account `matches` Access entry by stable identifier.
+- Session `authenticates` Access entry.
 - Member access is `governed_by` Membership.
 - Instructor `approves_or_revokes` Membership.
 - Member `owns` Personal Project.
@@ -86,6 +90,27 @@ it is not a fourth state.
 - Member access requires successful GitHub authentication and Instructor-approved
   Membership. Instructor access is pre-established separately and still requires
   GitHub authentication.
+- The deployment owner designates exactly one Instructor before sign-in opens.
+  The first visitor cannot become Instructor, and the Instructor occupies no
+  Member place.
+- Instructor recovery requires a separately verified, non-Member replacement
+  account. It preserves one Instructor and the active Member count, and removes
+  old-account access on the next protected request or action.
+- A successful first sign-in creates one unapproved Access entry. Authentication
+  alone creates no Membership. Dismissal applies only to an unapproved entry.
+- Approval or reapproval, capacity enforcement, and Nickname reservation succeed
+  or fail together. Competing approvals cannot create an eighth active Member,
+  and repeated submissions create no duplicate Membership.
+- A revoked Membership keeps its Nickname, Role, ownership, authorship, content
+  states, and onboarding completion.
+- Only the Instructor can view private GitHub account details in access
+  management. Member-facing pages show Nicknames only. Profile names, avatars,
+  email addresses, and biographies are not stored.
+- A Session has an absolute 24-hour lifetime. Every protected request and action
+  checks the current access status. Sign-out ends only the current browser's
+  Session and does not change Membership.
+- One browser session may start sign-in 10 times in 10 minutes. This limit does
+  not define complete abuse prevention.
 - Onboarding completion changes only once, when a Member first publishes a
   Personal Project. It remains complete afterward.
 - A Member may browse before onboarding is complete but may not author Comments
@@ -120,6 +145,8 @@ flowchart LR
     Role -->|can be| Instructor["Instructor"]
     Role -->|can be| Member["Member"]
     User -->|authenticates_with| GitHubAccount["GitHub Account"]
+    GitHubAccount -->|matches by stable identifier| AccessEntry["Access entry"]
+    Session["Session: 24 hours"] -->|authenticates| AccessEntry
     Member -->|access governed_by| Membership["Membership: Approved or Revoked"]
     Instructor -->|approves or revokes| Membership
 

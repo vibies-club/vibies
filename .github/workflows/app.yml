@@ -12,6 +12,18 @@ jobs:
   app-check:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: vibies_access_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,4 +33,29 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - run: npm run test:access
+        env:
+          VIBIES_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/vibies_access_test
       - run: npm run build
+      - name: Check access through the built server
+        env:
+          VIBIES_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/vibies_access_web_test
+          VIBIES_TEST_APP_ORIGIN: http://127.0.0.1:3105
+          VIBIES_APP_ORIGIN: http://127.0.0.1:3105
+          VIBIES_DATABASE_URL: postgresql://vibies_web_test@127.0.0.1:5432/vibies_access_web_test
+          VIBIES_GITHUB_CLIENT_ID: fixture-client
+          VIBIES_GITHUB_CLIENT_SECRET: fixture-secret
+          PORT: 3105
+        run: |
+          node --input-type=module <<'JS'
+          import postgres from 'postgres';
+          const sql = postgres('postgresql://postgres@127.0.0.1:5432/postgres');
+          try { await sql.unsafe('create database vibies_access_web_test'); }
+          finally { await sql.end(); }
+          JS
+          npm run check:access-web -- --prepare
+          npm start &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          curl --fail --silent --output /dev/null --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:3105/demo
+          npm run check:access-web

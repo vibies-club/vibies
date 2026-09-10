@@ -1,12 +1,16 @@
 import { readDemoProject } from "../../lib/supabase";
+import { cookies } from "next/headers";
+import { cookieName } from "../../lib/access";
+import { SignOut } from "../access-shell";
 
 export const dynamic = "force-dynamic";
 
 export default async function DemoPage() {
   const state = await readDemoProject();
+  const signedIn = (await cookies()).has(cookieName("session"));
   return (
     <main>
-      <header><a href="/demo" aria-label="Vibies demo home">vibies<span>.</span></a><span className="label">CLASS DEMO</span></header>
+      <header><a href="/demo" aria-label="Vibies demo home">vibies<span>.</span></a><span className="label">CLASS DEMO</span>{signedIn ? <SignOut /> : <a href="/sign-in">Sign in</a>}</header>
       <section aria-labelledby="page-title">
         <p className="eyebrow">Built together. Stored for real.</p>
         <h1 id="page-title">A project with<br />a little memory.</h1>

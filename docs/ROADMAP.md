@@ -8,22 +8,25 @@ chosen.
 
 ## Now
 
-- Perform the human review of the validated Issue #6 knowledge foundation.
-- Accept and merge the documentation when it matches the team's agreement.
-- Close Issue #6 after the accepted documents are on the default branch.
+- Build issue #5 on `feature/sign-in-access-5` from the accepted issue #14
+  specification and approved implementation plan.
+- Prove the implementation against checks A1 through A16 in
+  [Access verification](ACCESS-VERIFICATION.md).
+- Open one PR for Member review after the six merge-gate checks pass. The
+  Instructor merges it.
 
 ## Next
 
-- Choose the first product feature only after the knowledge foundation is
-  accepted.
-- Define that feature's purpose, boundaries, actors, success behavior, failure
-  behavior, and acceptance checks using the existing product vocabulary.
+- Choose the first Personal Project feature after access is merged and verified.
+- Define its purpose, boundaries, actors, success behavior, failure behavior,
+  and acceptance checks using the existing product vocabulary.
 - Resolve Class Project lifecycle authority or individual Comment and Feedback
   edit/delete behavior before choosing a feature that depends on either one.
 - Record any new accepted product decision before implementation.
 
 ## Later
 
-Later work is intentionally uncommitted. Application features, integration
-choices, and technology decisions will be added only through future approved
-planning. This issue does not select them.
+Later work is intentionally uncommitted. Repository connection, project
+publishing, discussion, Feedback, stronger sign-in abuse protection, nickname
+editing, account transfer, and other product features need their own approved
+plan before implementation.
