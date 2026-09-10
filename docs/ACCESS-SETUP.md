@@ -273,9 +273,11 @@ merges. Configure and verify Production only after that reviewed merge.
 
 ## 9. Move the approved change to Production, then remove Preview
 
-Keep the legacy unlinked `access-review-5` until the Instructor has merged the
-reviewed PR and the Production checks below pass. Linked ephemeral feature
-Previews now follow the owner's automatic cleanup decision: they are deleted
+The owner authorized removal of the legacy unlinked `access-review-5` after
+confirming Builder's Production profile access. It was deleted after PR #18
+merged on 2026-09-10 UTC. Main was retained. This confirms the authorized cleanup;
+the full Production checks below remain separate. Linked ephemeral feature
+Previews follow the owner's automatic cleanup decision: they are deleted
 at PR merge or close. [Database deployment](DATABASE-DEPLOYMENT.md) owns
 the automatic migration setup, required checks, initial rollout order, and
 failure recovery. Automation starts after its separate setup PR merges.
@@ -298,6 +300,6 @@ failure recovery. Automation starts after its separate setup PR merges.
    unapproved and signed-out denial, sign-out, and the public demo. Confirm that
    Production connects to the main database and no required deployment still
    uses the Preview branch. Record dated results without private identifiers.
-5. Only after these checks pass, remove `access-review-5` through Branching.
-   Review the deletion warning at that time. Deletion loses branch-only data;
-   leave the branch intact if any required record or verification is missing.
+5. For any other unlinked staging branch, obtain the owner's explicit cleanup
+   decision before deletion. Deletion loses branch-only data. Record its removal
+   and the retained main branch in [Database deployment](DATABASE-DEPLOYMENT.md).

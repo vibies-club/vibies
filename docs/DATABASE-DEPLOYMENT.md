@@ -21,9 +21,9 @@ already deployed. When a new app requires new schema, merge its database-only PR
 first, wait for successful database deployment, then merge the app PR. Keep old
 functions until the old app no longer needs them.
 
-For the initial rollout, PR #18 and the automation follow-up have separate
-reviews. Production is ready only after both merge, the migration deployment
-passes, and the one-time Production setup is verified. The owner requested
+For the initial rollout, PR #18 merged after Member review; this automation
+follow-up has a separate review. Production is ready only after both merge,
+the migration deployment passes, and the one-time Production setup is verified. The owner requested
 automatic feature Preview cleanup at merge; it does not wait for Production
 verification. Complete the needed Preview proof before merging. Do not treat an
 early Vercel success as database proof.
@@ -70,11 +70,10 @@ npm run check:database-migrations
 supabase stop --no-backup
 ```
 
-The `migration-check` GitHub check runs these commands. After PR #18 merges,
-require it alongside the existing app and documentation checks before merging
-the automation follow-up or later database changes. Requiring it sooner would
-block PR #18, which does not contain this new workflow. A missing fixture or
-failed command is a failure, never a skipped proof.
+The `migration-check` GitHub check runs these commands. It is required on main
+alongside `app-check` and `links`, with one Member approval still required.
+The owner approved this rule after PR #18 merged. A missing fixture or failed
+command is a failure, never a skipped proof.
 
 The native check applies the full migration chain, verifies an empty second
 deployment, and upgrades the pre-Personal-Projects schema from commit `39fda5a`
@@ -104,7 +103,7 @@ GitHub connection for the intended repository and set:
 | Supabase changes only | On |
 
 Review the project and branch on the provider page before saving. Keep the
-existing isolated Preview and Vercel integration unchanged. The owner connected
+existing Vercel integration unchanged. The owner connected
 the integration and chose to keep automatic Preview branches on. New PRs with
 Supabase changes also receive a native Preview migration check. Production
 deployment works on all Supabase plans; automatic Preview branches require Pro
@@ -124,10 +123,10 @@ does not wait for a successful Production deployment and branch data does not
 move to main. After merge, record the deleted feature branch and the retained
 main branch from the provider's branch list. Until then, mark deletion pending.
 
-The existing issue #17 Preview has the correct GitHub branch association and is
-ephemeral. The older `access-review-5` has no GitHub association, so it needs
-separate one-time reconciliation under [Access setup](ACCESS-SETUP.md). Do not
-assume that an unlinked legacy database will be removed automatically.
+The issue #17 Preview was removed automatically after PR #18 merged. The older
+unlinked `access-review-5` was removed separately with the owner's explicit
+approval under [Access setup](ACCESS-SETUP.md). Main was retained after both
+deletions. Do not assume that an unlinked database will be removed automatically.
 
 ## If deployment fails
 
@@ -157,11 +156,12 @@ define the checks. Status is recorded separately for each boundary:
 | App and documentation checks | Local typecheck, 24 offline tests, clean build, and 88 relative file/directory links in changed docs PASS on Node.js 24.15.0. [App CI](https://github.com/vibies-club/vibies/actions/runs/34533955722/job/103061076048), [documentation CI including fragments](https://github.com/vibies-club/vibies/actions/runs/34533955646/job/103061075470), and [Vercel build](https://vercel.com/beta-momo/vibies/8SjaKntFdP5DqEgPNrPiMydJM1n7) PASS for code commit `17ecba5`. Initial attempts used the wrong npm runtime and an external node_modules symlink; both setup errors were corrected before the passing local runs. Issue #17 receipts remain in [PROJECT-VERIFICATION.md](PROJECT-VERIFICATION.md). |
 | Clean GitHub migration runner | [PASS](https://github.com/vibies-club/vibies/actions/runs/34533955698/job/103061075368) for `17ecba5`: installation, snapshot fixture, history comparison, cold native database start, complete native proof, and database cleanup all succeeded within the 15-minute limit. |
 | Native GitHub integration configuration | PASS on 2026-09-10 UTC: the owner connected the integration, and the provider page shows main Production, repository `vibies-club/vibies`, directory `.`, production deployment on, and branch `main`. The owner chose to keep automatic Preview branching on, with limit 3 and Supabase-changes-only on. The earlier automatic approval block is resolved by the owner's setup. |
-| Native Supabase Preview migration | [CANCELLED, not a pass](https://github.com/vibies-club/vibies/pull/30/checks?check_run_id=103061071993): the provider reported that the maximum concurrent branch count was reached. The limit remains 3. After #18 merges and its linked Preview is removed, retarget [PR #30](https://github.com/vibies-club/vibies/pull/30) to main and rerun the provider check. |
-| Feature cleanup configuration | READ on 2026-09-10 UTC: `personal-projects-review-17` is non-default, non-persistent, and linked to `feature/personal-projects-17`; main is the default branch. Native lifecycle documentation confirms cleanup on PR merge or close. |
-| Feature cleanup result | Pending the Instructor's merge. No branch deletion is claimed as completed. The unlinked legacy `access-review-5` remains outside automatic cleanup. |
-| Required GitHub migration check | The first CI run passes. Adding the requirement is pending PR #18 merge, so its current review is not blocked by a workflow it does not contain. |
-| Main deployment | Pending the Instructor's reviewed merge. No production migration has been applied by this task. |
+| Native Supabase Preview migration | [PASS](https://github.com/vibies-club/vibies/pull/30/checks?check_run_id=103065754495) for `6b136d7` on 2026-09-10 UTC. The hosted migration page showed exactly `20260910065142`, `20260910220000`, and `20260910220001`; branch status was `FUNCTIONS_DEPLOYED`. The earlier branch-limit cancellation and skipped checks were not passes. After cleanup, reopening the same PR retried native branch creation successfully, with limit 3 unchanged. |
+| Feature cleanup configuration | READ on 2026-09-10 UTC: PR #30's native Preview matches `feature/database-auto-deploy-29`, is linked to PR #30, and is non-default, non-persistent, with no copied main data. Main remains default. |
+| Feature cleanup result | [PASS after PR #18 merge](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922) at `5e55642`, 21:59:40 UTC: a native metadata read showed `personal-projects-review-17` absent and main retained. No manual delete was used for that linked feature Preview. PR #30's own removal remains pending its merge or close. |
+| Legacy Preview cleanup | [PASS with explicit owner approval](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922): the owner confirmed Builder's Production profile access and requested removal of `access-review-5`. The native CLI returned `Deleted preview branch`; the next list contained only main. This is separate from automatic cleanup and full Production acceptance. |
+| Required GitHub migration check | [PASS after explicit owner approval](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922): main requires `migration-check`, `app-check`, and `links`, bound to GitHub Actions. One approving Member review and administrator enforcement are retained. |
+| Main deployment | Pending PR #30's reviewed merge and provider deployment. The Preview result does not prove Production migration or runtime setup. |
 
 The final local review found no remaining code or documentation defect. A scan
 of all 14 changed files found no environment files, private keys, live token

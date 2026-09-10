@@ -422,4 +422,8 @@ Previews use the native ephemeral lifecycle and the matching GitHub branch, so
 Supabase deletes them after PR merge or close. The owner requested this to end
 unused branch compute charges. Main is retained. Preview proof must finish
 before merge; deletion does not wait for a successful Production deployment.
-Legacy unlinked branches need separate reconciliation.
+Legacy unlinked branches need separate reconciliation. After PR #18 merged,
+the owner explicitly authorized deleting `access-review-5` and confirmed
+Builder's Production profile access. The [cleanup receipt](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922)
+records its deletion and retained main. Full Production verification remains
+separate from that access confirmation.
