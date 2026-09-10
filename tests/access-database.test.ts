@@ -11,7 +11,9 @@ function hash(label: string) {
 }
 
 if (!databaseUrl) {
-  test("access database checks", { skip: "VIBIES_TEST_DATABASE_URL is not set" }, () => {});
+  test("access database checks require an isolated fixture", () => {
+    assert.fail("Set VIBIES_TEST_DATABASE_URL to the loopback vibies_access_test database");
+  });
 } else {
   const target = new URL(databaseUrl);
   const database = target.pathname.slice(1);
@@ -69,6 +71,7 @@ if (!databaseUrl) {
       await migrationSql.unsafe(migration);
       await sql.unsafe(`
         truncate table
+          vibies_private.personal_projects,
           vibies_private.sessions,
           vibies_private.sign_in_flows,
           vibies_private.sign_in_attempts,

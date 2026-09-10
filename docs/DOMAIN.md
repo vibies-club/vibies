@@ -29,12 +29,14 @@ terms instead of creating alternative definitions.
 | Term | Definition |
 | --- | --- |
 | **Project** | Work shared or developed in Vibies. A Project has independent publication, connection, and moderation states. |
-| **Personal Project** | A Project owned by one Member and synchronized from that Member's selected private personal GitHub Repository. |
+| **Personal Project** | A Project owned by one Member, connected to the stable ID of that Member's selected private personal GitHub Repository, with a Member-written title, summary, and optional HTTPS demo link. |
 | **Class Project** | The separate organization-owned Project on which the Instructor and Members collaborate. It is not owned by a Member and does not count toward a Member's Personal Project limit. Its lifecycle authority is deliberately not assigned by Issue #6. |
-| **GitHub Repository** | The external metadata source from which a Project is manually synchronized. |
+| **GitHub Repository** | The external repository whose metadata proves connection eligibility. For Personal Projects, Vibies stores only its stable repository ID. |
 | **GitHub App connection** | Authorization for metadata-only access to a selected GitHub Repository. It does not allow source-file or README-content importing. |
-| **Manual sync** | An authorized User-requested refresh of repository metadata that records the time of the last completed sync. Personal Project sync authority belongs to its owner; Class Project sync authority is not yet assigned. |
-| **Deletion** | Confirmed removal of a Personal Project, its imported metadata, discussion, and Feedback. Deletion is not a project state and is different from `Archived`, `Disconnected`, and `Hidden`. |
+| **Manual sync** | A separately planned owner-requested metadata refresh. Issue #17 replaces imported Personal Project descriptions with Member-written details and does not implement Sync. Class Project sync authority remains unassigned. |
+| **Check connection** | An owner-requested, bounded GitHub metadata check. Verified restores Connected for the same stored repository and records a successful check time; confirmed loss saves Disconnected; Unknown changes nothing. |
+| **Project details** | Owner-written plain-text title (1 to 80 Unicode code points), summary (1 to 500), and optional absolute HTTPS demo URL (up to 2,048). Outer whitespace is trimmed. Cc and Cf characters are rejected, except LF in summaries after CRLF normalization. Demo URLs cannot contain embedded sign-in credentials. |
+| **Deletion** | Confirmed removal of a Personal Project, its stored repository ID and details, discussion, and Feedback. Deletion is not a project state and is different from `Archived`, `Disconnected`, and `Hidden`. |
 
 ## Participation and moderation
 
@@ -52,7 +54,7 @@ one value does not silently change either of the others.
 | Group | Values | Meaning |
 | --- | --- | --- |
 | Publication | `Draft`, `Published`, `Archived` | `Draft` has not been published. `Published` is published to the Community when the other states allow it. `Archived` is retained but no longer active. Archived is not deleted. |
-| GitHub connection | `Connected`, `Disconnected` | `Connected` has an active repository connection. `Disconnected` does not and makes the Project unavailable, without changing publication or moderation. |
+| GitHub connection | `Connected`, `Disconnected` | `Connected` means the last completed check verified repository access. Without background checks, later GitHub changes remain unknown until Publish or Check connection. `Disconnected` does not and makes the Project unavailable, without changing publication or moderation. |
 | Moderation | `Visible`, `Hidden` | `Visible` is not suppressed by moderation. `Hidden` is suppressed by the Instructor until restored, without changing publication or connection. |
 
 A Project is available to the Community exactly when it is `Published`,
@@ -70,7 +72,7 @@ it is not a fourth state.
 - Instructor `approves_or_revokes` Membership.
 - Member `owns` Personal Project.
 - Instructor and Member `collaborate_on` Class Project.
-- Project `syncs_from` GitHub Repository.
+- Personal Project `connects_to` GitHub Repository.
 - User `authors` Comment.
 - User `authors` Feedback.
 - Comment `discusses` Project.
@@ -130,7 +132,9 @@ it is not a fourth state.
 - A Member may comment on their own Personal Project but cannot submit Feedback
   on a Personal Project they own.
 - The Instructor may hide and restore moderated content but cannot rewrite it.
-- Repository synchronization is manual and metadata-only.
+- Personal Project connection checks are manual and metadata-only. Source metadata is not the shared description. See [D-015](DECISIONS.md#d-015-share-member-written-personal-projects-with-checked-repository-access).
+- One stable repository ID can belong to only one retained Personal Project. Deletion frees that connection and one owner place.
+- Member-selected HTTPS demo destinations may include GitHub Pages usernames. Application-supplied shared identity remains Nickname-only.
 - Source files and README contents never enter Vibies.
 - Only a Nickname is displayed as User identity.
 
@@ -155,7 +159,7 @@ flowchart LR
     Member -->|collaborates_on| ClassProject
     PersonalProject -->|is a| Project["Project"]
     ClassProject -->|is a| Project
-    Project -->|syncs_from| GitHubRepository["GitHub Repository"]
+    PersonalProject -->|connects_to| GitHubRepository["GitHub Repository"]
 
     User -->|authors| Comment["Comment"]
     User -->|authors| Feedback["Feedback: keep + improve"]

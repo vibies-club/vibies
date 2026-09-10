@@ -41,6 +41,8 @@ definition instead of creating a different version of it.
 | [Supabase setup](docs/SUPABASE-SETUP.md) | Human setup, safety checks, local verification, and Vercel deployment |
 | [Access setup](docs/ACCESS-SETUP.md) | Human database, GitHub OAuth, Instructor, recovery, and deployment setup |
 | [Access verification](docs/ACCESS-VERIFICATION.md) | Skeptic findings and evidence for issue #14 checks A1 through A16 |
+| [Personal Project setup](docs/PROJECT-SETUP.md) | Human App/Preview setup and exact isolated proof commands |
+| [Personal Project verification](docs/PROJECT-VERIFICATION.md) | Phase order and receipts for issue #17 |
 
 ## Current status
 
@@ -50,6 +52,12 @@ from Supabase and stays public. GitHub sign-in, approval, revocation, and the
 protected welcome and membership pages are separate from it. See the
 [access setup guide](docs/ACCESS-SETUP.md), [access verification](docs/ACCESS-VERIFICATION.md),
 and [progress](docs/PROGRESS.md).
+
+Issue #17 is in staged draft implementation. The first stage adds private
+Personal Project connection, publication, connection checks, and Community
+reading. The [project proof record](docs/PROJECT-VERIFICATION.md) lists completed
+checks and pending live setup. Edit, Delete, and Instructor Hide and Restore
+follow the first stage's live proof.
 
 ## Run the demo locally
 
@@ -73,8 +81,13 @@ npm run build
 npm start
 ```
 
-The access database and HTTP checks need isolated local fixtures. Run them with
-the commands in the [access setup guide](docs/ACCESS-SETUP.md).
+`npm test` is offline and needs no fixture database. `npm run test:access` and
+`npm run test:projects` are explicit isolated-database checks. Both fail with a
+setup message when fixtures are absent. `npm run check:access-web` needs the
+built server and its separate isolated fixtures and also fails when setup is
+missing. Run the exact commands in the
+[project setup guide](docs/PROJECT-SETUP.md#local-and-ci-commands). These tests
+never use the live Preview database.
 
 The live Supabase check is a separate human-run command because it needs the
 values in `.env.local`:

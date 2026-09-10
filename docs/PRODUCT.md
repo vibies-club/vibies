@@ -101,9 +101,23 @@ A Member connects a selected private personal GitHub Repository through a
 GitHub App. Vibies receives metadata only for repositories the Member selected.
 It does not import source files or README contents.
 
-Repository metadata changes only when the project owner requests a manual sync.
-The product displays the time of the last completed sync. A failed sync does not
-pretend that newer metadata was received.
+Shared details are a Member-written title, short summary, and optional HTTPS
+demo link. The owner can edit these fields before or after publication in every
+retained state. Community pages show the details and owner Nickname. Canonical
+field limits live in the [domain model](DOMAIN.md#projects-and-repositories).
+
+The protected `/projects` page has My projects and Community projects sections.
+Owners connect a repository at `/projects/connect`, review the Draft, and choose
+Publish on `/projects/[id]`. The Instructor can browse and moderate, but cannot
+run owner actions. An existing connection opens the existing project unchanged,
+even at the three-project limit.
+
+Connect, Publish, and Check connection verify selected metadata-only access to
+the same private personal repository. It must stay private. The owner can
+explicitly Check connection to detect lost access or restore it. The page shows
+the last successful check time. Connection is last known status; there are no
+background checks. Unknown provider failures change nothing. Manual Sync is
+outside this feature. See [D-015](DECISIONS.md#d-015-share-member-written-personal-projects-with-checked-repository-access).
 
 The Instructor and all Members collaborate on the separate, organization-owned
 Class Project. It is not owned by an individual Member. Issue #6 defines this
@@ -135,7 +149,7 @@ moderation decision. Reconnection makes it available again only if it is still
 | Capability | Authenticated prospective Member, not approved | Approved Member onboarding | Member onboarding complete | Instructor |
 | --- | --- | --- | --- | --- |
 | Enter and browse the Community | No | Yes | Yes | Yes |
-| Use the documented Personal Project workflows | No | Own projects only | Own projects only | No |
+| Run Personal Project owner workflows | No | Own projects only | Own projects only | No |
 | Publish a Personal Project | No | Own projects only | Own projects only | No |
 | Post a Comment | No | No | Yes, including on an owned project | Yes |
 | Submit Feedback | No | No | Yes, except on an owned project | Yes |
@@ -143,8 +157,9 @@ moderation decision. Reconnection makes it available again only if it is still
 | Hide or restore a Project, Comment, or Feedback | No | No | No | Yes |
 | Rewrite another person's content | No | No | No | No |
 
-For Personal Projects, the documented owner operations are connect, sync,
-publish, archive, disconnect, reconnect, and delete. For Comments and Feedback,
+For Personal Projects, issue #17 defines Connect, Publish, Edit, Check connection
+(including restoration), and confirmed Delete. Manual Sync, Archive, and
+deliberate owner Disconnect remain separate planned operations. For Comments and Feedback,
 this foundation defines authoring but does not define individual edit or delete
 operations. “Own content only” is a permission boundary for any future operation,
 not an unlisted capability.
@@ -166,14 +181,19 @@ Personal Project they own. Conduct requirements for both formats live in the
 ## Moderation, disconnection, and deletion
 
 The Instructor may hide or restore a Project, Comment, or Feedback. The original
-content is preserved unchanged, and the Instructor cannot rewrite it.
+content is preserved unchanged, and the Instructor cannot rewrite it. Minimal
+Hide and Restore controls belong on the project page. The Instructor can open a
+Hidden target to restore it, as well as available projects. Visible Draft,
+Archived, and Disconnected projects are unavailable to non-owners, including
+the Instructor. Ordinary Members can read another owner's project only when it
+is available.
 
 If GitHub access is deliberately removed or lost, the Project becomes
-`Disconnected` and unavailable. The Project and its existing metadata,
+`Disconnected` and unavailable. The Project and its stored repository ID and details,
 discussion, and Feedback remain so the connection can be restored.
 
 Deletion is different and requires confirmation from the Personal Project
-owner. It removes the Project, imported metadata, discussion, and Feedback. The
+owner. It removes the Project, its stored repository ID and details, discussion, and Feedback. The
 deleted Project no longer counts toward the owner's limit.
 
 ## Privacy boundaries
@@ -181,7 +201,10 @@ deleted Project no longer counts toward the owner's limit.
 - Member-facing pages display only Vibies nicknames as identity.
 - The Instructor membership screen may show a GitHub username and stable account
   identifier only to identify an account for an access decision.
-- Member-facing pages do not show GitHub account details.
+- Application-supplied shared content does not show GitHub account details.
+  Members may choose any valid HTTPS demo host, including GitHub Pages; the
+  chosen destination can contain a GitHub username. This explicit exception is
+  recorded in [D-015](DECISIONS.md#d-015-share-member-written-personal-projects-with-checked-repository-access).
 - Profile names, avatars, email addresses, and biographies are not imported or
   stored. Authentication responses are discarded after the stable identifier and
   current GitHub username are projected for access management.
@@ -200,17 +223,14 @@ Behavioral rules about personal information and credentials are defined in the
 
 ## Out of scope
 
-The first sign-in and access feature does not include:
-
-- real Project, Comment, or Feedback records;
-- GitHub repository App creation or configuration;
-- source-code or README importing;
-- automatic sync or webhooks;
-- threads, reactions, mentions, or notifications;
-- real names, avatars, secrets, tokens, or installation IDs;
-- membership requests, nickname editing, or account transfers;
-- Personal Project, Class Project, Comment, Feedback, or repository features;
-- stronger abuse protection beyond the browser sign-in limit.
+Issue #17 excludes Manual Sync, deliberate owner Disconnect, Archive actions,
+a full moderation screen, Comments, Feedback, Class Project lifecycle,
+source-code or README import, automatic sync, webhooks, notifications,
+repository transfer, and GitHub repository modification. Membership requests,
+Nickname editing, account transfer, and stronger sign-in abuse protection also
+remain separate work. App registration and private server configuration require
+human setup. The [progress record](PROGRESS.md) distinguishes implemented work
+from pending proof and later delivery stages.
 
 The Class Project lifecycle authority and individual Comment or Feedback edit
 and delete operations are also deliberately undecided. They require later

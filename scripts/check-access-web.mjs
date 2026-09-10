@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import postgres from "postgres";
+import { checkProjectsWeb } from "./check-projects-web.mjs";
 
 // This script uses synthetic accounts in a separate, disposable local database.
 const address = new URL(process.env.VIBIES_TEST_DATABASE_URL ?? "http://missing");
@@ -109,6 +110,7 @@ try {
     check((await get("/welcome", "member")).headers.get("location") === "/sign-in?message=expired", "sign-out invalidates the old browser session");
     const [retained] = await sql`select status from vibies_private.accounts where github_id = ${ids.member}`;
     check(retained.status === "approved", "sign-out preserves approval");
+    await checkProjectsWeb({sql, origin, check});
     console.log(`${checks} HTTP checks passed. Real GitHub and hosted Preview checks remain separate.`);
   }
 } finally { await sql.end(); }

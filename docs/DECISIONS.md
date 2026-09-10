@@ -106,6 +106,10 @@ first published project do not reset onboarding.
 
 **Status:** Accepted.
 
+**Supplemented by:** [D-015](#d-015-share-member-written-personal-projects-with-checked-repository-access),
+which replaces imported Personal Project descriptions with Member-written details
+and defines explicit connection checks for issue #17.
+
 **Decision:** Members connect selected private personal repositories through a
 GitHub App with metadata-only access. Source files and README contents are not
 imported. Metadata updates only through a manual Sync action that exposes a
@@ -356,8 +360,8 @@ remains Nickname-only. The form retains the privacy instruction because automate
 checks cannot identify every personal detail in arbitrary text or destinations.
 
 WORKFLOWS 8 and PRODUCT's feature scope include minimal Instructor Hide and
-Restore actions on the project page, including access to a retained moderation
-target for restoration. They change only moderation state and the concurrency
+Restore actions on the project page, including access to a Hidden target for
+restoration. They change only moderation state and the concurrency
 version. This makes the existing moderation promise usable when Community reads
 ship. A full moderation screen remains outside #17.
 
@@ -374,3 +378,11 @@ transfer, and GitHub repository modification remain outside this issue.
 
 **Related documents:** [Product](PRODUCT.md), [domain](DOMAIN.md), and
 [workflows](WORKFLOWS.md).
+
+**Owner clarifications on 2026-09-10:** The [implementation review answers](https://github.com/vibies-club/vibies/issues/17#issuecomment-5623179154)
+require an opaque internal account UUID as the project owner reference. The
+stable GitHub account ID remains in the access account, and project records
+reference only its internal UUID. This satisfies P13 without copying GitHub
+identity into project records. The Instructor can read available projects plus
+Hidden targets for restoration. Visible Draft, Archived, and Disconnected
+projects remain unavailable to non-owners, including the Instructor.

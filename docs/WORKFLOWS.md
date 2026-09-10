@@ -117,14 +117,25 @@ of three non-deleted Personal Projects.
 
 **Outcome:**
 
-1. The selected repository becomes the Personal Project's metadata source.
-2. The new Personal Project starts as `Draft`, `Connected`, and `Visible`.
-3. The Project counts toward the three-project limit immediately, before
+1. The owner installs or configures selected-repository access in the GitHub App,
+   returns to the protected connect page, and refreshes eligible repositories.
+   Callback parameters never prove access or ownership.
+2. A fresh server check verifies a personal User installation, selected access,
+   no suspension, matching stable owner ID, and a private repository.
+3. The owner supplies the title, summary, and optional demo link. Only the stable
+   repository ID and authored details are stored; picker names are transient.
+4. The new Personal Project starts as `Draft`, `Connected`, and `Visible`.
+5. The Project counts toward the three-project limit immediately, before
    publication.
-4. Vibies does not request or import source files or README contents.
+6. Vibies does not request or import source files or README contents.
 
 The organization-owned Class Project is not created through this workflow and
 does not count toward the limit.
+
+An existing connection opens its retained project without changing any fields,
+even when the owner has three projects. Concurrent connections cannot exceed
+three retained projects. A repository attached to another retained project
+returns a safe conflict without revealing its owner.
 
 **Failure path:** If metadata access is unavailable, the repository is not an
 eligible private personal repository, or the Member already has three
@@ -133,24 +144,10 @@ change an existing Project.
 
 ## 4. Manually sync repository metadata
 
-**Start:** A Member selects the Sync action on one of their Connected Personal
-Projects.
-
-**Actor:** Personal Project owner.
-
-**Preconditions:** The Project is non-deleted, belongs to the Member, and remains
-`Connected` to an accessible repository.
-
-**Outcome:**
-
-1. Vibies requests only the allowed repository metadata.
-2. Vibies replaces the previously imported metadata with the completed refresh.
-3. Vibies records and displays the time of that completed sync.
-4. No source file or README content is requested or imported.
-
-**Failure path:** A temporary failure leaves the prior metadata and last-sync
-time unchanged and reports that the refresh failed. If repository access has
-been lost, the Project follows the disconnection workflow instead.
+Manual Sync remains a separate planned operation. Issue #17 uses Member-written
+project details and an explicit Check connection action instead of imported
+repository descriptions. See [D-015](DECISIONS.md#d-015-share-member-written-personal-projects-with-checked-repository-access)
+and [workflow 9](#9-disconnect-or-reconnect-a-repository).
 
 ## 5. Publish or archive a Personal Project
 
@@ -164,12 +161,20 @@ must be `Connected` for publication.
 
 **Outcome — publish:**
 
-1. The publication state changes from `Draft` to `Published`.
-2. Connection and moderation states do not change.
-3. The Project becomes available only if it is also `Connected` and `Visible`.
-4. If this is the Member's first publication, onboarding completes permanently.
+1. The server route checks current ownership and runs a fresh GitHub verification,
+   including for repeated or direct Publish requests. A browser-supplied
+   verification result has no authority.
+2. The database rechecks current Session, Membership, ownership, row version, and
+   eligibility. It saves `Draft` to `Published` and first-time onboarding together.
+   A failed write rolls both changes back.
+3. Connection and moderation states do not change. A Hidden Draft can publish
+   and complete onboarding while remaining unavailable.
+4. The Project becomes available only if it is also `Connected` and `Visible`.
+5. A repeated Publish returns Already published after current access and GitHub
+   checks pass, with no stored changes. Concurrent retries run fresh checks again
+   after a version conflict; a second conflict stops with a safe retry.
 
-**Outcome — archive:**
+**Archive outcome:** This remains a separate planned action outside #17.
 
 1. The publication state changes from `Published` to `Archived`.
 2. The Project is retained but unavailable to the Community.
@@ -178,7 +183,12 @@ must be `Connected` for publication.
 
 **Failure path:** A Member cannot change another Member's Personal Project. A
 Disconnected Project cannot complete publication. Publishing never overrides an
-Instructor's `Hidden` moderation state. If a precondition fails, no state changes.
+Instructor's `Hidden` moderation state. A Disconnected Project needs a successful
+Check connection before publication. Archived, missing, and Class Projects are
+ineligible. Other failed preconditions change nothing. The accepted Q9 exception
+is confirmed GitHub access loss: it saves only Disconnected and stops publication,
+preserving publication, moderation, onboarding, and the last successful check
+time. Unknown provider failures change nothing.
 
 ## 6. Post a flat discussion Comment
 
@@ -230,7 +240,14 @@ decision, or previously hidden content is ready for review.
 
 **Actor:** Instructor.
 
-**Precondition:** The target content exists and has not been deleted.
+**Precondition:** The target content exists and has not been deleted. For Personal
+Projects in #17, the Instructor opens the project page and selects Hide or
+Restore. The Instructor can reach a Hidden target for restoration, as well as
+available projects. Visible Draft, Archived, and Disconnected projects remain
+unavailable to non-owners, including the Instructor. The action
+route and database function both check Instructor access. A Member cannot use
+these controls or a direct POST to moderate. The full moderation screen remains
+outside this issue.
 
 **Outcome — hide:** The Instructor changes the target's moderation visibility to
 hidden. For a Project, this means changing only its moderation state to `Hidden`.
@@ -249,8 +266,9 @@ Private reminders and membership enforcement follow the
 
 ## 9. Disconnect or reconnect a repository
 
-**Start:** The owner deliberately disconnects a Personal Project, GitHub access
-is lost, or the owner tries to restore access.
+**Start:** GitHub access is lost or the owner uses Check connection to verify or
+restore access. Deliberate owner Disconnect is a separate planned action outside
+#17.
 
 **Actors:** Personal Project owner; Vibies may detect lost GitHub access.
 
@@ -259,18 +277,23 @@ is lost, or the owner tries to restore access.
 1. The connection state changes to `Disconnected`.
 2. The Project becomes unavailable to the Community.
 3. Publication and moderation states do not change.
-4. The Project, imported metadata, discussion, and Feedback are retained for
+4. The Project, stored repository ID and authored details, discussion, and Feedback are retained for
    later restoration.
 
 **Outcome — reconnect:**
 
 1. The owner restores metadata-only GitHub App access to the repository.
-2. Vibies verifies that access and changes the state to `Connected`.
-3. The owner can request a new manual sync.
+2. Vibies verifies selected, metadata-only access for the same stable repository
+   ID and owner. A public repository is confirmed lost.
+3. A successful Check connection saves `Connected` and the last successful check
+   time. It preserves authored details, publication, moderation, and onboarding.
 4. The Project becomes available only if it is also `Published` and `Visible`.
 
-**Failure path:** If access cannot be verified, the Project remains
-`Disconnected` and unavailable. A Member cannot disconnect or reconnect another
+**Failure path:** A timeout, rate limit, configuration error, malformed response,
+or incomplete bounded scan is Unknown and changes nothing. A completed result
+that proves lost access saves Disconnected and preserves the last successful
+check time. A stale version stops the write, so a late response cannot overwrite
+a newer connection check or recreate a deleted project. A Member cannot disconnect or reconnect another
 Member's Project. Reconnection does not import source files or README content and
 does not override an Instructor's moderation state.
 
@@ -286,10 +309,13 @@ does not override an Instructor's moderation state.
 
 1. Vibies explains that the Project and all attached information will be removed.
 2. The Member explicitly confirms deletion.
-3. Vibies removes the Personal Project, imported repository metadata, discussion,
+3. Vibies removes the Personal Project, stored repository ID and details, discussion,
    and Feedback.
 4. The Project no longer counts toward the Member's three-project limit.
 5. If publishing this Project completed onboarding, onboarding remains complete.
+6. Deletion changes nothing on GitHub. Repeated deletion reveals no ownership
+   details. Connecting the deleted repository again creates a new Draft with a
+   new ID.
 
 Deleting the Project also removes Comments and Feedback authored by other Users
 because they belong to its discussion. It does not give the owner permission to
@@ -322,3 +348,19 @@ this workflow.
 **Failure path:** A Member account cannot become the replacement through
 recovery. A rejected recovery changes no designation or Membership. Account
 transfer requires a separate reviewed procedure.
+
+## 12. Edit Personal Project details
+
+**Actor:** Current approved owner of a retained Personal Project.
+
+**Outcome:** The owner saves a title, short summary, and optional HTTPS demo link
+before or after publication. An empty demo field removes the link. Server checks
+apply the [canonical field rules](DOMAIN.md#projects-and-repositories). Only
+these three authored fields and the concurrency version change. Publication,
+connection, moderation, ownership, and onboarding remain unchanged.
+
+**Failure path:** Invalid input, cross-origin requests, lost Membership, wrong
+ownership, a deleted project, or a version conflict make no change. Stored text
+renders as plain text. Demo links send no referrer; Vibies does not fetch, embed,
+or preview their destinations. The detail form explains the privacy rules and
+the accepted GitHub Pages destination exception.
