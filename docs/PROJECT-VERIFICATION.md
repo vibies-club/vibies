@@ -16,7 +16,8 @@ live P1/P15. Edit and Delete follow as P10 to P12. Instructor Hide and Restore
 follows as P16. The first-stage local and live receipts, including P1/P15, were
 committed in `49747ba` before Edit/Delete code. Edit/Delete now have local receipts
 below. Instructor Hide/Restore was built last and now has local receipts. The
-PR remains draft while its hosted check and final review are completed.
+PR remains draft. The final review raised the owner decision below before the
+hosted moderation check.
 
 The [owner clarifications](https://github.com/vibies-club/vibies/issues/17#issuecomment-5623179154)
 were answered on 2026-09-10. The owner chose an opaque internal account UUID for
@@ -163,6 +164,17 @@ both project rows stayed unchanged, the runtime allowlist contains 17 functions,
 and direct table access and Instructor designation remain denied. Hosted browser
 moderation proof remains pending.
 
+Final review identified that an old Instructor Restore form can restore content
+edited since the page was opened. D-015 requires version checks at protected
+writes, but the current moderation function has no expected-version argument.
+The [owner question](https://github.com/vibies-club/vibies/issues/17#issuecomment-5625343850)
+asks whether Hide/Restore must match the version displayed to the Instructor.
+The live moderation check is paused for that answer. The other review finding,
+a missing route-level Instructor check, was corrected with the existing
+`accessState()` helper. Both the route and SQL now verify the current Instructor.
+A clean build and a fresh 134-check HTTP run pass after that fix. The reviewer
+confirmed the route fix. The version decision is the remaining review finding.
+
 ## Acceptance rows
 
 | Row | Evidence and remaining work | Status |
@@ -182,7 +194,7 @@ moderation proof remains pending.
 | P13 | Database tests pass UUID backfill and stability, runtime/anonymous grant denial, and private shared projection. HTTP responses and stored rows contain no synthetic provider identity/token markers. The clean browser bundle scan passes. | Local PASS |
 | P14 | Typecheck, 24 offline tests, 10 access tests, 26 project tests, 134 HTTP assertions, clean build, 176 local links, and Mermaid render pass. The public demo remains available. | Local PASS |
 | P15 | Real Member access, eligible private selection, publication, onboarding, Community reads, signed-out denial, selected-access loss, and same-project restoration pass above. | Live PASS |
-| P16 | Database and HTTP proof pass Instructor-only Hide/Restore, generic unauthorized and cross-origin denial, reachable Hidden targets, unchanged details/timestamps/publication/connection/onboarding, same-state no-ops, and late owner-check rejection. Restored Draft, Archived, and Disconnected fixtures remain unavailable. | Local PASS |
+| P16 | Database and HTTP proof pass Instructor-only Hide/Restore, generic unauthorized and cross-origin denial, reachable Hidden targets, unchanged details/timestamps/publication/connection/onboarding, same-state no-ops, and late owner-check rejection. Restored Draft, Archived, and Disconnected fixtures remain unavailable. | Local checks pass; final review findings open |
 
 ## Merge gate
 
@@ -192,7 +204,7 @@ files or dependency changes. A scan of all 30 changed files found no environment
 files, static private keys, live-token patterns, or database passwords. The
 first stage matches the approved plan and both owner clarifications. The clean
 build passes. First-stage live Preview acceptance passes. Edit/Delete local proof passes.
-All local acceptance rows pass. The final hosted moderation check and review
-remain pending, so the merge gate is incomplete.
+Local checks pass, but the final moderation review findings and hosted check
+remain open. The merge gate is incomplete.
 No row is complete because a check was skipped. A Member review and all remaining
 proof are required before the Instructor merges.

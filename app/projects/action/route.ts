@@ -1,4 +1,4 @@
-import { database, sessionHash } from "../../../lib/access";
+import { accessState, database, sessionHash } from "../../../lib/access";
 import { allowedPost, go, safeError } from "../../../lib/access-http";
 import { projectDetails, projectForm, projectId, repositoryId } from "../../../lib/project-core";
 import { projectActor, verifyProject, type ProjectContext } from "../../../lib/projects";
@@ -30,6 +30,9 @@ export async function POST(request: Request) {
     const id = form.get("id");
     if (!projectId(id)) return safeError(404);
     if (action === "hide" || action === "restore") {
+      const access = await accessState();
+      if (access.kind === "error") return safeError();
+      if (access.kind !== "instructor") return safeError(403);
       const [row] = await database()`select vibies_private.moderate_project(${hash}, ${id}::uuid, ${action === "hide"}) as result`;
       if (row.result.kind === "forbidden") return safeError(403);
       if (row.result.kind === "restored") return go("/projects?message=restored");
