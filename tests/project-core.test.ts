@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { PROJECT_BODY_LIMIT, projectDetails, projectForm, projectId, repositoryId } from "../lib/project-core.ts";
+import { PROJECT_BODY_LIMIT, projectDetails, projectForm, projectId, projectVersion, repositoryId } from "../lib/project-core.ts";
 
 test("project details accept Unicode and HTTPS without provider identity imports", () => {
   assert.deepEqual(projectDetails("  Synthetic garden  ", "Line one\r\nLine two", ""),
@@ -29,4 +29,8 @@ test("bounded form accepts maximum Unicode details and rejects oversize and dupl
   assert.equal(projectId("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"), true);
   assert.equal(repositoryId("9007199254740992"), false);
   assert.equal(repositoryId("123"), true);
+  for (const value of ["1", "9223372036854775807"]) assert.equal(projectVersion(value), true);
+  for (const value of [null, "", "0", "-1", "01", "1.5", "1e3", "9223372036854775808", "9".repeat(100)]) {
+    assert.equal(projectVersion(value), false);
+  }
 });

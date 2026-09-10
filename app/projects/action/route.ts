@@ -1,6 +1,6 @@
 import { accessState, database, sessionHash } from "../../../lib/access";
 import { allowedPost, go, safeError } from "../../../lib/access-http";
-import { projectDetails, projectForm, projectId, repositoryId } from "../../../lib/project-core";
+import { projectDetails, projectForm, projectId, projectVersion, repositoryId } from "../../../lib/project-core";
 import { projectActor, verifyProject, type ProjectContext } from "../../../lib/projects";
 
 export async function POST(request: Request) {
@@ -33,10 +33,12 @@ export async function POST(request: Request) {
       const access = await accessState();
       if (access.kind === "error") return safeError();
       if (access.kind !== "instructor") return safeError(403);
-      const [row] = await database()`select vibies_private.moderate_project(${hash}, ${id}::uuid, ${action === "hide"}) as result`;
+      const version = form.get("version");
+      if (!projectVersion(version)) return safeError(400);
+      const [row] = await database()`select vibies_private.moderate_project(${hash}, ${id}::uuid, ${version}::bigint, ${action === "hide"}) as result`;
       if (row.result.kind === "forbidden") return safeError(403);
       if (row.result.kind === "restored") return go("/projects?message=restored");
-      return go(`/projects/${id}?message=${row.result.kind === "hidden" ? "hidden" : "error"}`);
+      return go(`/projects/${id}?message=${["hidden", "stale"].includes(row.result.kind) ? row.result.kind : "error"}`);
     }
     if (action === "edit" || action === "delete") {
       if (action === "delete" && form.get("confirm") !== "yes") return safeError(400);

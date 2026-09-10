@@ -22,6 +22,8 @@ export const projectId = (value: unknown): value is string => typeof value === "
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 export const repositoryId = (value: unknown): value is string => typeof value === "string" &&
   /^[1-9]\d{0,15}$/.test(value) && Number.isSafeInteger(Number(value));
+export const projectVersion = (value: unknown): value is string => typeof value === "string" &&
+  /^[1-9]\d{0,18}$/.test(value) && BigInt(value) <= BigInt("9223372036854775807");
 
 export async function projectForm(request: Request): Promise<URLSearchParams | 400 | 413> {
   const reader = request.body?.getReader();

@@ -386,3 +386,10 @@ reference only its internal UUID. This satisfies P13 without copying GitHub
 identity into project records. The Instructor can read available projects plus
 Hidden targets for restoration. Visible Draft, Archived, and Disconnected
 projects remain unavailable to non-owners, including the Instructor.
+
+**Moderation version answer on 2026-09-11:** The owner
+[requires review of the current version](https://github.com/vibies-club/vibies/issues/17#issuecomment-5625398735).
+Hide and Restore submit the version shown on the Instructor's project page.
+The database compares it with the current locked row and rejects any intervening
+change without a write. The Instructor then reviews the current content before
+trying again. This prevents an old Restore form from exposing unseen edits.

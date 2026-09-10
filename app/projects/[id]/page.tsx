@@ -22,7 +22,7 @@ export default async function ProjectPage({ params, searchParams }: {params:Prom
     {(item.isOwner || access.kind === "instructor") && <ProjectMessage message={message} />}
     {access.kind === "instructor" && <>
       <p>{item.moderation === "Hidden" ? "Hidden from the Community." : "Visible to the Community."}</p>
-      <ProjectAction id={item.id} action={item.moderation === "Hidden" ? "restore" : "hide"}>
+      <ProjectAction id={item.id} version={item.version} action={item.moderation === "Hidden" ? "restore" : "hide"}>
         {item.moderation === "Hidden" ? "Restore project" : "Hide project"}
       </ProjectAction>
     </>}

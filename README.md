@@ -53,11 +53,10 @@ protected welcome and membership pages are separate from it. See the
 [access setup guide](docs/ACCESS-SETUP.md), [access verification](docs/ACCESS-VERIFICATION.md),
 and [progress](docs/PROGRESS.md).
 
-Issue #17 is in staged draft implementation. The first stage adds private
-Personal Project connection, publication, connection checks, and Community
-reading. The [project proof record](docs/PROJECT-VERIFICATION.md) lists completed
-checks and pending live setup. Edit, Delete, and Instructor Hide and Restore
-follow the first stage's live proof.
+Issue #17 adds private Personal Project connection, publication, connection
+checks, Community reading, owner Edit/Delete, and Instructor Hide/Restore.
+The [project proof record](docs/PROJECT-VERIFICATION.md) lists local and live
+receipts in the approved stage order, plus the current review status.
 
 ## Run the demo locally
 

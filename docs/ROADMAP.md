@@ -13,7 +13,7 @@ chosen.
   local and live receipts, including P1/P15.
 - Edit and Delete (P10 to P12) have local database and HTTP receipts.
 - Instructor Hide and Restore (P16) were built last and pass local proof.
-  Resolve the final moderation review findings, then complete its hosted check.
+  The reviewed-version fix passes review and local proof. Complete its hosted check.
 - Obtain a Member review after the six merge-gate checks pass. Only the
   Instructor merges. See [project verification](PROJECT-VERIFICATION.md).
 

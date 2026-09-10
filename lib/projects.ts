@@ -1,16 +1,20 @@
 import "server-only";
 import { database, sessionHash } from "./access";
 import { nickname } from "./access-core";
-import { projectDetails, projectId, repositoryId, type ProjectDetails } from "./project-core";
+import { projectDetails, projectId, projectVersion, repositoryId, type ProjectDetails } from "./project-core";
 import { verifyRepository } from "./project-github";
 
 export type Project = ProjectDetails & { id: string; nickname: string; isOwner: boolean;
-  publication?: string; connection?: string; moderation?: string; lastCheckedAt?: string | null };
+  publication?: string; connection?: string; moderation?: string; lastCheckedAt?: string | null; version?: string };
 
 function readProject(value: any): Project {
   const details = projectDetails(value?.title, value?.summary, value?.demoUrl ?? "");
   if (!details || !projectId(value?.id) || !nickname(value?.nickname) || typeof value?.isOwner !== "boolean") throw new Error("Project unavailable");
   const result: Project = { ...details, id:value.id, nickname:value.nickname, isOwner:value.isOwner };
+  if (value.version !== undefined) {
+    if (!projectVersion(value.version)) throw new Error("Project unavailable");
+    result.version = value.version;
+  }
   if (value.publication !== undefined) {
     if (!["Draft", "Published", "Archived"].includes(value.publication) ||
         !["Connected", "Disconnected"].includes(value.connection) || !["Visible", "Hidden"].includes(value.moderation) ||

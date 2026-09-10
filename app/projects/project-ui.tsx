@@ -45,7 +45,8 @@ export function SharedDetails({ project }: { project: ProjectDetails & { nicknam
     {project.demoUrl && <p><a href={project.demoUrl} rel="noreferrer" referrerPolicy="no-referrer">Open demo</a></p>}</>;
 }
 
-export function ProjectAction({ id, action, children }: { id: string; action: string; children: React.ReactNode }) {
+export function ProjectAction({ id, action, version, children }: { id: string; action: string; version?: string; children: React.ReactNode }) {
   return <form action="/projects/action" method="post"><input type="hidden" name="id" value={id} />
+    {version && <input type="hidden" name="version" value={version} />}
     <button name="action" value={action}>{children}</button></form>;
 }

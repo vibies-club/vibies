@@ -249,6 +249,11 @@ route and database function both check Instructor access. A Member cannot use
 these controls or a direct POST to moderate. The full moderation screen remains
 outside this issue.
 
+Hide and Restore carry the version shown on the Instructor's project page.
+The database rejects the action if the locked project has changed since that
+page was opened. The Instructor must review the current content before trying
+again. A rejected old form changes nothing.
+
 **Outcome — hide:** The Instructor changes the target's moderation visibility to
 hidden. For a Project, this means changing only its moderation state to `Hidden`.
 The original content and authorship remain unchanged.

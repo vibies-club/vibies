@@ -75,6 +75,7 @@ first-stage proof gate is complete.
 
 Edit and Delete (P10 to P12) now pass local database and HTTP proof, including
 delayed provider responses after edits and deletion. Instructor Hide and Restore
-(P16) pass local proof too. Resolve the final moderation review findings before the hosted check.
+(P16) pass local proof too. The owner-approved version fix passes review and local proof. Complete the hosted
+moderation check.
 Keep the PR draft until every row has a receipt. A Member reviews; only the
 Instructor merges.

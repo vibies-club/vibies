@@ -50,8 +50,8 @@ if (!databaseUrl) {
       tx`select vibies_private.edit_project(${session}, ${id}::uuid, ${version}::bigint, ${title}, ${summary}, ${demoUrl}) as value`);
     const remove = (session: string, id: string, version: string) => call((tx) =>
       tx`select vibies_private.delete_project(${session}, ${id}::uuid, ${version}::bigint) as value`);
-    const moderate = (session: string, id: string, hidden: boolean) => call((tx) =>
-      tx`select vibies_private.moderate_project(${session}, ${id}::uuid, ${hidden}) as value`);
+    const moderate = (session: string, id: string, version: string, hidden: boolean) => call((tx) =>
+      tx`select vibies_private.moderate_project(${session}, ${id}::uuid, ${version}::bigint, ${hidden}) as value`);
     const list = (session: string) => call((tx) =>
       tx`select vibies_private.projects(${session}) as value`);
     const read = (session: string, id: string) => call((tx) =>
@@ -180,7 +180,7 @@ if (!databaseUrl) {
           "end_session(text)",
           "finish_sign_in(text, text, text, text)",
           "members(text)",
-          "moderate_project(text, uuid, boolean)",
+          "moderate_project(text, uuid, bigint, boolean)",
           "project(text, uuid)",
           "project_actor(text)",
           "project_operation_context(text, uuid)",
@@ -188,6 +188,11 @@ if (!databaseUrl) {
           "publish_project(text, uuid, bigint)",
           "record_project_connection(text, uuid, bigint, boolean)",
         ]);
+        const [moderationSignatures] = await sql`
+          select to_regprocedure('vibies_private.moderate_project(text,uuid,boolean)') is null as old_removed,
+                 to_regprocedure('vibies_private.moderate_project(text,uuid,bigint,boolean)') is not null as current_exists
+        `;
+        assert.deepEqual(moderationSignatures, { old_removed: true, current_exists: true });
       });
 
       await t.test("database validation rejects controls and invalid destinations", async () => {
@@ -283,7 +288,10 @@ if (!databaseUrl) {
           id: hiddenId, title: "Hidden launch", summary: "Original details", demoUrl: null,
           nickname: "Builder", isOwner: false,
         } });
-        assert.deepEqual(await read(sessions.instructor, hiddenId), shared);
+        const instructorShared = await read(sessions.instructor, hiddenId);
+        assert.deepEqual(instructorShared, { kind: "ok", project: {
+          ...shared.project, version: (await context(sessions.owner, hiddenId)).version,
+        } });
         assert.equal((await list(sessions.instructor)).community.some((item: any) => item.id === hiddenId), true);
         assert.equal(JSON.stringify(shared).includes("synthetic-owner"), false);
         assert.equal(JSON.stringify(shared).includes("repositoryId"), false);
@@ -596,47 +604,94 @@ if (!databaseUrl) {
         `;
         for (const id of [archivedId, draftId, disconnectedId]) {
           const before = await stored(id);
-          assert.deepEqual(await moderate(sessions.instructor, id, true), { kind: "forbidden" });
-          assert.deepEqual(await moderate(sessions.instructor, id, false), { kind: "forbidden" });
+          assert.deepEqual(await moderate(sessions.instructor, id, before.version, true), { kind: "forbidden" });
+          assert.deepEqual(await moderate(sessions.instructor, id, before.version, false), { kind: "forbidden" });
           assert.deepEqual(await stored(id), before);
         }
 
         const availableBefore = await stored(availableId);
+        const firstReview = await read(sessions.instructor, availableId);
+        assert.deepEqual(firstReview, { kind: "ok", project: {
+          id: availableId,
+          title: availableBefore.title,
+          summary: availableBefore.summary,
+          demoUrl: availableBefore.demo_url,
+          nickname: "Builder",
+          isOwner: false,
+          version: availableBefore.version,
+        } });
         for (const session of [hash("signed-out"), sessions.owner, sessions.reader,
           sessions.pending, sessions.revoked, sessions.expired, sessions.instructorExpired]) {
-          assert.deepEqual(await moderate(session, availableId, true), { kind: "forbidden" });
+          assert.deepEqual(await moderate(session, availableId, availableBefore.version, true),
+            { kind: "forbidden" });
         }
         assert.deepEqual(await moderate(sessions.instructor,
-          "00000000-0000-4000-8000-000000000001", true), { kind: "forbidden" });
+          "00000000-0000-4000-8000-000000000001", "1", true), { kind: "forbidden" });
         assert.deepEqual(await call((tx) => tx`
-          select vibies_private.moderate_project(${sessions.instructor}, null, true) as value
+          select vibies_private.moderate_project(${sessions.instructor}, null, 1, true) as value
         `), { kind: "invalid" });
         assert.deepEqual(await call((tx) => tx`
-          select vibies_private.moderate_project(${sessions.instructor}, ${availableId}::uuid, null) as value
+          select vibies_private.moderate_project(${sessions.instructor}, ${availableId}::uuid, null, true) as value
+        `), { kind: "invalid" });
+        assert.deepEqual(await call((tx) => tx`
+          select vibies_private.moderate_project(${sessions.instructor}, ${availableId}::uuid, ${availableBefore.version}::bigint, null) as value
         `), { kind: "invalid" });
         assert.deepEqual(await stored(availableId), availableBefore);
 
-        const ownerContext = await context(sessions.owner, availableId);
-        assert.deepEqual(await moderate(sessions.instructor, availableId, true), { kind: "hidden" });
+        let ownerContext = await context(sessions.owner, availableId);
+        assert.deepEqual(await edit(sessions.owner, availableId, ownerContext.version,
+          "Owner edit before Hide", availableBefore.summary, availableBefore.demo_url), { kind: "edited" });
+        const afterFirstEdit = await stored(availableId);
+        assert.deepEqual(await moderate(sessions.instructor, availableId, firstReview.project.version, true),
+          { kind: "stale" });
+        assert.deepEqual(await stored(availableId), afterFirstEdit);
+
+        const hideReview = await read(sessions.instructor, availableId);
+        assert.equal(hideReview.project.version, afterFirstEdit.version);
+        ownerContext = await context(sessions.owner, availableId);
+        assert.deepEqual(await moderate(sessions.instructor, availableId, hideReview.project.version, true),
+          { kind: "hidden" });
         const hidden = await stored(availableId);
-        assert.deepEqual({ ...hidden, moderation: availableBefore.moderation, version: availableBefore.version },
-          availableBefore);
+        assert.deepEqual({ ...hidden, moderation: afterFirstEdit.moderation, version: afterFirstEdit.version },
+          afterFirstEdit);
         assert.equal(hidden.moderation, "Hidden");
-        assert.equal(hidden.version, String(Number(availableBefore.version) + 1));
+        assert.equal(hidden.version, String(Number(afterFirstEdit.version) + 1));
         assert.deepEqual(await read(sessions.reader, availableId), { kind: "missing" });
         assert.equal((await read(sessions.instructor, availableId)).kind, "ok");
 
-        assert.deepEqual(await moderate(sessions.instructor, availableId, true), { kind: "hidden" });
+        assert.deepEqual(await moderate(sessions.instructor, availableId, hideReview.project.version, true),
+          { kind: "stale" });
+        assert.deepEqual(await stored(availableId), hidden);
+        assert.deepEqual(await moderate(sessions.instructor, availableId, hidden.version, true), { kind: "hidden" });
         assert.deepEqual(await stored(availableId), hidden);
         assert.deepEqual(await record(sessions.owner, availableId, ownerContext.version, false), { kind: "stale" });
 
-        assert.deepEqual(await moderate(sessions.instructor, availableId, false), { kind: "restored" });
+        const firstRestoreReview = await read(sessions.instructor, availableId);
+        ownerContext = await context(sessions.owner, availableId);
+        assert.deepEqual(await edit(sessions.owner, availableId, ownerContext.version,
+          "Owner edit before Restore", hidden.summary, hidden.demo_url), { kind: "edited" });
+        const afterSecondEdit = await stored(availableId);
+        assert.deepEqual(await moderate(sessions.instructor, availableId,
+          firstRestoreReview.project.version, false), { kind: "stale" });
+        assert.deepEqual(await stored(availableId), afterSecondEdit);
+
+        const restoreReview = await read(sessions.instructor, availableId);
+        assert.equal(restoreReview.project.version, afterSecondEdit.version);
+        assert.deepEqual(await moderate(sessions.instructor, availableId, restoreReview.project.version, false),
+          { kind: "restored" });
         const restored = await stored(availableId);
-        assert.deepEqual({ ...restored, moderation: hidden.moderation, version: hidden.version }, hidden);
+        assert.deepEqual({ ...restored, moderation: afterSecondEdit.moderation, version: afterSecondEdit.version },
+          afterSecondEdit);
         assert.equal(restored.moderation, "Visible");
-        assert.equal(restored.version, String(Number(hidden.version) + 1));
-        assert.deepEqual(await moderate(sessions.instructor, availableId, false), { kind: "restored" });
+        assert.equal(restored.version, String(Number(afterSecondEdit.version) + 1));
+        assert.deepEqual(await moderate(sessions.instructor, availableId, restoreReview.project.version, false),
+          { kind: "stale" });
         assert.deepEqual(await stored(availableId), restored);
+        assert.deepEqual(await moderate(sessions.instructor, availableId, restored.version, false),
+          { kind: "restored" });
+        assert.deepEqual(await stored(availableId), restored);
+        assert.deepEqual(await record(sessions.owner, availableId, restoreReview.project.version, false),
+          { kind: "stale" });
         assert.equal((await read(sessions.reader, availableId)).kind, "ok");
         assert.equal((await list(sessions.reader)).community.some((item: any) => item.id === availableId), true);
 
@@ -648,11 +703,11 @@ if (!databaseUrl) {
           `;
           const before = await stored(id);
           assert.equal((await read(sessions.instructor, id)).kind, "ok");
-          assert.deepEqual(await moderate(sessions.owner, id, false), { kind: "forbidden" });
-          assert.deepEqual(await moderate(sessions.instructor, id, true), { kind: "hidden" });
+          assert.deepEqual(await moderate(sessions.owner, id, before.version, false), { kind: "forbidden" });
+          assert.deepEqual(await moderate(sessions.instructor, id, before.version, true), { kind: "hidden" });
           assert.deepEqual(await stored(id), before);
 
-          assert.deepEqual(await moderate(sessions.instructor, id, false), { kind: "restored" });
+          assert.deepEqual(await moderate(sessions.instructor, id, before.version, false), { kind: "restored" });
           const after = await stored(id);
           assert.deepEqual({ ...after, moderation: before.moderation, version: before.version }, before);
           assert.equal(after.moderation, "Visible");

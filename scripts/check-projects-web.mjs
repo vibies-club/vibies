@@ -54,6 +54,7 @@ export async function checkProjectsWeb({ sql, origin, check }) {
   const moderationOnly = (before, after, moderation) => after.moderation === moderation &&
     after.version !== before.version && ["title", "summary", "demo_url", "publication", "connection",
       "last_checked_at", "onboarding_completed"].every(key => after[key] === before[key]);
+  const formVersion = html => html.match(/name="version" value="([1-9]\d*)"/)?.[1];
   const setUsername = username => sql`
     update vibies_private.accounts set github_username = ${username}
      where github_id = ${ids.member}
@@ -481,10 +482,27 @@ export async function checkProjectsWeb({ sql, origin, check }) {
   const guideAvailableText = await body(guideAvailable);
   const ownerAvailable = await get(`/projects/${mainId}`, "member");
   const ownerAvailableText = await body(ownerAvailable);
+  const oldHideVersion = formVersion(guideAvailableText);
   check(guideAvailable.status === 200 && guideAvailableText.includes(">Hide project</button>") &&
+    Boolean(oldHideVersion) &&
     !guideAvailableText.includes(">Restore project</button>") && !ownerAvailableText.includes(">Hide project</button>") &&
     !ownerAvailableText.includes(">Restore project</button>"),
-  "P16 only the Instructor sees Hide on an available project");
+  "P16 only the Instructor sees Hide with the current version on an available project");
+
+  await setUsername("synthetic-member-unknown");
+  const visibleOwnerEdit = await post("member", { action: "edit", id: mainId, title: "Pocket Garden Updated",
+    summary: "The owner changed these visible details after the Guide opened the page.", demoUrl: "" });
+  const afterVisibleOwnerEdit = await snapshot("17101");
+  const staleHide = await post("instructor", { action: "hide", id: mainId, version: oldHideVersion });
+  check(location(visibleOwnerEdit) === `/projects/${mainId}?message=edited` &&
+    location(staleHide) === `/projects/${mainId}?message=stale` && await snapshot("17101") === afterVisibleOwnerEdit,
+  "P16 an owner Edit makes an old Hide form stale without losing the newer details");
+
+  const refreshedGuide = await get(`/projects/${mainId}`, "instructor");
+  const refreshedGuideText = await body(refreshedGuide);
+  const hideVersion = formVersion(refreshedGuideText);
+  check(Boolean(hideVersion) && hideVersion !== oldHideVersion && refreshedGuideText.includes("Pocket Garden Updated"),
+    "P16 a refreshed Instructor page carries the new Hide version");
 
   const beforeModerationDenials = await snapshot("17101");
   for (const action of ["hide", "restore"]) {
@@ -494,44 +512,64 @@ export async function checkProjectsWeb({ sql, origin, check }) {
     const denialBodies = await Promise.all([...denials, crossOrigin].map(body));
     check(denials.every(response => response.status === 403) && crossOrigin.status === 403 &&
       denialBodies.every(text => !text.includes("Pocket Garden") && !text.includes(ids.member)),
-    `P16 unauthorized and cross-origin ${action} actions get a generic denial`);
+    `P16 unauthorized and cross-origin ${action} actions get a generic denial before version validation`);
+    const badVersions = await Promise.all([undefined, "0", "invalid", "9223372036854775808"]
+      .map(version => post("instructor", { action, id: mainId, ...(version === undefined ? {} : { version }) })));
+    check(badVersions.every(response => response.status === 400),
+      `P16 authorized ${action} rejects missing, malformed, and out-of-range versions`);
   }
   for (const [id, repositoryId] of [[draftId, "18011"], [archivedId, "17106"], [disconnectedId, "18013"]]) {
     const before = await snapshot(repositoryId);
-    const attempts = await Promise.all(["hide", "restore"].map(action => post("instructor", { action, id })));
+    const version = JSON.parse(before).version;
+    const attempts = await Promise.all(["hide", "restore"].map(action =>
+      post("instructor", { action, id, version })));
     check(attempts.every(response => response.status === 403) && await snapshot(repositoryId) === before,
       "P16 the Instructor cannot moderate a Visible unavailable target");
   }
   check(await snapshot("17101") === beforeModerationDenials,
-    "P16 denied moderation actions leave the available project unchanged");
+    "P16 stale, invalid, and denied moderation actions leave the available project unchanged");
 
-  await setUsername("synthetic-member-unknown");
-  const beforeHide = JSON.parse(await snapshot("17101"));
-  const hidden = await post("instructor", { action: "hide", id: mainId });
+  const beforeHide = JSON.parse(beforeModerationDenials);
+  const hidden = await post("instructor", { action: "hide", id: mainId, version: hideVersion });
   const afterHide = JSON.parse(await snapshot("17101"));
   const guideHidden = await get(`/projects/${mainId}?message=hidden`, "instructor");
   const guideHiddenText = await body(guideHidden);
+  const oldRestoreVersion = formVersion(guideHiddenText);
   const ownerHidden = await get(`/projects/${mainId}`, "member");
   const ownerHiddenText = await body(ownerHidden);
   const hiddenList = await get("/projects", "second");
   const hiddenDetail = await get(`/projects/${mainId}`, "second");
   const hiddenDetailText = await body(hiddenDetail);
   check(location(hidden) === `/projects/${mainId}?message=hidden` && moderationOnly(beforeHide, afterHide, "Hidden") &&
-    guideHidden.status === 200 && guideHiddenText.includes("Pocket Garden") &&
+    guideHidden.status === 200 && guideHiddenText.includes("Pocket Garden Updated") && Boolean(oldRestoreVersion) &&
     guideHiddenText.includes("Project hidden from the Community.") && guideHiddenText.includes(">Restore project</button>") &&
-    !guideHiddenText.includes(">Hide project</button>") && ownerHiddenText.includes("Pocket Garden") &&
-    ownerHiddenText.includes("A synthetic garden log for small daily experiments.") &&
-    !ownerHiddenText.includes(">Restore project</button>") && !(await body(hiddenList)).includes("Pocket Garden") &&
-    hiddenDetailText.includes("Project unavailable") && !hiddenDetailText.includes("Pocket Garden"),
+    !guideHiddenText.includes(">Hide project</button>") && ownerHiddenText.includes("Pocket Garden Updated") &&
+    ownerHiddenText.includes("The owner changed these visible details after the Guide opened the page.") &&
+    !ownerHiddenText.includes(">Restore project</button>") && !(await body(hiddenList)).includes("Pocket Garden Updated") &&
+    hiddenDetailText.includes("Project unavailable") && !hiddenDetailText.includes("Pocket Garden Updated"),
   "P16 Hide preserves the owner's project, removes Community access, and keeps an Instructor Restore path without GitHub");
 
-  const restored = await post("instructor", { action: "restore", id: mainId });
+  const hiddenOwnerEdit = await post("member", { action: "edit", id: mainId, title: "Pocket Garden",
+    summary: "A synthetic garden log for small daily experiments.", demoUrl: "https://example.test/vibies" });
+  const afterHiddenOwnerEdit = await snapshot("17101");
+  const staleRestore = await post("instructor", { action: "restore", id: mainId, version: oldRestoreVersion });
+  check(location(hiddenOwnerEdit) === `/projects/${mainId}?message=edited` &&
+    location(staleRestore) === `/projects/${mainId}?message=stale` && await snapshot("17101") === afterHiddenOwnerEdit,
+  "P16 an owner Edit while Hidden makes an old Restore form stale and preserves the newer details");
+
+  const refreshedHidden = await get(`/projects/${mainId}`, "instructor");
+  const refreshedHiddenText = await body(refreshedHidden);
+  const restoreVersion = formVersion(refreshedHiddenText);
+  check(Boolean(restoreVersion) && restoreVersion !== oldRestoreVersion && refreshedHiddenText.includes("Pocket Garden"),
+    "P16 a refreshed Hidden project page carries the new Restore version");
+  const beforeModerationRestore = JSON.parse(afterHiddenOwnerEdit);
+  const restored = await post("instructor", { action: "restore", id: mainId, version: restoreVersion });
   const afterModerationRestore = JSON.parse(await snapshot("17101"));
   const restoredGuideList = await get("/projects?message=restored", "instructor");
   const restoredGuideText = await body(restoredGuideList);
   const restoredMemberDetail = await get(`/projects/${mainId}`, "second");
   check(location(restored) === "/projects?message=restored" &&
-    moderationOnly(afterHide, afterModerationRestore, "Visible") && restoredGuideList.status === 200 &&
+    moderationOnly(beforeModerationRestore, afterModerationRestore, "Visible") && restoredGuideList.status === 200 &&
     restoredGuideText.includes("Project restored. It is available only when Published and Connected.") &&
     restoredGuideText.includes("Pocket Garden") && (await body(restoredMemberDetail)).includes("Pocket Garden"),
   "P16 Restore preserves independent state and returns an eligible project to the Community without GitHub");
@@ -543,11 +581,12 @@ export async function checkProjectsWeb({ sql, origin, check }) {
     const before = JSON.parse(await snapshot(repositoryId));
     const hiddenTarget = await get(`/projects/${id}`, "instructor");
     const hiddenTargetText = await body(hiddenTarget);
-    const restoreUnavailable = await post("instructor", { action: "restore", id });
+    const targetVersion = formVersion(hiddenTargetText);
+    const restoreUnavailable = await post("instructor", { action: "restore", id, version: targetVersion });
     const after = JSON.parse(await snapshot(repositoryId));
     const unavailableAgain = await get(`/projects/${id}`, "instructor");
     const unavailableAgainText = await body(unavailableAgain);
-    check(hiddenTarget.status === 200 && hiddenTargetText.includes(title) &&
+    check(hiddenTarget.status === 200 && hiddenTargetText.includes(title) && Boolean(targetVersion) &&
       hiddenTargetText.includes(">Restore project</button>") && location(restoreUnavailable) === "/projects?message=restored" &&
       moderationOnly(before, after, "Visible") && unavailableAgainText.includes("Project unavailable") &&
       !unavailableAgainText.includes(title),

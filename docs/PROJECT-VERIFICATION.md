@@ -115,7 +115,7 @@ from these receipts. The clean test server uses an in-memory synthetic key.
 | `npm run test:access` | PASS: 10 tests, zero skipped | Existing isolated access regression proof. |
 | `npm run test:projects` | PASS: 26 tests, zero skipped | 14 offline tests plus 12 database tests, including the parent test. |
 | Database commands without fixtures | PASS: both exit 1 with setup messages, zero skipped | `test:access` and `test:projects` cannot report absent database proof as success. |
-| `npm run check:access-web` | PASS: 134 assertions, exit 0 | Clean built server, synthetic provider, dedicated runtime login, loopback fixture database. |
+| `npm run check:access-web` | PASS: 140 assertions, exit 0 | Clean built server, synthetic provider, dedicated runtime login, loopback fixture database. |
 | Local Markdown links | PASS: 176 links and fragments in 23 documents | Repository paths and heading fragments, rechecked after the final moderation receipt update. |
 | Browser JavaScript scan | PASS: 9 built JavaScript files, zero private server markers | Clean production snapshot; checked App/database configuration names, private SQL identifiers, and synthetic provider markers. |
 | Changed Mermaid graph | PASS, exit 0 | DOMAIN graph rendered to SVG with installed Mermaid CLI 11.17.0 and Chrome. No dependency added. |
@@ -133,9 +133,12 @@ or skipped check counts as proof.
 
 The Edit/Delete changes use native forms, the existing protected action route,
 and two private functions. The route and database both check current owner
-authorization. The React review found no new client components or hooks. Live
-Edit/Delete confirmation is pending; the required real GitHub gate is already
-complete above.
+authorization. The React review found no new client components or hooks. At about 21:01 UTC on 2026-09-10, the user confirmed Builder saved an edit
+to an extra test project, used Cancel without deleting it, then used Confirm
+delete and retained completed onboarding. This is a human-confirmed live
+Edit/Delete receipt on the fixed Preview; the agent did not control Builder's
+browser or observe the exact deployment used. The required real GitHub gate
+was already complete above.
 
 The isolated Preview received the two exact tested function definitions with
 only their execution grants, in one transaction. This narrow migration ran
@@ -169,11 +172,20 @@ edited since the page was opened. D-015 requires version checks at protected
 writes, but the current moderation function has no expected-version argument.
 The [owner question](https://github.com/vibies-club/vibies/issues/17#issuecomment-5625343850)
 asks whether Hide/Restore must match the version displayed to the Instructor.
-The live moderation check is paused for that answer. The other review finding,
+The owner answered on 2026-09-11: [require the current reviewed version](https://github.com/vibies-club/vibies/issues/17#issuecomment-5625398735).
+The reviewed-version fix now passes database tests and the complete 140-check
+HTTP run. The form carries the reviewed version, the route validates it, and SQL
+compares it under the project lock before any no-op or change. Old Hide and
+Restore forms after owner edits fail without writes; refreshed forms succeed.
+The obsolete function signature is removed, so the old path cannot bypass this
+rule. The other review finding,
 a missing route-level Instructor check, was corrected with the existing
 `accessState()` helper. Both the route and SQL now verify the current Instructor.
 A clean build and a fresh 134-check HTTP run pass after that fix. The reviewer
-confirmed the route fix. The version decision is the remaining review finding.
+confirmed the route fix. Both Standards and Spec reviewers checked the fix and closed their findings;
+neither found a new issue. The narrow Preview migration ran twice with both project rows unchanged, 17
+runtime functions, zero direct table grants, and the obsolete moderation
+signature removed. Hosted moderation is the remaining proof step.
 
 ## Acceptance rows
 
@@ -192,9 +204,9 @@ confirmed the route fix. The version decision is the remaining review finding.
 | P11 | Database and HTTP proof pass title/warning/Cancel/Confirm controls, no write without confirmation, physical owned deletion, capacity recovery, safe retries/concurrent deletion, new ID on reconnect, and retained onboarding after deletion/revocation/reapproval. GitHub is not called for Edit or Delete. | Local PASS |
 | P12 | Database proof covers old contexts after Edit/Delete/newer checks and owner writes ordered against revocation. HTTP proof holds a real Check request in the synthetic provider, completes Edit or Delete, then releases the response and verifies it cannot overwrite the edit or recreate the deleted project. | Local PASS |
 | P13 | Database tests pass UUID backfill and stability, runtime/anonymous grant denial, and private shared projection. HTTP responses and stored rows contain no synthetic provider identity/token markers. The clean browser bundle scan passes. | Local PASS |
-| P14 | Typecheck, 24 offline tests, 10 access tests, 26 project tests, 134 HTTP assertions, clean build, 176 local links, and Mermaid render pass. The public demo remains available. | Local PASS |
+| P14 | Typecheck, 24 offline tests, 10 access tests, 26 project tests, 140 HTTP assertions, clean build, 176 local links, and Mermaid render pass. The public demo remains available. | Local PASS |
 | P15 | Real Member access, eligible private selection, publication, onboarding, Community reads, signed-out denial, selected-access loss, and same-project restoration pass above. | Live PASS |
-| P16 | Database and HTTP proof pass Instructor-only Hide/Restore, generic unauthorized and cross-origin denial, reachable Hidden targets, unchanged details/timestamps/publication/connection/onboarding, same-state no-ops, and late owner-check rejection. Restored Draft, Archived, and Disconnected fixtures remain unavailable. | Local checks pass; final review findings open |
+| P16 | Database and HTTP proof pass Instructor-only Hide/Restore, generic unauthorized and cross-origin denial, reachable Hidden targets, unchanged details/timestamps/publication/connection/onboarding, same-state no-ops, stale forms after owner edits, and late owner-check rejection. Restored Draft, Archived, and Disconnected fixtures remain unavailable. | Local PASS; hosted check pending |
 
 ## Merge gate
 
@@ -204,7 +216,7 @@ files or dependency changes. A scan of all 30 changed files found no environment
 files, static private keys, live-token patterns, or database passwords. The
 first stage matches the approved plan and both owner clarifications. The clean
 build passes. First-stage live Preview acceptance passes. Edit/Delete local proof passes.
-Local checks pass, but the final moderation review findings and hosted check
-remain open. The merge gate is incomplete.
+Local checks and final code review pass. The hosted moderation check remains
+open, so the merge gate is incomplete.
 No row is complete because a check was skipped. A Member review and all remaining
 proof are required before the Instructor merges.
