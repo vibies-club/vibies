@@ -123,6 +123,26 @@ correctly identified this evidence gap. The PR's completed Preview checkbox was
 premature. A1, A3, A5, and A16 need dated procedures and observed results before
 the Preview gate can pass. The results below remain pending where indicated.
 
+### Live recovery rejection check on 2026-09-10
+
+At 12:32 UTC, the live Preview showed the intended Instructor's welcome page
+and Member administration with one active Member. A read-only staging count
+showed one Instructor, one approved Member, no unapproved accounts, no completed
+onboarding records, and one Instructor audit entry.
+
+The database owner interface called `designate_instructor` with the existing
+approved Member selected from `accounts`, inside an explicit transaction with
+rollback. PostgreSQL returned `P0001: An existing Member cannot be designated as
+Instructor`. An explicit rollback and count query at 12:33 UTC showed the same
+five counts. Reloading administration with the existing Instructor Session still
+showed one active Member and allowed Instructor access.
+
+This proves the live Member-target rejection part of A16. A separate verified
+non-Member account is still required for replacement, old-Instructor denial,
+and restoration. A1 and A3 need a real first-time account; A5 needs the approved
+Member's own browser welcome-page result. None of those pending procedures is
+replaced by this rejection check.
+
 ### Earlier hosted checks
 
 Checked on 2026-09-10 at the fixed
@@ -187,7 +207,7 @@ on this configured Preview. No claim below treats those procedures as passed.
 | **A13: Failure behavior** | Cancel real GitHub sign-in. Exercise invalid, expired, replayed, and provider-error callbacks. Force a Membership lookup failure in the isolated fixture. Confirm each path denies access, offers a safe retry, hides private data and raw details, and does not claim revocation without a lookup. | PASS: local callback, provider-error, replay, and lookup-failure checks; hosted invalid callback and real GitHub cancellation. | Automated commands above; live procedures remain as stated. |
 | **A14: Sign-in limit** | Start sign-in 11 times within 10 minutes using one fixture browser, including concurrent starts. Confirm the first 10 redirects are allowed, later starts show retry, and repeated successful sign-ins reuse one Access entry. | PASS: ten starts allowed, eleventh denied; concurrent database starts also yield exactly ten successes; expiry permits retry. | Automated commands above; live procedures remain as stated. |
 | **A15: Public demo separation** | As a signed-out Preview visitor, open `/` and `/demo`, follow the `/sign-in` link, and request each private route directly. Confirm the demo remains public and provides no path into private content. | PASS: local and hosted public demo and private-route denial. Hosted HTTP checks passed through unchanged Vercel Preview protection. | Automated commands above; live procedures remain as stated. |
-| **A16: Recovery** | On clean staging, verify a separate replacement outside Vibies and record the reason privately. First try a Member target and confirm rejection. Designate the valid replacement, then retry a protected request from the old Instructor Session. Confirm one Instructor, no old access, unchanged Member count, invalidated affected Sessions, and no self-service transfer path. Restore the intended staging Instructor through the same verified procedure. | Local owner-only replacement, audit, invalidation, and count preservation pass. Hosted runtime recovery denial passes. Trusted-channel recovery with a separate verified participant remains pending. | Automated commands above; live procedures remain as stated. |
+| **A16: Recovery** | On clean staging, verify a separate replacement outside Vibies and record the reason privately. First try a Member target and confirm rejection. Designate the valid replacement, then retry a protected request from the old Instructor Session. Confirm one Instructor, no old access, unchanged Member count, invalidated affected Sessions, and no self-service transfer path. Restore the intended staging Instructor through the same verified procedure. | Local owner-only replacement, audit, invalidation, and count preservation pass. Hosted runtime recovery denial and the live Member-target rejection check above pass. Trusted-channel recovery with a separate verified participant remains pending. | Automated commands above; live procedures remain as stated. |
 
 ## Merge gate record
 
