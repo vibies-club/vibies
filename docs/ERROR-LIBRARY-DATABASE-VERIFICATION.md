@@ -122,11 +122,11 @@ encoded nonsensitive query value pass. The database performs no URL fetch.
 | **AC10: Helpful lifecycle** | LOCAL PASS | The Helpful group proves idempotent and concurrent Add and Remove, active-only counts, private `helpfulByMe`, unchanged entry version, time and order, retained reactions through moderation, revocation exclusion, and reapproval restoration. |
 | **AC11: Response and grant privacy** | LOCAL PASS | The schema and response-privacy groups prove no direct private table rights for runtime, public, anonymous, or authenticated roles. Runtime receives only the seven new Error Library API functions. Responses exclude GitHub identity, actor identity, reaction identity, and Session hashes. |
 | **AC12: Required database matrix** | LOCAL PASS | The eight named scenario groups collectively cover the required roles, replacement, privacy, limits, metacharacters, all fields, 21-row cursor, ownership, competing requests, Hidden access, reactions, revocation, reapproval, cascade, and retained rows. |
-| **AC13: Migration and regression proof** | LOCAL PASS, HOSTED PENDING | The snapshot fixture, four-file history guard, native local four-migration chain, blank and no-op apply, legacy and main-shape adoption, retained rows, 24 grants, rollback, corrected retry, typecheck, offline tests, existing access and project database tests, 140 built-server HTTP checks, and build pass locally. GitHub CI, documentation links, and native Supabase Preview remain pending below. |
-| **AC14: Database-only PR boundary** | LOCAL PARTIAL | The current implementation adds private SQL, its snapshot, database tests, CI wiring, and this proof. No Error Library page, route, browser component, dependency, credential, real identity, or Production data is present. The final expected-file, unrelated-change, and secret scans remain part of the root merge gate. |
+| **AC13: Migration and regression proof** | PRE-MERGE PASS | The snapshot fixture, four-file history guard, native local four-migration chain, blank and no-op apply, legacy and main-shape adoption, retained rows, 24 grants, rollback, corrected retry, typecheck, offline tests, existing access and project database tests, 140 built-server HTTP checks, and build pass locally. Hosted CI, documentation links, and native Supabase Preview also passed at implementation commit `7253f8f`, as recorded below. |
+| **AC14: Database-only PR boundary** | PASS | Root review found 11 expected paths: SQL, snapshot, database tests and their CI commands, migration checks, this proof, and the setup guide correction for the already approved 24-function API. The guide also links this proof and names the third database test command. No app page, route, browser component, dependency, credential, real identity, or Production data is added. The diff and whitespace checks pass. |
 | **AC15: Reviewed merge and Production** | PENDING | Production deployment and migration-history proof can start only after Member review and the Instructor's merge. No local or Preview receipt can satisfy this criterion. |
 
-## Pending receipts
+## Hosted receipts and remaining checks
 
 Pending rows must stay pending until the named check completes. A skipped or
 cancelled check is not proof.
@@ -134,14 +134,15 @@ cancelled check is not proof.
 | Check | Status | Receipt to add |
 | --- | --- | --- |
 | Existing built-server HTTP regression | PASS | 140 access and project HTTP checks passed with loopback databases and the synthetic provider hook. The database-only PR has no Error Library HTTP route or browser journey. |
-| GitHub `app-check` | PENDING | Add the passing run link and commit. Record the unit, access, project, Error Library, build, and HTTP results reported by CI. |
-| GitHub `migration-check` | PENDING | Add the passing run link and commit. Record snapshot history, cold native database apply, adoption, rollback, retry, and cleanup. |
-| GitHub documentation check | PENDING | Add the passing run link and the local-link and fragment counts. This document contains no Mermaid diagram. |
-| Vercel build | PENDING | Add the passing deployment link and commit. This proves compatibility with the deployed app. It does not prove Error Library browser behavior. |
-| Native Supabase Preview migration | PENDING | Add the provider check link, commit, branch state, and exact migration history through `20260911065302`. Verify 24 runtime function grants, zero runtime table grants, and retained synthetic Preview rows. |
+| GitHub `app-check` | PASS at `7253f8f` | [CI run](https://github.com/vibies-club/vibies/actions/runs/34572544259/job/103177606145): 24 offline, 10 access, 26 project, and 9 Error Library tests; zero skips; typecheck, build, and 140 HTTP checks passed. |
+| GitHub `migration-check` | PASS at `7253f8f` | [CI run](https://github.com/vibies-club/vibies/actions/runs/34572544251/job/103177606258): immutable snapshots, full native migration proof, and disposable database cleanup passed. |
+| GitHub documentation check | PASS at `7253f8f` | [CI run](https://github.com/vibies-club/vibies/actions/runs/34572544173/job/103177606045): 279 links considered, 207 successful, zero errors. External links excluded by the offline policy are not live proof. This change adds no Mermaid diagram. |
+| Vercel build | PASS at `7253f8f` | [Ready Preview deployment](https://vercel.com/beta-momo/vibies/Aja9yRJNqacSQ5DvRbd68VCgwnLY). This proves existing-app deployment compatibility, not Error Library browser behavior. |
+| Native Supabase Preview migration | PASS at `7253f8f` | The [native Preview check](https://supabase.com/dashboard/project/asoanwhbfhuwpgqbztpc) passed. Its migration page shows exactly `20260910065142`, `20260910220000`, `20260910220001`, and `20260911065302`. A read-only SQL Editor catalog check returned 24 runtime functions, zero runtime table grants, NOLOGIN/NOINHERIT, no anonymous or authenticated private schema access, both Error Library tables present, and the unchanged anonymous demo read-only boundary. Row-retention evidence comes from the local and CI upgrade fixtures above. |
 | Member review and merge gate | PENDING | Add the approving review, exact reviewed commit, expected-file review, unrelated-change review, privacy scan, all required checks, and merge record. |
 | Production migration | PENDING AFTER MERGE | Add the main deployment result, exact history through `20260911065302`, retained row checks, runtime grants, and date. Keep all account and Session values private. |
 
-The database child remains incomplete while these hosted and review receipts are
-pending. The later app child remains blocked until the reviewed database merge
+The implementation receipts above are dated 2026-09-11 UTC. Final review must
+also check the latest PR head after documentation updates. The database child
+remains incomplete while review, merge, and Production receipts are pending. The later app child remains blocked until the reviewed database merge
 and Production migration pass.
