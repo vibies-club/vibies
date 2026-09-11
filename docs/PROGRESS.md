@@ -59,11 +59,14 @@ It adds Connect, Publish, Check connection, Community reading, owner Edit/Delete
 and Instructor Hide/Restore. All P1 to P16 receipts and the approved stage order
 are in [Project verification](PROJECT-VERIFICATION.md).
 
-Issue #29 adds automatic main database migrations and feature Preview cleanup.
-[PR #30](https://github.com/vibies-club/vibies/pull/30) targets main and is ready
-for Member review. Local and CI migration proof and the native Supabase Preview
-deployment pass. Automatic Preview branching stays on, with limit 3.
-[Database deployment](DATABASE-DEPLOYMENT.md) owns the setup and receipts.
+Issue #29 added automatic main database migrations and feature Preview cleanup.
+[PR #30](https://github.com/vibies-club/vibies/pull/30) merged after Member
+review. Its [post-merge receipt](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630352747)
+records main at `a5fabc1`, the three expected migration versions, and removal of
+its ephemeral Preview. The [Production follow-up](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630665472)
+records three App settings moved to Production and a passing Ready redeploy.
+Live Production Member publishing remains pending while Builder is offline.
+[Database deployment](DATABASE-DEPLOYMENT.md) owns the detailed receipts.
 
 The issue #17 Preview database was removed automatically after merge. The legacy
 `access-review-5` was deleted separately with the owner's explicit approval.
@@ -72,7 +75,11 @@ do not establish full Production readiness.
 
 ## Next step
 
-Obtain a Member review of PR #30. Only the Instructor merges. After that reviewed
-merge, verify the native Production deployment, main's migration history,
-Production runtime setup, and deletion of PR #30's ephemeral Preview. Those
-post-merge checks remain pending in the deployment guide.
+Complete the review process for [PR #33](https://github.com/vibies-club/vibies/pull/33),
+which contains the issue #31 database work, and
+[PR #34](https://github.com/vibies-club/vibies/pull/34), which contains the issue
+#32 Vercel cleanup. Only the Instructor merges. These PRs deploy no new app
+feature. After PR #33 merges, verify its Production migration before starting
+the Error Library app child. After PR #34 merges, verify its first GitHub Actions run with the
+dedicated project token. Complete the live Production Member publishing check
+when Builder is available.

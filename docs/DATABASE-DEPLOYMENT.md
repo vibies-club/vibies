@@ -21,12 +21,14 @@ already deployed. When a new app requires new schema, merge its database-only PR
 first, wait for successful database deployment, then merge the app PR. Keep old
 functions until the old app no longer needs them.
 
-For the initial rollout, PR #18 merged after Member review; this automation
-follow-up has a separate review. Production is ready only after both merge,
-the migration deployment passes, and the one-time Production setup is verified.
-The owner requested automatic feature Preview cleanup at merge; it does not wait for Production
-verification. Complete the needed Preview proof before merging. Do not treat an
-early Vercel success as database proof.
+For the initial rollout, PR #18 and PR #30 merged after Member review. Main at
+`a5fabc1` has the three expected migration versions. PR #30's Preview was
+removed, and the Production settings and Ready redeploy passed. Live Production
+Member publishing remains pending while Builder is offline. The issue #31
+database work in PR #33 and the issue #32 Vercel cleanup in PR #34 have separate
+reviews and deploy no new app feature. The owner requested automatic feature
+Preview cleanup at merge; it does not wait for Production verification. Do not
+treat an early Vercel success as database proof.
 
 ## Add a database change
 
@@ -163,10 +165,11 @@ define the checks. Status is recorded separately for each boundary:
 | Native GitHub integration configuration | PASS on 2026-09-10 UTC: the owner connected the integration, and the provider page shows main Production, repository `vibies-club/vibies`, directory `.`, production deployment on, and branch `main`. The owner chose to keep automatic Preview branching on, with limit 3 and Supabase-changes-only on. The earlier automatic approval block is resolved by the owner's setup. |
 | Native Supabase Preview migration | [PASS](https://github.com/vibies-club/vibies/pull/30/checks?check_run_id=103065754495) for `6b136d7` on 2026-09-10 UTC. The hosted migration page showed exactly `20260910065142`, `20260910220000`, and `20260910220001`; branch status was `FUNCTIONS_DEPLOYED`. The earlier branch-limit cancellation and skipped checks were not passes. After cleanup, reopening the same PR retried native branch creation successfully, with limit 3 unchanged. |
 | Feature cleanup configuration | READ on 2026-09-10 UTC: PR #30's native Preview matches `feature/database-auto-deploy-29`, is linked to PR #30, and is non-default, non-persistent, with no copied main data. Main remains default. |
-| Feature cleanup result | [PASS after PR #18 merge](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922) at `5e55642`, 21:59:40 UTC: a native metadata read showed `personal-projects-review-17` absent and main retained. No manual delete was used for that linked feature Preview. PR #30's own removal remains pending its merge or close. |
+| Feature cleanup result | [PASS after PR #18 merge](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922) at `5e55642`, 21:59:40 UTC: a native metadata read showed `personal-projects-review-17` absent and main retained. [PR #30's Preview cleanup also passed after merge](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630352747): `feature/database-auto-deploy-29` was absent and main was retained. No manual delete was used for either linked feature Preview. |
 | Legacy Preview cleanup | [PASS with explicit owner approval](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922): the owner confirmed Builder's Production profile access and requested removal of `access-review-5`. The native CLI returned `Deleted preview branch`; the next list contained only main. This is separate from automatic cleanup and full Production acceptance. |
 | Required GitHub migration check | [PASS after explicit owner approval](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922): main requires `migration-check`, `app-check`, and `links`, bound to GitHub Actions. One approving Member review and administrator enforcement are retained. |
-| Main deployment | Pending PR #30's reviewed merge and provider deployment. The Preview result does not prove Production migration or runtime setup. |
+| Main deployment | [PASS after PR #30 merged](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630352747) on 2026-09-11 UTC: main was at `a5fabc1` and its hosted migration history contained the three expected versions. |
+| Production setup | [PASS for the settings and Ready redeploy](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630665472): three App settings moved to Production and the Ready redeploy passed. Live Production Member publishing remains pending while Builder is offline. |
 
 The implementation review at `17ecba5` found no remaining code defect. A scan
 of its 14 changed files found no environment files, private keys, live token
