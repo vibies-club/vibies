@@ -13,7 +13,11 @@ const migrationDirectory = join(root, "supabase", "migrations");
 const migrationFiles = (await readdir(migrationDirectory))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name)).sort();
 const migrations = migrationFiles.map((name) => name.slice(0, 14));
+const mainMigrationFiles = migrationFiles.slice(0, 3);
 assert.equal(migrationFiles[0], "20260910065142_remote_schema.sql");
+assert.equal(mainMigrationFiles.at(-1), "20260910220001_access.sql");
+assert.ok(migrationFiles.length > mainMigrationFiles.length,
+  "the Error Library migration must follow the migrations on main");
 assert.equal(new Set(migrations).size, migrations.length, "migration versions must be unique");
 
 function supabase(args, shouldFail = false) {
@@ -77,13 +81,13 @@ async function checkBoundaries(sql) {
       has_table_privilege('authenticated', 'public.demo_projects', 'SELECT') as authenticated_demo
   `;
   assert.deepEqual(privileges, {
-    runtime_functions: 17, runtime_tables: 0, anon_private: false,
+    runtime_functions: 24, runtime_tables: 0, anon_private: false,
     authenticated_private: false, anon_demo: true, anon_demo_write: false,
     authenticated_demo: false,
   });
 }
 
-async function retainedRows(sql) {
+async function retainedExistingRows(sql) {
   return {
     account: await sql`select to_jsonb(a) as row from vibies_private.accounts a
       where github_id = '200'`,
@@ -94,6 +98,16 @@ async function retainedRows(sql) {
     demo: await sql`select to_jsonb(d) as row from public.demo_projects d where id = 1`,
     community: await sql`select to_jsonb(c) as row from vibies_private.community c`,
     audit: await sql`select to_jsonb(a) as row from vibies_private.instructor_audit a order by id`,
+  };
+}
+
+async function retainedRows(sql) {
+  return {
+    ...await retainedExistingRows(sql),
+    error: await sql`select to_jsonb(e) as row from vibies_private.error_entries e
+      where id = '44444444-4444-4444-8444-444444444444'`,
+    reaction: await sql`select to_jsonb(r) as row from vibies_private.error_helpful_reactions r
+      where entry_id = '44444444-4444-4444-8444-444444444444'`,
   };
 }
 
@@ -113,7 +127,9 @@ try {
     assert.deepEqual(server, { database: "postgres", major: 17 });
     assert.ok((await history(sql)).every((version) => migrations.includes(version)),
       "the local stack contains unrelated migration history");
-    for (const table of ["accounts", "sessions", "personal_projects"]) {
+    for (const table of [
+      "accounts", "sessions", "personal_projects", "error_entries", "error_helpful_reactions",
+    ]) {
       const [{ present }] = await sql`
         select to_regclass(${`vibies_private.${table}`}) is not null as present
       `;
@@ -148,9 +164,12 @@ try {
       values ('300', 'synthetic-legacy', 'Returning', 'approved', true)`;
     await sql`insert into vibies_private.sessions (session_hash, github_id)
       values (${"b".repeat(64)}, '300')`;
+    await sql`update vibies_private.community set instructor_github_id = '100',
+      instructor_nickname = 'Mentor' where singleton`;
     return {
       account: (await sql`select to_jsonb(a) as row from vibies_private.accounts a where github_id = '300'`)[0].row,
       session: await sql`select to_jsonb(s) as row from vibies_private.sessions s where github_id = '300'`,
+      community: (await sql`select to_jsonb(c) as row from vibies_private.community c`)[0].row,
     };
   });
   for (const name of migrationFiles.slice(1)) {
@@ -163,15 +182,17 @@ try {
     delete account.row.internal_id;
     assert.deepEqual(account.row, legacyBefore.account);
     assert.deepEqual(await sql`select to_jsonb(s) as row from vibies_private.sessions s where github_id = '300'`, legacyBefore.session);
+    const [community] = await sql`select to_jsonb(c) as row from vibies_private.community c`;
+    assert.match(community.row.instructor_actor_id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    delete community.row.instructor_actor_id;
+    assert.deepEqual(community.row, legacyBefore.community);
     assert.deepEqual(await history(sql), migrations);
     await checkBoundaries(sql);
   });
 
-  upgradeProject = await makeProject("upgrade", [migrationFiles[0]]);
+  upgradeProject = await makeProject("upgrade", mainMigrationFiles);
   supabase(["db", "reset", "--local", "--workdir", upgradeProject]);
   await usingDatabase(async (sql) => {
-    await sql.unsafe(await readFile(join(root, "supabase", "demo-projects.sql"), "utf8"));
-    await sql.unsafe(await readFile(join(root, "supabase", "access.sql"), "utf8"));
     await sql`insert into vibies_private.accounts
       (internal_id, github_id, github_username, nickname, status, onboarding_completed)
       values ('11111111-1111-4111-8111-111111111111', '200', 'synthetic-member',
@@ -190,13 +211,34 @@ try {
     await sql`insert into vibies_private.instructor_audit
       (previous_github_id, new_github_id, reason) values (null, '100', 'Synthetic setup')`;
   });
-  const before = await usingDatabase(retainedRows);
-  for (const name of migrationFiles.slice(1)) {
+  const mainBefore = await usingDatabase(retainedExistingRows);
+  for (const name of migrationFiles.slice(mainMigrationFiles.length)) {
     await copyFile(join(migrationDirectory, name),
       join(upgradeProject, "supabase", "migrations", name));
   }
   supabase(["db", "push", "--local", "--yes", "--workdir", upgradeProject]);
   await usingDatabase(async (sql) => {
+    const mainAfter = await retainedExistingRows(sql);
+    assert.match(mainAfter.community[0].row.instructor_actor_id,
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    delete mainAfter.community[0].row.instructor_actor_id;
+    assert.deepEqual(mainAfter, mainBefore);
+
+    await sql`insert into vibies_private.error_entries
+      (id, author_actor_id, author_nickname, title, error_text, location, cause,
+        fix_steps, success_confirmation)
+      select '44444444-4444-4444-8444-444444444444',
+        instructor_actor_id, 'Mentor', 'Retained error',
+        'Synthetic migration error.', 'Migration proof', 'Synthetic cause.',
+        'Apply the additive migration.', 'The retained row still exists.'
+        from vibies_private.community where singleton`;
+    await sql`insert into vibies_private.error_helpful_reactions (entry_id, actor_id)
+      values ('44444444-4444-4444-8444-444444444444',
+        '11111111-1111-4111-8111-111111111111')`;
+  });
+  const before = await usingDatabase(retainedRows);
+  await usingDatabase(async (sql) => {
+    await sql.unsafe(await readFile(join(root, "supabase", "access.sql"), "utf8"));
     assert.deepEqual(await history(sql), migrations);
     assert.deepEqual(await retainedRows(sql), before);
     await checkBoundaries(sql);

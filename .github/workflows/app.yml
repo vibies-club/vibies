@@ -39,6 +39,9 @@ jobs:
       - run: npm run test:projects
         env:
           VIBIES_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/vibies_access_test
+      - run: npm run test:errors
+        env:
+          VIBIES_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/vibies_access_test
       - run: npm run build
       - name: Check access through the built server
         env:

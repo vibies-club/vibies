@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/demo.test.ts tests/access-core.test.ts tests/project-core.test.ts tests/project-github.test.ts",
     "test:access": "node --test tests/access-database.test.ts",
+    "test:errors": "node --test tests/errors-database.test.ts",
     "test:projects": "node --test tests/project-core.test.ts tests/project-github.test.ts tests/projects-database.test.ts",
     "check:access-web": "node scripts/check-access-web.mjs",
     "check:migrations": "node scripts/check-migrations.mjs",
