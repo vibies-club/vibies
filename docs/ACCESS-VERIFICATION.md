@@ -1,6 +1,7 @@
 # Access Verification
 
-[Documentation home](../README.md) · [Issue #14](https://github.com/vibies-club/vibies/issues/14) ·
+[Documentation home](../README.md) · [Issue #5](https://github.com/vibies-club/vibies/issues/5) ·
+[Access specification #14](https://github.com/vibies-club/vibies/issues/14) ·
 [Access setup](ACCESS-SETUP.md)
 
 This is the proof record for issue #5. Record the command or human procedure and
@@ -9,10 +10,15 @@ Nicknames. Never record a credential, GitHub profile, real name, contact detail,
 or private recovery reason.
 
 Local results below were rechecked on 2026-09-10 using synthetic accounts.
-Hosted staging is configured. Real Instructor sign-in and cancellation pass.
+Hosted staging was configured for these checks. Real Instructor sign-in and
+cancellation passed.
 Dated Member welcome, first-time denial, and recovery/restoration receipts are
-recorded below. A1 through A16 pass with the stated evidence sources. Member
-re-review is still required before the Instructor merges.
+recorded below. A1 through A16 pass with the stated evidence sources.
+[PR #16](https://github.com/vibies-club/vibies/pull/16) received Member approval
+and merged on 2026-09-10 at 13:21:46 UTC, commit `39fda5a`.
+The later [owner-authorized cleanup](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922)
+deleted `access-review-5` and retained main. Hosted links below identify the
+historical proof environment. Production verification is separate.
 Change a pending entry only after its procedure completes and attach a privacy-safe receipt in the PR. A hidden control is insufficient proof;
 direct protected requests and actions must also be denied.
 
@@ -203,7 +209,7 @@ Checked on 2026-09-10 at the fixed
 Vercel authentication still protects this Preview. The HTTP checks used existing
 Preview access without changing that protection.
 
-- The approved clean Supabase branch is `access-review-5`. The access SQL,
+- The approved clean Supabase branch was `access-review-5`. The access SQL,
   including the locale correction, succeeded twice. Catalog checks found no
   public or runtime table grants, exactly seven runtime function grants, and no
   runtime Instructor-designation right.
@@ -237,7 +243,8 @@ nickname index inside its transaction. See
 
 The earlier synthetic results remain separate from the real-account evidence.
 The dated owner-supplied screenshots and direct browser/database observations
-above complete the missing live checks. Member re-review remains required.
+above completed the missing live checks before the Member approval and merge
+recorded above.
 
 ## Issue #14 acceptance record
 
@@ -269,4 +276,4 @@ above complete the missing live checks. Member re-review remains required.
 | No secrets or personal data | PASS | Staged diff and browser bundle scanned; only synthetic fixtures and placeholder configuration appear. No environment files or credentials staged. Configuration was handled privately under the owner's one-run authorization. |
 | Matches the approved plan | PASS | Root review reconciled both worker results and all Skeptic findings. |
 | Build succeeded | PASS | Production build, typecheck, unit tests, PostgreSQL tests, HTTP checks, links, and Mermaid rendering. |
-| Preview satisfies A1 through A16 | PASS: ready for Member re-review | A1 through A16 now have the dated automated, hosted, and owner-assisted live receipts above. The reported page error is fixed. The Member must review these changes and receipts before the Instructor merges. |
+| Preview satisfies A1 through A16 | PASS; Member review and merge complete | A1 through A16 have the dated automated, hosted, and owner-assisted live receipts above. The reported page error was fixed before the approved merge of PR #16. |

@@ -244,9 +244,10 @@ product features add more risk and decisions.
 Class Project. It contains synthetic data only. It adds no authentication,
 write feature, ORM, GitHub integration, or real product data. The `anon` role
 can select the demo row and cannot write. The `authenticated` role receives no
-demo access while issue #5 remains pending. Humans supply public configuration
-locally and in Vercel. This decision does not define the full Vibies product or
-its future production data model.
+demo access; private access was outside issue #13's scope and was later
+implemented by [D-014](#d-014-use-direct-github-oauth-and-a-private-database-api).
+Humans supply public configuration locally and in Vercel. This decision does not
+define the full Vibies product or its future production data model.
 
 **Related documents:** [Demo data model](DATA-MODEL.md),
 [Supabase setup](SUPABASE-SETUP.md), and [progress](PROGRESS.md).
@@ -393,3 +394,37 @@ Hide and Restore submit the version shown on the Instructor's project page.
 The database compares it with the current locked row and rejects any intervening
 change without a write. The Instructor then reviews the current content before
 trying again. This prevents an old Restore form from exposing unseen edits.
+
+## D-016: Deploy reviewed schema changes through native migrations
+
+**Status:** Accepted implementation scope in the owner's request for
+[issue #29](https://github.com/vibies-club/vibies/issues/29).
+
+**Decision:** Connect Supabase main to the repository's protected `main` branch
+and use its native production deployment for versioned SQL migrations. Current
+standalone SQL remains the schema definition; exact versioned snapshots are
+deployment history. CI checks their agreement and tests the native migration
+chain on an isolated local database. Production credentials stay out of GitHub
+Actions. GitHub's reviewed merge remains the release gate.
+
+**Why:** A reviewed merge should apply its database changes without repeated
+manual SQL setup. Native migration tracking avoids a custom deployment runner
+and preserves the existing main database and its applied history.
+
+**Consequence:** Schema deployment does not transfer Preview data or repeat
+identity, approval, OAuth, App, or login setup. Supabase and Vercel deploy
+independently, so database changes must support the deployed app during rollout.
+Failure and first-production receipts remain explicit. Applied migrations are
+immutable; the Instructor must verify an unapplied version before a reviewed
+repair exception. The [deployment guide](DATABASE-DEPLOYMENT.md) owns the steps.
+
+**Owner cleanup addition:** Automatic Preview branching stays enabled. Feature
+Previews use the native ephemeral lifecycle and the matching GitHub branch, so
+Supabase deletes them after PR merge or close. The owner requested this to end
+unused branch compute charges. Main is retained. Preview proof must finish
+before merge; deletion does not wait for a successful Production deployment.
+Legacy unlinked branches need separate reconciliation. After PR #18 merged,
+the owner explicitly authorized deleting `access-review-5` and confirmed
+Builder's Production profile access. The [cleanup receipt](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922)
+records its deletion and retained main. Full Production verification remains
+separate from that access confirmation.

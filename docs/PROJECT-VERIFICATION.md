@@ -3,6 +3,15 @@
 [Documentation home](../README.md) · [Setup and exact commands](PROJECT-SETUP.md) ·
 [Accepted decision](DECISIONS.md#d-015-share-member-written-personal-projects-with-checked-repository-access)
 
+## Current status
+
+[PR #18](https://github.com/vibies-club/vibies/pull/18) merged on 2026-09-10 UTC
+at `5e55642` after Member approval. All P1 to P16 receipts below are complete.
+The isolated Preview database was then removed by native cleanup. Preview links
+below identify the historical test environment; they are not a live setup for
+new tests. [Database deployment](DATABASE-DEPLOYMENT.md) records cleanup and the
+remaining Production rollout checks in PR #30.
+
 ## Approved order
 
 The [interview plan](https://github.com/vibies-club/vibies/issues/17#issuecomment-5622731491),
@@ -22,7 +31,7 @@ to mark PR #18 ready for review on 2026-09-10 UTC, and GitHub confirmed the chan
 The [owner clarifications](https://github.com/vibies-club/vibies/issues/17#issuecomment-5623179154)
 were answered on 2026-09-10. The owner chose an opaque internal account UUID for
 project ownership and limited Instructor reads to available projects plus
-Hidden targets. Implementation has resumed with those rules. These answers are
+Hidden targets. Implementation used those rules. These answers are
 recorded in D-015.
 
 ## Hosted setup receipts
@@ -243,5 +252,11 @@ implementation matches the approved plan and all owner clarifications. The clean
 build, local acceptance checks, and required live Preview journeys pass. Both
 agent review axes have no remaining findings after the version fix. All P1 to P16
 rows have receipts; no skipped check is counted as proof. The implementation
-checks are complete. [PR #18](https://github.com/vibies-club/vibies/pull/18) is
-ready for the required formal Member review. Only the Instructor merges.
+checks are complete.
+
+Scout approved commit `8450ac4eec3d77e6828729ca350552dc81bb5f17` on 2026-09-10
+at 21:51:57 UTC. The [PR #18 review and merge record](https://github.com/vibies-club/vibies/pull/18)
+shows the normal protected merge at 21:59:40 UTC, commit
+`5e556428d4c54dc1ea0e1317822e70ff4b29d86d`. Scout reviewed code, receipts, and
+remote checks, without independently repeating the tests or live journey.
+Production deployment is a separate follow-up, as stated in the current status.

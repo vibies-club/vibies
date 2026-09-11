@@ -15,6 +15,8 @@
     "test:access": "node --test tests/access-database.test.ts",
     "test:projects": "node --test tests/project-core.test.ts tests/project-github.test.ts tests/projects-database.test.ts",
     "check:access-web": "node scripts/check-access-web.mjs",
+    "check:migrations": "node scripts/check-migrations.mjs",
+    "check:database-migrations": "node scripts/check-database-migrations.mjs",
     "check:demo": "node --env-file=.env.local scripts/check-demo.mjs"
   },
   "dependencies": {

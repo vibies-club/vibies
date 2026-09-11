@@ -7,6 +7,10 @@ This guide is for the human who owns the Supabase and Vercel projects. It sets
 up the synthetic public demo for issue #13. Use a Supabase project that contains
 no real Vibies data.
 
+These manual SQL steps are for a standalone demo environment. The maintained
+main database and GitHub-linked Previews use the reviewed migrations in
+[Database deployment](DATABASE-DEPLOYMENT.md).
+
 ## 1. Inspect the database before any change
 
 Open the Supabase SQL Editor. Run this inventory before you run the setup SQL:

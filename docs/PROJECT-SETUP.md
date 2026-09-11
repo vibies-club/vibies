@@ -7,6 +7,13 @@ The approved scope is in [issue #17](https://github.com/vibies-club/vibies/issue
 The [domain model](DOMAIN.md#projects-and-repositories) owns field and state
 definitions. The [workflows](WORKFLOWS.md) own user behavior.
 
+[PR #18](https://github.com/vibies-club/vibies/pull/18) is merged. Its isolated
+Preview database was deleted, with main retained, as recorded in
+[Database deployment](DATABASE-DEPLOYMENT.md#automatic-cleanup-after-merge).
+The steps below record the original issue #17 setup. For a new GitHub-linked
+Preview, use native migration deployment for the schema and scope the access
+and App settings to the new branch and its fixed origin.
+
 ## Human setup for the live Preview
 
 1. Use an isolated Preview database. Follow [Access setup](ACCESS-SETUP.md) for
@@ -136,5 +143,17 @@ completed layer from pending live work.
    identifiers, repository links, installation IDs, cookies, keys, or raw
    provider responses. Synthetic HTTP results cannot replace this procedure.
 
-Keep the PR draft until all proof rows have receipts. Follow the issue's stage
-order before implementing Edit, Delete, and then Instructor Hide and Restore.
+Issue #17 completed this stage order before Member review and merge. Its
+[proof record](PROJECT-VERIFICATION.md) contains every acceptance receipt.
+For later changes, finish their approved proof before merging; native cleanup
+removes the linked ephemeral Preview when its PR merges or closes.
+
+## Production setup
+
+[Database deployment](DATABASE-DEPLOYMENT.md) owns the migration rollout order.
+Use [Access setup](ACCESS-SETUP.md) for the Production database login, TLS,
+OAuth origin and callback, and Instructor setup. Configure the three server-only
+GitHub App settings from step 3 in Production and verify the selected-repository,
+Metadata-read boundary from step 2. Schema migration does not copy Preview
+credentials or complete this one-time runtime setup. Record the Production
+journey separately from the historical Preview proof.

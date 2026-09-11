@@ -27,9 +27,12 @@ vague idea → grill → Ready → Skeptic → build → prove → PR → review
 2. Nothing unrelated.
 3. No secrets.
 4. Matches the approved plan.
-5. Build succeeded. While the repository is documentation only, this means
-   every local link resolves and Mermaid renders.
+5. Build succeeded. Local documentation links resolve, and changed Mermaid
+   diagrams render.
 6. Preview satisfies the acceptance criteria.
+
+Database changes also follow the migration checks and rollout order in
+[Database deployment](docs/DATABASE-DEPLOYMENT.md).
 
 ## Writing rules
 

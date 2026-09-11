@@ -14,7 +14,8 @@ define the future product schema. Do not put member data, repository data, real
 projects, names, contact details, credentials, or other personal data in it.
 
 This demo has no authentication, write feature, ORM, repository integration, or
-real product data. Issue #5 will decide authenticated access later.
+real product data. Private access is implemented separately under
+[D-014](DECISIONS.md#d-014-use-direct-github-oauth-and-a-private-database-api).
 
 ## Table
 
@@ -35,7 +36,8 @@ Row Level Security is enabled. One `SELECT` policy applies to the Supabase
 or delete rows.
 
 The `authenticated` role intentionally receives no grants or policies in this
-demo. Authentication and private product access remain work for issue #5.
+demo. Private product access uses the separate server-side access API described
+in D-014; signing in does not change the public demo's grants.
 
 ## Application behavior
 
