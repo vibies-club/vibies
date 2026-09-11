@@ -128,6 +128,11 @@ unlinked `access-review-5` was removed separately with the owner's explicit
 approval under [Access setup](ACCESS-SETUP.md). Main was retained after both
 deletions. Do not assume that an unlinked database will be removed automatically.
 
+Vercel uses a separate reviewed cleanup for branch-specific Preview settings.
+Follow its [setup, safety boundary, and proof status](VERCEL-PREVIEW-CLEANUP.md).
+Vercel deployment retention continues to manage old deployments; the cleanup
+removes only exact branch-specific Preview environment rows.
+
 ## If deployment fails
 
 Read the failing migration version and safe error details in Supabase. Main is
