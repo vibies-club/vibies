@@ -56,9 +56,64 @@ try {
       const action = await post("/admin/members/action", role, {action:"approve",githubId:ids.unapproved,nickname:"Sneaky"});
       check(action.status === 403, `direct administration action denies ${role ?? "signed-out"}`);
     }
+    for (const [role, location] of [[undefined, "/sign-in?message=expired"], ["unapproved", "/access-denied"], ["revoked", "/access-denied"]]) {
+      const response = await get("/wiki", role);
+      check(response.status === 307 && response.headers.get("location") === location,
+        `command wiki denies ${role ?? "signed-out"} exactly like welcome`);
+    }
+    const wiki = await get("/wiki", "member");
+    const wikiText = await wiki.text();
+    const instructorWiki = await get("/wiki", "instructor");
+    check(wiki.status === 200 && instructorWiki.status === 200 && wikiText.includes("<h1>Command wiki</h1>"),
+      "approved Member before onboarding and Instructor can read the command wiki");
+    check(wiki.headers.get("cache-control")?.includes("no-store"), "command wiki response cannot be cached");
+    check(/<form(?=[^>]*\baction="\/wiki")(?=[^>]*\bmethod="get")[^>]*>/.test(wikiText) &&
+      /<input(?=[^>]*\bname="q")[^>]*>/.test(wikiText) && /<select(?=[^>]*\bname="topic")[^>]*>/.test(wikiText),
+    "command wiki exposes a GET search form with query and topic controls");
+    check(["git-status", "git-switch-feature", "tmux-split-pane", "npm-run-dev"].every(id =>
+      wikiText.includes(`id="${id}"`) && wikiText.includes(`href="/wiki#${id}"`)) &&
+      /<article[^>]*\bid="git-status"[^>]*>[\s\S]*?Copy command[\s\S]*?<\/article>/.test(wikiText),
+    "command wiki exposes stable entry links and a labeled command copy control");
+    const [onboarding] = await sql`select onboarding_completed from vibies_private.accounts where github_id = ${ids.member}`;
+    check(onboarding.onboarding_completed === false, "command wiki proof starts with the Member before onboarding");
+    await sql`update vibies_private.accounts set onboarding_completed = true where github_id = ${ids.member}`;
+    try {
+      const afterOnboarding = await get("/wiki", "member");
+      check(afterOnboarding.status === 200, "approved Member can still read the command wiki after onboarding");
+    } finally {
+      await sql`update vibies_private.accounts set onboarding_completed = ${onboarding.onboarding_completed} where github_id = ${ids.member}`;
+    }
+    const searchedText = await (await get("/wiki?q=git%20status", "member")).text();
+    check(searchedText.includes('id="git-status"') && !searchedText.includes('id="npm-run-dev"') &&
+      searchedText.includes('href="/wiki"'), "command wiki search filters entries and offers Show all");
+    const topicText = await (await get("/wiki?topic=Git", "member")).text();
+    check(topicText.includes('id="git-status"') && topicText.includes('id="git-switch-feature"') &&
+      !topicText.includes('id="tmux-split-pane"'), "command wiki filters by the exact Git topic");
+    const combinedText = await (await get("/wiki?q=git%20status&topic=Git", "member")).text();
+    check(combinedText.includes('id="git-status"') && !combinedText.includes('id="npm-run-dev"') &&
+      !combinedText.includes('id="tmux-split-pane"'),
+      "command wiki combines query and topic filters");
+    const emptyText = await (await get("/wiki?q=missing-command&topic=Git", "member")).text();
+    check(emptyText.includes("No commands found") && emptyText.includes('href="/wiki"'),
+      "command wiki explains an empty result and offers a clear link");
+    const repeatedText = await (await get("/wiki?q=git&q=status&topic=Git&topic=Terminal", "member")).text();
+    check(["git-status", "git-switch-feature", "tmux-split-pane", "npm-run-dev"].every(id => repeatedText.includes(`id="${id}"`)),
+      "repeated command wiki filters safely fall back to the full catalog");
+    const trimmedText = await (await get("/wiki?q=%20git%20status%20", "member")).text();
+    check(trimmedText.includes('value="git status"') && trimmedText.includes('id="git-status"') &&
+      !trimmedText.includes('id="npm-run-dev"'), "command wiki trims its search query");
+    const oversizedQuery = "x".repeat(201);
+    const boundedText = await (await get(`/wiki?q=${oversizedQuery}`, "member")).text();
+    check(boundedText.includes(`value="${"x".repeat(200)}"`) && !boundedText.includes(`value="${oversizedQuery}"`),
+      "command wiki limits its search query to 200 characters");
+    const markup = "<script>synthetic()</script>";
+    const escapedText = await (await get(`/wiki?q=${encodeURIComponent(markup)}`, "member")).text();
+    check(escapedText.includes("&lt;script&gt;synthetic()&lt;/script&gt;") && !escapedText.includes(markup),
+      "command wiki renders search markup as text without injected HTML");
     const welcome = await get("/welcome", "member");
     const welcomeText = await welcome.text();
-    check(welcome.status === 200 && welcomeText.includes("Builder") && !welcomeText.includes("synthetic-member") && !welcomeText.includes(ids.member), "member welcome exposes nickname only");
+    check(welcome.status === 200 && welcomeText.includes("Builder") && welcomeText.includes('href="/wiki"') &&
+      !welcomeText.includes("synthetic-member") && !welcomeText.includes(ids.member), "member welcome exposes nickname only and links to the command wiki");
     check(welcome.headers.get("cache-control")?.includes("no-store"), "private response cannot be cached");
     check(welcome.headers.get("referrer-policy") === "same-origin", "page policy preserves same-origin form POSTs and hides cross-origin referrers");
     check(welcomeText.includes("/auth/sign-out"), "welcome offers sign-out");
@@ -72,15 +127,23 @@ try {
     check((await get("/welcome", "member")).status === 200, "revocation without confirmation changes nothing");
     await post("/admin/members/action", "instructor", {action:"revoke",githubId:ids.member,confirm:"yes"});
     check((await get("/welcome", "member")).headers.get("location") === "/access-denied", "confirmed revocation blocks the next request");
+    check((await get("/wiki", "member")).headers.get("location") === "/access-denied", "confirmed revocation blocks the next command wiki request");
     await post("/admin/members/action", "instructor", {action:"reapprove",githubId:ids.member});
     check((await get("/welcome", "member")).status === 200, "reapproval restores existing session access");
     await sql`update vibies_private.sessions set created_at = clock_timestamp() - interval '24 hours' where session_hash = ${hash(sessions.member)}`;
     check((await get("/welcome", "member")).headers.get("location") === "/sign-in?message=expired", "absolute 24-hour session boundary is enforced");
+    check((await get("/wiki", "member")).headers.get("location") === "/sign-in?message=expired", "command wiki enforces the absolute 24-hour session boundary");
     await sql`select vibies_private.finish_sign_in(${ids.member}, 'synthetic-member', ${hash(sessions.member)}, null)`;
     await sql.unsafe("revoke execute on function vibies_private.access_state(text) from vibies_runtime");
     try {
       const failure = await (await get("/welcome", "member")).text();
       check(failure.includes("We could not check your access") && !failure.includes("Builder") && !failure.includes("revoked") && !failure.includes("permission denied"), "lookup failure is safe and does not mislabel the member");
+      const wikiFailureResponse = await get("/wiki", "member");
+      const wikiFailure = await wikiFailureResponse.text();
+      check(wikiFailureResponse.status === 200 && wikiFailure.includes("We could not check your access") &&
+        !wikiFailure.includes('name="q"') && !wikiFailure.includes('id="git-status"') && !wikiFailure.includes("Builder") &&
+        !wikiFailure.includes("revoked") && !wikiFailure.includes("permission denied"),
+      "command wiki lookup failure is safe and does not expose its gated content");
     } finally { await sql.unsafe("grant execute on function vibies_private.access_state(text) to vibies_runtime"); }
     let firstState, firstOAuth;
     for (let i = 0; i < 11; i++) {

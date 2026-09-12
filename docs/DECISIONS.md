@@ -428,3 +428,40 @@ the owner explicitly authorized deleting `access-review-5` and confirmed
 Builder's Production profile access. The [cleanup receipt](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922)
 records its deletion and retained main. Full Production verification remains
 separate from that access confirmation.
+
+## D-017: Keep class command knowledge inside Vibies
+
+**Status:** Accepted through the approved
+[issue #25 plan](https://github.com/vibies-club/vibies/issues/25) and
+[Owner answers](https://github.com/vibies-club/vibies/issues/25#issuecomment-5646775457).
+
+**Decision:** Vibies provides a protected `/wiki` page for commands taught in
+class. A curated TypeScript catalog in `lib/wiki.ts` stores its entries, and
+reviewed PRs maintain the catalog. The Error Library keeps its separate purpose:
+Members create solved-error records in the database.
+
+The wiki owns taught command references. [Supabase setup](SUPABASE-SETUP.md),
+[Personal Project setup](PROJECT-SETUP.md),
+[Database deployment](DATABASE-DEPLOYMENT.md), [access setup](ACCESS-SETUP.md),
+and the [README](../README.md) own their exact procedures. An overlapping wiki
+entry links to the relevant guide anchor and does not copy its recipe. Past
+decks remain teaching history. Future teaching documents can cite stable wiki
+anchors.
+
+**Why:** Beginners need one searchable command reference inside the product.
+Keeping the catalog in TypeScript makes every correction visible in Git review
+history and keeps procedures in their existing authoritative homes. Class
+command changes need shared curation and PR review. Members add their solved
+errors through the Error Library database workflow.
+
+**Consequence:** The catalog file stays public in GitHub. The page uses the
+existing private-area gate for the Instructor and all approved Members,
+including Members with incomplete onboarding. Database storage, a browser
+editor, and synchronization stay outside this feature. Search uses a GET query
+and works without JavaScript. A copy button is an optional JavaScript
+enhancement. A source inventory belongs in the implementing PR receipt, with no
+additional documentation file.
+
+**Related documents:** [Product class command wiki](PRODUCT.md#class-command-wiki),
+[contributing guide](../CONTRIBUTING.md#add-a-command-entry), and
+[shared error log](ERROR_LOG.md).
