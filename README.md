@@ -40,6 +40,7 @@ definition instead of creating a different version of it.
 | [Roadmap](docs/ROADMAP.md) | The `Now`, `Next`, and `Later` sequence |
 | [Supabase setup](docs/SUPABASE-SETUP.md) | Human setup, safety checks, local verification, and Vercel deployment |
 | [Database deployment](docs/DATABASE-DEPLOYMENT.md) | Reviewed migrations, automatic main deployment, local checks, and retry receipts |
+| [Vercel Preview cleanup](docs/VERCEL-PREVIEW-CLEANUP.md) | Exact branch-setting cleanup boundary, owner setup, and proof status |
 | [Access setup](docs/ACCESS-SETUP.md) | Human database, GitHub OAuth, Instructor, recovery, and deployment setup |
 | [Access verification](docs/ACCESS-VERIFICATION.md) | Issue #5 implementation receipts for the A1 through A16 checks specified in issue #14 |
 | [Personal Project setup](docs/PROJECT-SETUP.md) | Human App/Preview setup and exact isolated proof commands |
@@ -60,10 +61,17 @@ Community reading, owner Edit/Delete, and Instructor Hide/Restore.
 The [project proof record](docs/PROJECT-VERIFICATION.md) lists local and live
 receipts in the approved stage order, plus the Member review and merge receipt.
 
-[PR #30](https://github.com/vibies-club/vibies/pull/30) is ready for Member review
-of automatic main database migrations and feature Preview cleanup. Production
-deployment and runtime verification remain pending. See
-[Database deployment](docs/DATABASE-DEPLOYMENT.md) for the proof and rollout steps.
+[PR #30](https://github.com/vibies-club/vibies/pull/30) merged after Member
+review. Its [post-merge receipt](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630352747)
+records main at `a5fabc1`, all three migration versions, and removal of its
+ephemeral Preview. The [Production follow-up](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630665472)
+records three App settings moved to Production and a passing Ready redeploy.
+Live Production Member publishing remains pending while Builder is offline. See
+[Database deployment](docs/DATABASE-DEPLOYMENT.md) for the rollout details.
+
+The [Vercel Preview cleanup](docs/VERCEL-PREVIEW-CLEANUP.md) has local and
+bounded live script proof. Its first GitHub Actions run with the dedicated
+project token waits for the reviewed cleanup PR to merge.
 
 ## Run the demo locally
 
