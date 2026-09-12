@@ -1,0 +1,52 @@
+name: staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Select a pull request or return staging to main
+        required: true
+        type: choice
+        options:
+          - Preview PR
+          - Clear
+      pr_number:
+        description: Open pull request number for Preview PR
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+  actions: read
+
+concurrency:
+  group: reusable-staging
+  cancel-in-progress: false
+
+jobs:
+  staging:
+    if: github.repository == 'vibies-club/vibies' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: vibies-club/vibies
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Update and verify shared staging
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          STAGING_OPERATION: ${{ inputs.operation }}
+          STAGING_PR_NUMBER: ${{ inputs.pr_number }}
+          STAGING_WORKFLOW_SHA: ${{ github.sha }}
+          STAGING_ORIGIN: ${{ vars.STAGING_ORIGIN }}
+          STAGING_PROJECT_ID: ${{ vars.STAGING_PROJECT_ID }}
+          STAGING_SUPABASE_TREE: ${{ vars.STAGING_SUPABASE_TREE }}
+        run: node scripts/staging.mjs

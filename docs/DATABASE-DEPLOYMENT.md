@@ -1,6 +1,7 @@
 # Database migrations and deployment
 
 [Documentation home](../README.md) · [Issue #29](https://github.com/vibies-club/vibies/issues/29) ·
+[Issue #37](https://github.com/vibies-club/vibies/issues/37) ·
 [Access setup](ACCESS-SETUP.md)
 
 ## What a merge deploys
@@ -65,17 +66,22 @@ disposable local Supabase project `vibies-migrations`.
 
 ```sh
 npm ci
-node --test tests/migrations.test.mjs
+node --test tests/migrations.test.mjs tests/migration-scope.test.mjs
 npm run check:migrations -- --base "$(git rev-parse origin/main)"
 supabase db start
 npm run check:database-migrations
 supabase stop --no-backup
 ```
 
-The `migration-check` GitHub check runs these commands. It is required on main
-alongside `app-check` and `links`, with one Member approval still required.
-The owner approved this rule after PR #18 merged. A missing fixture or failed
-command is a failure, never a skipped proof.
+The `migration-check` GitHub check is required on every PR alongside `app-check`
+and `links`, with one Member approval still required. Its snapshot, history, and
+classification guards always run. Known documentation, wiki, and static
+presentation changes can skip the disposable Supabase startup and full migration
+exercise. SQL, backend, access, migration tooling, dependency, workflow, and
+unknown changes run the full exercise. Renames and deletions check every old and
+new path. Main always receives the full proof. Unclear classifications run the
+full exercise. A missing fixture or failed command is a failure. The `app-check` suite remains
+required and unchanged.
 
 The native check applies the full migration chain, verifies an empty second
 deployment, and upgrades the pre-Personal-Projects schema from commit `39fda5a`
@@ -89,7 +95,124 @@ The pinned CLI gives reproducible local receipts. Supabase controls its hosted
 runner version, so the provider deployment and history are separate required
 receipts after the first merge.
 
-## Configure automatic deployment once
+## Reusable staging
+
+Issue #37 replaces repeated feature-specific hosted setup with one stable test
+site and one standalone Supabase Free project. This rollout is approved and its
+provider setup is unfinished. Member review, Instructor merge, and the first real
+GitHub Actions deployment are pending. A local script run is not proof of the
+Action or the Vercel Git trigger.
+
+### Configure it once
+
+1. Confirm that one Free Supabase project slot is available. Create
+   `vibies-staging` in the selected Free organization, in the Frankfurt region.
+   Keep the Data API enabled and **Automatically expose new tables** off. Copy no
+   Production data. Stop if setup requires a paid project.
+2. Connect that project through Supabase's native GitHub integration to
+   `vibies-club/vibies`, working directory `.`, and production branch `main`.
+   Keep automatic branching off. This second same-repository connection must
+   coexist with the existing Production integration. If the provider rejects
+   it, stop the rollout. Do not add a Supabase token fallback.
+3. After native deployment, the owner compares the project's applied migration
+   versions with all migration versions in current `main`. If they match, record
+   the 40-character `supabase` tree from `main` as the verified baseline. The
+   Action never connects to the database. Its receipt derives the expected
+   migration version list from that verified repository tree.
+4. Create a separate Vercel project named `vibies-staging`. Connect the same
+   repository, set its Production Branch to the fixed `staging` ref, and create
+   that ref at current `main` before the first operation. Configure the Ignored
+   Build Step as **Only build production** before adding runtime credentials or
+   deploying candidate code. Only `staging` deploys from this project. Use its
+   generated fixed domain. In this project, Vercel's **Production** label means
+   the staging test site. Configure its protection so designated reviewers can
+   use Vibies sign-in without a second Vercel login. Keep this change scoped to
+   the staging project.
+5. Set `VIBIES_STAGING=true` only in this Vercel project. Expose Vercel's system
+   environment variables, including `VERCEL_GIT_COMMIT_SHA` and
+   `VERCEL_PROJECT_ID`. Configure the fixed origin, runtime login, GitHub OAuth,
+   and GitHub App once through [Access setup](ACCESS-SETUP.md) and
+   [Project setup](PROJECT-SETUP.md). The public demo needs its own anonymous API
+   values from [Supabase setup](SUPABASE-SETUP.md).
+6. Create a protected GitHub Actions environment named `staging` and restrict it
+   to selected branch `main`, with the Instructor as required reviewer. The
+   reviewer checks the selected code before approving access to staging settings.
+   Add only these public environment variables after
+   the matching provider values exist:
+
+   | Name | Value |
+   | --- | --- |
+   | `STAGING_ORIGIN` | Exact generated HTTPS origin, with no trailing slash or path |
+   | `STAGING_PROJECT_ID` | Exact ID of the separate Vercel staging project |
+   | `STAGING_SUPABASE_TREE` | Verified 40-character `supabase` tree from current `main` |
+
+The workflow pins GitHub REST version `2022-11-28` because its PR response
+includes the test merge SHA. [GitHub supports this version until March 10, 2028](https://docs.github.com/en/rest/about-the-rest-api/api-versions); update that
+lookup before then.
+
+No Vercel or Supabase token belongs in this environment. The workflow uses its
+`GITHUB_TOKEN` to read PR and CI state, move the fixed `staging` ref, and post the
+receipt. Its contents permission covers the repository; trusted main code and
+the fixed API path enforce the single-ref limit.
+
+### Preview a PR or clear staging
+
+Run the manual **staging** workflow from `main`. Choose **Preview PR** and enter
+the PR number, or choose **Clear** to restore current `main`. Operations are
+serialized through deployment and verification. Ordinary feature pushes do not
+change the shared site. Clear after the selected PR is closed, rejected, or
+merged. This moves the app ref and does not reset the shared database.
+
+Preview accepts only an open, non-draft, same-repository PR into `main`. Current
+`main` must be an ancestor of its unchanged head. The exact head must have passing
+`app-check`, `migration-check`, and `links` checks from
+`.github/workflows/app.yml`, `.github/workflows/database.yml`, and
+`.github/workflows/docs.yml`. Their GitHub Actions `pull_request` run metadata
+must match current `main` and the exact head. GitHub Actions tests the synthetic
+merge revision, so the operation separately verifies that revision's parents and
+requires its complete tree to equal the head tree. The candidate and verified
+baseline must have the same complete `supabase` tree as current `main`.
+
+The trusted workflow checks out the pinned `main` script and moves only the
+existing `staging` ref to the exact PR head, never to the synthetic merge commit.
+It never checks out or runs PR code in the privileged job. Vercel runs the
+selected app code with staging-only credentials after maintainer review.
+
+After the ref moves, verification waits at most 10 minutes for the fixed origin.
+`/staging.json` must report the full selected commit SHA, the configured Vercel
+project ID, the echoed request nonce, and `staging` as its Git ref. The endpoint
+is available only when Vercel also reports its `production` environment and the
+fixed `staging` ref. This prevents an older feature Preview with the same SHA
+from passing. The operation then rechecks `main`, the PR head, and the fixed ref.
+A detected change, timeout, provider failure, wrong alias, wrong project, or wrong
+commit fails the operation and cannot produce a success receipt. Clear staging
+uses the same checks for the exact current `main` commit.
+
+The receipt records the operation, PR when applicable, current main, exact head,
+tested merge commit, fixed URL, project ID, verified `supabase` tree,
+repository-derived migration versions, and result. It contains no credentials
+or account data.
+
+### Shared staging limits
+
+Shared staging follows reviewed `main` schema only. A PR with an unmerged
+database change uses the full local and CI migration proof and cannot use the
+routine staging operation. If its acceptance criteria require hosted database
+proof, use a separate temporary environment with an agreed cost cap. Do not add
+a paid resource automatically.
+
+After each reviewed `main` schema change, wait for the native staging deployment.
+The owner verifies the applied versions and then updates
+`STAGING_SUPABASE_TREE` to the new `supabase` tree. Routine staging stays blocked
+while this attestation is stale.
+
+Supabase can pause a Free project after low activity. Resume it in the dashboard,
+then verify the applied migration versions, update the baseline tree if current
+`main` changed, and prove sign-in before accepting a hosted receipt. Do not add a
+keep-alive job. Test data is recreated through the migration and setup procedures,
+without Production data.
+
+## Configure main automatic deployment once
 
 In the main Supabase project's Settings > Integrations, authorize Supabase's
 GitHub connection for the intended repository and set:
@@ -100,17 +223,23 @@ GitHub connection for the intended repository and set:
 | Working directory | `.` |
 | Production branch | `main` |
 | Deploy to production | On |
-| Automatic branching | On, as requested by the owner |
+| Automatic branching | On during the reusable staging rollout |
 | Branch limit | 3 |
 | Supabase changes only | On |
 
 Review the project and branch on the provider page before saving. Keep the
-existing Vercel integration unchanged. The owner connected
-the integration and chose to keep automatic Preview branches on. New PRs with
-Supabase changes also receive a native Preview migration check. Production
-deployment works on all Supabase plans; automatic Preview branches require Pro
-and can add branch compute charges. No GitHub Actions deployment token or database
-password is needed.
+existing Vercel integration unchanged. The owner originally chose to keep
+automatic Preview branches on. New PRs with Supabase changes can receive a native
+Preview migration check while that setting remains on. Production deployment
+works on all Supabase plans; automatic Preview branches require Pro and can add
+branch compute charges. No GitHub Actions deployment token or database password
+is needed.
+
+After reusable staging passes its first complete Action proof, inventory every
+existing Supabase Preview branch before turning automatic branching off for
+future PRs. Keep each existing branch until its current review or approved
+cleanup is complete. This transition does not alter the historical receipts
+below.
 
 ## Automatic cleanup after merge
 
@@ -170,6 +299,7 @@ define the checks. Status is recorded separately for each boundary:
 | Required GitHub migration check | [PASS after explicit owner approval](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922): main requires `migration-check`, `app-check`, and `links`, bound to GitHub Actions. One approving Member review and administrator enforcement are retained. |
 | Main deployment | [PASS after PR #30 merged](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630352747) on 2026-09-11 UTC: main was at `a5fabc1` and its hosted migration history contained the three expected versions. |
 | Production setup | [PASS for the settings and Ready redeploy](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630665472): three App settings moved to Production and the Ready redeploy passed. Live Production Member publishing remains pending while Builder is offline. |
+| Reusable staging rollout | APPROVED in issue #37 on 2026-09-13. The owner created standalone Supabase project `rftkxfkteqxyyeimpqlx` in the Free organization. It is Healthy in Frankfurt; the owner approved the native main integration and it is enabled with automatic branching off. Migrations and runtime setup are pending. The separate Vercel project and fixed `staging` ref at `76cf1e8` exist; it builds only its `staging` production branch and has `VIBIES_STAGING=true` with system variables enabled. The initial Vercel deployment of `76cf1e8` is Ready, and an unauthenticated request to `https://vibies-staging.vercel.app/demo` returned HTTP 200 without Vercel SSO. Runtime credentials are pending. The GitHub environment requires Instructor review and permits only `main`. Its origin and project ID are set; its database baseline is unset until migration verification. Member review, Instructor merge, first `GITHUB_TOKEN` ref update, native Vercel trigger, exact-commit Action receipt, and acceptance checks are pending. Wiki PR #36 also awaits its hosted staging proof and Member readability review. No provider or live acceptance criterion is recorded as passed. |
 
 The implementation review at `17ecba5` found no remaining code defect. A scan
 of its 14 changed files found no environment files, private keys, live token
