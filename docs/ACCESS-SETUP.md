@@ -33,7 +33,7 @@ Open [access.sql](../supabase/access.sql). Copy its complete contents into the
 Supabase SQL Editor and run it. Run the same complete SQL a second time. Both
 runs must succeed. The second run proves that setup is repeatable.
 
-The SQL creates private access records and security-definer functions in
+The SQL creates private access, project, and Error Library records and security-definer functions in
 `vibies_private`. It also creates `vibies_runtime` as `NOLOGIN`, removes table
 and sequence rights from runtime and public roles, and grants runtime only the
 function calls required by the server. It does not change the public demo.
@@ -69,8 +69,12 @@ table-grant query must return no rows. Runtime routine grants must contain only
 `consume_sign_in`, `delete_project`, `edit_project`, `end_session`,
 `finish_sign_in`, `members`, `moderate_project`, `project`,
 `project_actor`, `project_operation_context`, `projects`, `publish_project`, and
-`record_project_connection`. Both database proof commands and the live setup use
-this same expanded function API. The final value must be `false`.
+`record_project_connection`, plus `create_error`, `delete_error`, `edit_error`,
+`error`, `errors`, `moderate_error`, and `set_error_helpful`. These are 24 runtime
+functions. The access, project, and Error Library database checks use this same
+API. The final value must be `false`. The
+[Error Library database proof](ERROR-LIBRARY-DATABASE-VERIFICATION.md) records
+the additional contract and its migration receipts.
 
 Nickname validation requires PostgreSQL 17 with UTF-8 and its `unicode` ICU
 collation. The SQL pins validation and case-insensitive uniqueness to this
@@ -249,7 +253,10 @@ These checks use synthetic accounts and fixed local databases. They must never
 target staging or production. Record their pass counts, without configuration
 values, in [Access verification](ACCESS-VERIFICATION.md).
 
-The `app-check` CI job runs the unit, database, build, and HTTP checks on each PR
+Run `npm run test:errors` with the same isolated `VIBIES_TEST_DATABASE_URL` used
+for `test:access` and `test:projects`. It fails when the fixture is missing.
+
+The `app-check` CI job runs the unit, all three database, build, and HTTP checks on each PR
 update. It creates a separate web-test database and uses synthetic configuration.
 The build runs before access configuration is provided to the web-test step.
 

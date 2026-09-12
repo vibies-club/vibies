@@ -1,4 +1,3 @@
-begin;
 
 do $$
 begin
@@ -2028,4 +2027,3 @@ $$;
 alter default privileges in schema vibies_private revoke all on tables from public;
 alter default privileges in schema vibies_private revoke all on sequences from public;
 alter default privileges in schema vibies_private revoke all on functions from public;
-commit;

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { cpSync, mkdtempSync, mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -39,6 +39,9 @@ test("migration snapshots and committed history stay immutable", () => {
     execFileSync("git", ["-c", "user.name=Vibies Test", "-c", "user.email=test@example.invalid", "commit", "--quiet", "-m", "migrations"], { cwd: fixture });
     base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: fixture, encoding: "utf8" }).trim();
     assert.equal(run().status, 0);
+    const latestVersion = readdirSync(join(fixture, "supabase", "migrations"))
+      .filter((name) => /^\d{14}_.+\.sql$/.test(name)).sort().at(-1).slice(0, 14);
+    const nextVersion = String(BigInt(latestVersion) + 1n);
 
     const baselineMigration = join(fixture, "supabase", "migrations", "20260910065142_remote_schema.sql");
     const originalBaseline = readFileSync(baselineMigration);
@@ -62,14 +65,14 @@ test("migration snapshots and committed history stay immutable", () => {
     assert.match(run().stderr, /duplicate migration version: 20260910220001/);
     unlinkSync(duplicateMigration);
 
-    const unsupportedMigration = join(fixture, "supabase", "migrations", "20260910230000_other.sql");
+    const unsupportedMigration = join(fixture, "supabase", "migrations", `${nextVersion}_other.sql`);
     writeFileSync(unsupportedMigration, "select 1;\n");
     assert.match(run().stderr, /migration has no canonical SQL source/);
     unlinkSync(unsupportedMigration);
 
     const accessSource = join(fixture, "supabase", "access.sql");
     const originalAccessSource = readFileSync(accessSource);
-    const nextAccessMigration = join(fixture, "supabase", "migrations", "20260910230000_access.sql");
+    const nextAccessMigration = join(fixture, "supabase", "migrations", `${nextVersion}_access.sql`);
     writeFileSync(nextAccessMigration, originalAccessSource.subarray("begin;\n".length, -"commit;\n".length));
     const nextSnapshot = run();
     assert.equal(nextSnapshot.status, 0, nextSnapshot.stderr);
