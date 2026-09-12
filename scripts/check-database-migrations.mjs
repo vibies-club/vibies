@@ -16,8 +16,9 @@ const migrations = migrationFiles.map((name) => name.slice(0, 14));
 const mainMigrationFiles = migrationFiles.slice(0, 3);
 assert.equal(migrationFiles[0], "20260910065142_remote_schema.sql");
 assert.equal(mainMigrationFiles.at(-1), "20260910220001_access.sql");
-assert.ok(migrationFiles.length > mainMigrationFiles.length,
-  "the Error Library migration must follow the migrations on main");
+assert.equal(migrationFiles[3], "20260911065302_access.sql");
+assert.ok(migrationFiles.length > 4,
+  "the privacy repair must follow the first Error Library migration");
 assert.equal(new Set(migrations).size, migrations.length, "migration versions must be unique");
 
 function supabase(args, shouldFail = false) {
@@ -212,7 +213,7 @@ try {
       (previous_github_id, new_github_id, reason) values (null, '100', 'Synthetic setup')`;
   });
   const mainBefore = await usingDatabase(retainedExistingRows);
-  for (const name of migrationFiles.slice(mainMigrationFiles.length)) {
+  for (const name of migrationFiles.slice(mainMigrationFiles.length, -1)) {
     await copyFile(join(migrationDirectory, name),
       join(upgradeProject, "supabase", "migrations", name));
   }
@@ -237,7 +238,16 @@ try {
         '11111111-1111-4111-8111-111111111111')`;
   });
   const before = await usingDatabase(retainedRows);
+  const repair = migrationFiles.at(-1);
+  await copyFile(join(migrationDirectory, repair),
+    join(upgradeProject, "supabase", "migrations", repair));
+  supabase(["db", "push", "--local", "--yes", "--workdir", upgradeProject]);
   await usingDatabase(async (sql) => {
+    assert.deepEqual(await history(sql), migrations);
+    assert.deepEqual(await retainedRows(sql), before);
+    const [privacy] = await sql`select vibies_private._error_privacy_category(
+      array['https://one.two.localhost/docs']) as category`;
+    assert.equal(privacy.category, "local_url");
     await sql.unsafe(await readFile(join(root, "supabase", "access.sql"), "utf8"));
     assert.deepEqual(await history(sql), migrations);
     assert.deepEqual(await retainedRows(sql), before);

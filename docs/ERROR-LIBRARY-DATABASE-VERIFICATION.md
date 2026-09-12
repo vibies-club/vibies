@@ -17,9 +17,46 @@ All test content uses synthetic numeric identifiers and the Nicknames
 No environment file, credential, real identity, or Production row was read or
 written for this proof.
 
-The current schema source is [access.sql](../supabase/access.sql). Its issue #31
+The current schema source is [access.sql](../supabase/access.sql). Its latest
 deployment snapshot is
-[20260911065302_access.sql](../supabase/migrations/20260911065302_access.sql).
+[20260912143653_access.sql](../supabase/migrations/20260912143653_access.sql).
+The earlier [20260911065302 snapshot](../supabase/migrations/20260911065302_access.sql)
+stays unchanged because it has already run on Preview.
+
+## Local-host repair on 2026-09-12
+
+Review found that a URL such as `https://one.two.localhost/docs` passed privacy
+validation. The fallback matched only one hostname label. The existing URL
+helper now checks the parsed hostname for `.localhost`, `.local`, and `.internal`
+at any depth, including mixed case, a trailing dot, and a port. Public URLs with
+these words in another hostname label, path, query, or fragment remain valid.
+
+The new entry and moderation tests failed before the fix. After the fix,
+`npm run test:errors` passed all 9 tests with zero skips, including rejected Create
+and Edit requests without stored changes and the moderation-note regression.
+Access tests passed 10/10, project tests passed 26/26, offline tests passed 24/24,
+and typecheck and build passed on Node.js 24.15.0 with isolated PostgreSQL 17.
+The first command used an older Node runtime and failed before running the
+tests; only the corrected Node 24 runs count as proof.
+
+`node --test tests/migrations.test.mjs` passed. The history guard passed all five
+migrations against the previous PR head `5e50390`, preserving all four previous
+snapshots. The prior Preview snapshot retains SHA-256
+`90d1a1fc0cd855f56fe138f37f912d19a69da7a6dc08dbea5281c91d8d33a5e8`.
+The new snapshot changes only the privacy helper definitions.
+
+The native upgrade check now seeds an Error entry and Helpful reaction after
+the earlier Error Library migration, then applies the repair through the native
+runner. It checks retained rows, migration history, grants, and the corrected
+privacy result before repeating the standalone source.
+The native proof passed on Supabase CLI 2.109.1 and PostgreSQL 17: five-migration
+clean apply, no-op, legacy and current-main upgrades, the retained Error Library
+repair, unchanged grants, repeat apply, rollback, corrected retry, and final
+reset. Fresh hosted checks remain pending until the final PR receipt records
+the corrected commit.
+The initial receipts below describe the earlier implementation and do not prove
+this repair. Production verification remains pending the reviewed merge and
+must include version `20260912143653` before app work starts.
 
 ## Contract amendment
 
@@ -140,7 +177,7 @@ cancelled check is not proof.
 | Vercel build | PASS at `7253f8f` | [Ready Preview deployment](https://vercel.com/beta-momo/vibies/Aja9yRJNqacSQ5DvRbd68VCgwnLY). This proves existing-app deployment compatibility, not Error Library browser behavior. |
 | Native Supabase Preview migration | PASS at `7253f8f` | The [native Preview check](https://supabase.com/dashboard/project/asoanwhbfhuwpgqbztpc) passed. Its migration page shows exactly `20260910065142`, `20260910220000`, `20260910220001`, and `20260911065302`. A read-only SQL Editor catalog check returned 24 runtime functions, zero runtime table grants, NOLOGIN/NOINHERIT, no anonymous or authenticated private schema access, both Error Library tables present, and the unchanged anonymous demo read-only boundary. Row-retention evidence comes from the local and CI upgrade fixtures above. |
 | Member review and merge gate | PENDING | Add the approving review, exact reviewed commit, expected-file review, unrelated-change review, privacy scan, all required checks, and merge record. |
-| Production migration | PENDING AFTER MERGE | Add the main deployment result, exact history through `20260911065302`, retained row checks, runtime grants, and date. Keep all account and Session values private. |
+| Production migration | PENDING AFTER MERGE | Add the main deployment result, exact history through `20260912143653`, retained row checks, runtime grants, and date. Keep all account and Session values private. |
 
 The implementation receipts above are dated 2026-09-11 UTC. Final review must
 also check the latest PR head after documentation updates. The database child

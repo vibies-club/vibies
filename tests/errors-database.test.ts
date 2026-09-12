@@ -392,6 +392,11 @@ if (!databaseUrl) {
           ["Public IPv4 docs", "https://203.0.113.7/docs"],
           ["Public IPv6 docs", "https://[2001:db8::7]/docs"],
           ["Encoded query value", "https://docs.example.com/errors?topic=api%5fkey"],
+          ["Public hostname suffix", "https://one.two.localhost.example.com/docs"],
+          ["Public hostname prefix", "https://notinternal.example.com/docs"],
+          ["Local word in path", "https://docs.example.com/one.two.localhost"],
+          ["Local word in query", "https://docs.example.com?host=one.two.local"],
+          ["Local word in fragment", "https://docs.example.com#api.dev.internal"],
         ]) {
           const safe = await createError(sessions.author, {
             ...fields(label), errorText: `See ${url}`,
@@ -510,6 +515,13 @@ if (!databaseUrl) {
           ["local_url", "https://[::ffff:169.254.0.1]/docs"],
           ["local_url", "https://[::ffff:0.0.0.0]/docs"],
           ["local_url", "https://localhost./docs"],
+          ["local_url", "https://one.localhost/docs"],
+          ["local_url", "https://one.two.localhost/docs"],
+          ["local_url", "https://one.two.local/docs"],
+          ["local_url", "https://api.dev.internal/docs"],
+          ["local_url", "https://ONE.TWO.LOCALHOST.:8443/docs"],
+          ["local_url", "https://api.dev.local:8443?topic=errors"],
+          ["local_url", "https://api.dev.internal.#errors"],
           ["local_url", "https://10.0.0.1./docs"],
           ["local_url", "https://%6c%6f%63%61%6c%68%6f%73%74/docs"],
           ["local_url", "https://999.999.999.999/docs"],
@@ -672,6 +684,11 @@ if (!databaseUrl) {
             assert.equal(JSON.stringify(result).includes("builder@example.com"), false);
           }
         }
+        assert.deepEqual(
+          await moderateError(sessions.instructor, created.id, "1", true,
+            "Keep the useful context", "Remove https://one.two.localhost/docs"),
+          { kind: "privacy", category: "local_url" },
+        );
         assert.deepEqual(await stored(created.id), original);
 
         const [hiddenResult, competingResult] = await Promise.all([
