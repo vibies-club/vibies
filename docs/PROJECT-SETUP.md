@@ -10,9 +10,10 @@ definitions. The [workflows](WORKFLOWS.md) own user behavior.
 [PR #18](https://github.com/vibies-club/vibies/pull/18) is merged. Its isolated
 Preview database was deleted, with main retained, as recorded in
 [Database deployment](DATABASE-DEPLOYMENT.md#automatic-cleanup-after-merge).
-The steps below record the original issue #17 setup. For a new GitHub-linked
-Preview, use native migration deployment for the schema and scope the access
-and App settings to the new branch and its fixed origin.
+The steps below record the original issue #17 setup. For routine app reviews,
+configure the GitHub App once in the separate staging project and use the
+[reusable staging workflow](DATABASE-DEPLOYMENT.md#reusable-staging). Use a new
+GitHub-linked Preview only for an approved isolated hosted test.
 
 ## Human setup for the live Preview
 
@@ -145,8 +146,9 @@ completed layer from pending live work.
 
 Issue #17 completed this stage order before Member review and merge. Its
 [proof record](PROJECT-VERIFICATION.md) contains every acceptance receipt.
-For later changes, finish their approved proof before merging; native cleanup
-removes the linked ephemeral Preview when its PR merges or closes.
+For later routine changes, finish the approved proof on reusable staging before
+merging. Existing linked ephemeral Previews keep their native cleanup behavior
+while the issue #37 transition is pending.
 
 ## Production setup
 

@@ -418,13 +418,53 @@ Failure and first-production receipts remain explicit. Applied migrations are
 immutable; the Instructor must verify an unapplied version before a reviewed
 repair exception. The [deployment guide](DATABASE-DEPLOYMENT.md) owns the steps.
 
-**Owner cleanup addition:** Automatic Preview branching stays enabled. Feature
-Previews use the native ephemeral lifecycle and the matching GitHub branch, so
-Supabase deletes them after PR merge or close. The owner requested this to end
-unused branch compute charges. Main is retained. Preview proof must finish
-before merge; deletion does not wait for a successful Production deployment.
-Legacy unlinked branches need separate reconciliation. After PR #18 merged,
+**Original owner cleanup addition:** Automatic Preview branching stayed enabled.
+Feature Previews used the native ephemeral lifecycle and the matching GitHub
+branch, so Supabase deleted them after PR merge or close. The owner requested
+this to end unused branch compute charges. Main was retained. Preview proof had
+to finish before merge because deletion did not wait for Production deployment.
+Legacy unlinked branches needed separate reconciliation. After PR #18 merged,
 the owner explicitly authorized deleting `access-review-5` and confirmed
 Builder's Production profile access. The [cleanup receipt](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922)
 records its deletion and retained main. Full Production verification remains
 separate from that access confirmation.
+
+**Issue #37 amendment on 2026-09-13:** Keep automatic paid Preview branching on
+only during the reusable staging rollout. Disable it for future PRs after shared
+staging passes its complete Action and hosted proof, and after the owner
+inventories all existing active branches. Existing review environments keep
+their approved review and cleanup path. A database-changing PR that needs hosted
+proof can use an isolated environment only with an agreed cost cap.
+
+## D-018: Reuse one free staging environment for app reviews
+
+**Status:** Accepted in [issue #37](https://github.com/vibies-club/vibies/issues/37)
+on 2026-09-13. Provider setup and live proof are pending.
+
+**Decision:** Use one standalone Supabase Free project that follows reviewed
+`main` migrations and one separate Vercel project with the fixed `staging` ref
+as its Production Branch. A maintainer runs the manual **staging** workflow from
+trusted `main` to preview an eligible PR or restore current `main`. The operation
+accepts only an open non-draft same-repository PR into `main`, a current head
+containing current `main`, passing head checks whose pull-request runs tested an
+equivalent tree, and a `supabase` tree equal to the owner-verified staging
+baseline. It updates only the fixed ref and verifies the stable URL, exact
+commit, project, ref, environment, and nonce before it records success.
+
+The required `migration-check` always runs snapshot, history, and classification
+guards. It runs the full disposable Supabase proof for SQL, backend, access,
+migration tooling, dependency, workflow, and unknown changes. Only known
+documentation, wiki, and static presentation changes can use the fast result.
+The existing `app-check` and `links` checks remain required.
+
+**Why:** One stable test site reuses its database, OAuth settings, GitHub App,
+reviewer accounts, and URL. This removes repeated hosted setup and routine paid
+database branches while keeping exact revision and schema proof.
+
+**Consequence:** Shared staging never receives an unmerged migration. A
+database-changing PR uses local and CI proof, plus a separately approved hosted
+environment with a cost cap only when its acceptance criteria require one. The
+Free project can pause; the owner resumes it and rechecks migration versions,
+the baseline, and sign-in. No keep-alive job or fallback provider token is added.
+The [deployment guide](DATABASE-DEPLOYMENT.md#reusable-staging) owns setup,
+operation, limits, and rollout receipts.

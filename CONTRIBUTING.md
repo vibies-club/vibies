@@ -34,6 +34,14 @@ vague idea → grill → Ready → Skeptic → build → prove → PR → review
 Database changes also follow the migration checks and rollout order in
 [Database deployment](docs/DATABASE-DEPLOYMENT.md).
 
+Every PR reports `app-check`, `migration-check`, and `links`. The fast migration
+guards run for all PRs. Database, backend, access, tool, dependency, workflow,
+and unknown changes also run the full local Supabase proof. After required checks
+pass, a maintainer can select an eligible app PR with the manual **staging**
+workflow. Shared staging accepts the current reviewed schema only. Follow the
+[reusable staging guide](docs/DATABASE-DEPLOYMENT.md#reusable-staging) and attach
+its exact-commit receipt to hosted acceptance claims.
+
 ## Writing rules
 
 - Every durable artifact is English: docs, code, comments, issues, PRs, and
