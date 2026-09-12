@@ -30,6 +30,7 @@ definition instead of creating a different version of it.
 | [Community rules](RULES.md) | Behavior, safety, privacy conduct, feedback conduct, and enforcement |
 | [Contributing guide](CONTRIBUTING.md) | The workflow every contributor follows, and the merge gate |
 | [Shared error log](docs/ERROR_LOG.md) | Solved class workflow blockers and how to find or contribute a fix |
+| [Class command wiki](docs/PRODUCT.md#class-command-wiki) | The protected `/wiki` command reference, its access, and its content boundary |
 | [Agent instructions](AGENTS.md) | How agents must work in this repository |
 | [Product](docs/PRODUCT.md) | Purpose, scope, roles, permissions, privacy boundaries, and exclusions |
 | [Domain](docs/DOMAIN.md) | Canonical concepts, relationships, constraints, states, and the Mermaid graph |

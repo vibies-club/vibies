@@ -11,6 +11,7 @@ export default async function WelcomePage() {
     <section><p className="eyebrow">YOUR COMMUNITY</p><h1>Welcome, {state.nickname}.</h1>
       <p className="intro">You have access to Vibies. This is the first step in building our community.</p>
       <p><a className="button" href="/projects">Browse projects</a></p>
+      <p><a className="button secondary" href="/wiki">Command wiki</a></p>
       {state.kind === "instructor" && <a className="button" href="/admin/members">Manage member access</a>}
     </section>}</AccessShell>;
 }

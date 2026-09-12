@@ -95,6 +95,13 @@ Personal Project counts, whatever its publication, connection, or moderation
 states. The organization-owned Class Project is separate: it neither completes
 personal onboarding nor counts toward this limit.
 
+## Class command wiki
+
+The protected `/wiki` page gives the Instructor and every approved Member,
+including Members with incomplete onboarding, a searchable reference for
+commands taught in class; its private-area gate keeps access consistent with
+Vibies while the source content stays public on GitHub.
+
 ## Projects and GitHub
 
 A Member connects a selected private personal GitHub Repository through a
@@ -149,6 +156,7 @@ moderation decision. Reconnection makes it available again only if it is still
 | Capability | Authenticated prospective Member, not approved | Approved Member onboarding | Member onboarding complete | Instructor |
 | --- | --- | --- | --- | --- |
 | Enter and browse the Community | No | Yes | Yes | Yes |
+| Read the class command wiki at `/wiki` | No | Yes | Yes | Yes |
 | Run Personal Project owner workflows | No | Own projects only | Own projects only | No |
 | Publish a Personal Project | No | Own projects only | Own projects only | No |
 | Post a Comment | No | No | Yes, including on an owned project | Yes |

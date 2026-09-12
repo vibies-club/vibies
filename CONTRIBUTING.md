@@ -46,3 +46,46 @@ Database changes also follow the migration checks and rollout order in
 - Keep `.env` files, credentials, and secrets out of every commit.
 - Nicknames only. Keep real names, photos, contact details, and all other
   personal data out of the repository.
+
+## Add a command entry
+
+Edit the typed `wikiEntries` array in `lib/wiki.ts`. Use a stable `id` that
+does not change when wording changes. Copy this object into the array and
+replace every `TODO`. The example command is a non-runnable placeholder:
+
+```ts
+{
+  id: "todo-stable-id",
+  title: "TODO: Clear command name",
+  topic: "TODO: Topic",
+  where: "shell",
+  command: "TODO: Replace with the exact command before use",
+  usage: "TODO: When and why to use it",
+  prerequisites: "None",
+  placeholders: "TODO: Explain each value the learner must replace",
+  result: "TODO: Expected result",
+  sources: [
+    {
+      file: "vibies-session-3.html",
+      location: "TODO: Student-facing class heading",
+    },
+  ],
+  guide: {
+    label: "Personal Project setup",
+    href: "https://github.com/vibies-club/vibies/blob/main/docs/PROJECT-SETUP.md#local-and-ci-commands",
+  },
+},
+```
+
+`where` must be `shell`, `tmux`, `Codex`, `SQL Editor`, or `browser`.
+For a keyboard shortcut, use `keys` instead of `command`; it is shown as keys
+without a copy button. Every entry needs a `command`, `keys`, or `guide`.
+`command`, `keys`, `placeholders`, and `guide` are optional. All other template fields
+are required. `prerequisites` and `placeholders` are strings. Cite the actual
+student-facing class file and its heading in `sources`; instructor-only decks
+are not entry sources. Use `guide` separately to link a related setup procedure.
+Keep only the short command context in the entry instead of copying its recipe.
+
+Update an affected entry in the same PR as the command change. Record the source
+inventory in the PR receipt. Run `npm run typecheck` and `npm test`, then request
+a Member review. The Instructor merges the approved PR.
