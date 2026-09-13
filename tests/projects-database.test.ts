@@ -326,6 +326,8 @@ if (!databaseUrl) {
         assert.deepEqual(shared, { kind: "ok", project: {
           id: hiddenId, title: "Hidden launch", summary: "Original details", demoUrl: null,
           nickname: "Builder", isOwner: false,
+          roadmapAvailable: true,
+          roadmap: { milestones: [], completedCount: 0, totalCount: 0, percentage: null },
         } });
         const instructorShared = await read(sessions.instructor, hiddenId);
         assert.deepEqual(instructorShared, { kind: "ok", project: {
@@ -810,6 +812,8 @@ if (!databaseUrl) {
           nickname: "Builder",
           isOwner: false,
           version: availableBefore.version,
+          roadmapAvailable: true,
+          roadmap: { milestones: [], completedCount: 0, totalCount: 0, percentage: null },
         } });
         for (const session of [hash("signed-out"), sessions.owner, sessions.reader,
           sessions.pending, sessions.revoked, sessions.expired, sessions.instructorExpired]) {
