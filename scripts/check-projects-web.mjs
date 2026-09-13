@@ -237,13 +237,13 @@ export async function checkProjectsWeb({ sql, origin, check }) {
   check(crossOriginRoadmap.status === 403, "Issue 20 P10 cross-origin roadmap writes are denied");
 
   const secondAdd = await post("member", {
-    action: "milestone_add", id: mainId, version: protectedRoadmap,
+    action: "milestone_add", id: mainId, version: protectedRoadmapVersion,
     title: "Review result", blockedNote: "",
   });
   rows = await roadmapRows(mainId);
   const secondMilestoneId = rows[1]?.id;
   const staleAdd = await post("member", {
-    action: "milestone_add", id: mainId, version: protectedRoadmap,
+    action: "milestone_add", id: mainId, version: protectedRoadmapVersion,
     title: "Stale roadmap write", blockedNote: "",
   });
   const staleRows = await roadmapRows(mainId);
