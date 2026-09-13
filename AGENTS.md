@@ -24,8 +24,10 @@ vague idea → grill → Ready → Skeptic → build → prove → PR → review
 5. Build on a feature branch. Small changes. One issue, one branch, one PR.
 6. Prove the work against the written acceptance criteria. Every claim needs
    a receipt. Every loop needs an exit condition.
-7. Open a PR. Every PR needs at least one member review and must pass the
-   merge gate. The instructor merges.
+7. Open a PR. Every PR needs at least one approving review from a Member or
+   the Instructor's review agent account (see
+   [D-017](docs/DECISIONS.md#d-017-review-prs-with-an-instructor-run-agent-account))
+   and must pass the merge gate. The instructor merges.
 
 ## Branch rules (hard)
 

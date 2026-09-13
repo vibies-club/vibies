@@ -18,8 +18,12 @@ vague idea → grill → Ready → Skeptic → build → prove → PR → review
    the PR. Every claim needs a receipt.
 5. Open a PR. The template carries the six-check merge gate. Complete it
    honestly.
-6. Every PR needs at least one member review. The instructor (`0xinBeta`)
-   is the only person who merges to main.
+6. Every PR needs at least one approving review from a Member or from the
+   Instructor's review agent account `Trident-app` (see
+   [D-017](docs/DECISIONS.md#d-017-review-prs-with-an-instructor-run-agent-account)).
+   The review agent runs the merge gate and approves only after the last
+   commit it checked. The instructor (`0xinBeta`) is the only person who
+   merges to main.
 
 ## The merge gate: six checks
 
