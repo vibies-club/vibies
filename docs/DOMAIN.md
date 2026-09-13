@@ -36,6 +36,11 @@ terms instead of creating alternative definitions.
 | **Manual sync** | A separately planned owner-requested metadata refresh. Issue #17 replaces imported Personal Project descriptions with Member-written details and does not implement Sync. Class Project sync authority remains unassigned. |
 | **Check connection** | An owner-requested, bounded GitHub metadata check. Verified restores Connected for the same stored repository and records a successful check time; confirmed loss saves Disconnected; Unknown changes nothing. |
 | **Project details** | Owner-written plain-text title (1 to 80 Unicode code points), summary (1 to 500), and optional absolute HTTPS demo URL (up to 2,048). Outer whitespace is trimmed. Cc and Cf characters are rejected, except LF in summaries after CRLF normalization. Demo URLs cannot contain embedded sign-in credentials. |
+| **Roadmap** | An optional ordered collection of zero or more Milestones attached to one Personal Project. It records the owner's current work plan. |
+| **Milestone** | One owner-managed roadmap item with a plain-text title, a completion value, an optional Blocked note, and an order position. A Personal Project can have up to 20 Milestones. |
+| **Milestone status** | The derived state of a Milestone: `Complete` when its completion value is selected, `Blocked` when it is incomplete and has a Blocked note, or `Incomplete` when it is incomplete without a note. |
+| **Blocked note** | An optional owner-written plain-text reason attached to an incomplete Milestone. Completing the Milestone removes the note. |
+| **Progress** | A whole percentage derived from completed Milestones divided by total Milestones, rounded to the nearest whole number. A Roadmap with no Milestones has no Progress percentage. |
 | **Deletion** | Confirmed removal of a Personal Project, its stored repository ID and details, discussion, and Feedback. Deletion is not a project state and is different from `Archived`, `Disconnected`, and `Hidden`. |
 
 ## Participation and moderation
@@ -137,6 +142,30 @@ it is not a fourth state.
 - Member-selected HTTPS demo destinations may include GitHub Pages usernames. Application-supplied shared identity remains Nickname-only.
 - Source files and README contents never enter Vibies.
 - Only a Nickname is displayed as User identity.
+- A Personal Project may have zero through 20 Milestones. A Roadmap is optional
+  and does not affect publication eligibility.
+- Milestone titles contain 1 through 80 plain-text characters. Blocked notes are
+  optional and contain 1 through 500 plain-text characters when present.
+  Duplicate titles are allowed.
+- A new Milestone is incomplete and takes the final position. The owner controls
+  its order with Move up and Move down actions. Completion leaves its position
+  unchanged.
+- The owner uses one completion value to complete or reopen a Milestone. A
+  completed Milestone has no Blocked note. An incomplete Milestone with a note
+  has `Blocked` status.
+- Progress is derived when it is displayed. The stored model has no separate
+  Progress percentage. Deleting a Milestone recalculates the displayed value.
+- The current approved owner can manage a Roadmap in every retained Project
+  state. A person who can view a Project can view its Roadmap and Blocked notes.
+  The Instructor can moderate the containing Project and cannot rewrite
+  Milestone content.
+- Draft, Published, Archived, Connected, Disconnected, Visible, and Hidden
+  changes preserve Roadmap data. Deleting a Personal Project deletes its
+  Milestones. Restoring availability shows the retained Roadmap.
+- A protected Roadmap write carries the version it read. A stale write changes
+  nothing and asks the owner to reload.
+- Roadmap controls are keyboard operable, and Milestone status remains clear
+  without color alone.
 
 ## Mermaid graph
 
@@ -160,6 +189,10 @@ flowchart LR
     PersonalProject -->|is a| Project["Project"]
     ClassProject -->|is a| Project
     PersonalProject -->|connects_to| GitHubRepository["GitHub Repository"]
+    PersonalProject -->|may_have| Roadmap["Roadmap: optional"]
+    Roadmap -->|contains 0..20| Milestone["Milestone"]
+    Milestone -->|has derived| MilestoneStatus["Status: Incomplete, Blocked, Complete"]
+    Roadmap -->|derives| Progress["Progress: calculated percentage"]
 
     User -->|authors| Comment["Comment"]
     User -->|authors| Feedback["Feedback: keep + improve"]

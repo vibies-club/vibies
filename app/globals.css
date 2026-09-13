@@ -19,6 +19,7 @@ code { font-size: 12px; }
 a:focus-visible { outline: 3px solid #49793b; outline-offset: 5px; }
 @media (max-width: 440px) { main { width: calc(100% - 32px); } h1 { letter-spacing: -1px; } }
 button, .button { display: inline-block; font: inherit; font-weight: 700; background: #38582b; color: #fff; border: 1px solid #38582b; border-radius: 6px; padding: 12px 18px; cursor: pointer; text-decoration: none; }
+button:disabled { opacity: .55; cursor: not-allowed; }
 button.secondary, .button.secondary { color: #38582b; background: #fff; }
 button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid #49793b; outline-offset: 4px; }
 .access header nav a, header > a:not(:first-child) { font-size: 16px; letter-spacing: normal; }
@@ -39,3 +40,11 @@ summary { cursor: pointer; text-decoration: underline; padding: 12px 0; }
 .access textarea, .access select { display: block; width: 100%; max-width: 560px; font: inherit; padding: 12px; border: 1px solid #727d6b; border-radius: 4px; }
 .access textarea:focus-visible, .access select:focus-visible { outline: 3px solid #49793b; outline-offset: 4px; }
 .project-summary { white-space: pre-wrap; overflow-wrap: anywhere; }
+.roadmap { margin-top: 48px; }
+.roadmap progress { display: block; width: 100%; height: 20px; }
+.roadmap-milestone { margin: 24px 0; padding: 20px; border: 1px solid #d7dad0; border-radius: 8px; background: #fff; }
+.roadmap-milestone h3 { margin-top: 0; }
+.roadmap-controls form, .roadmap-order form { display: inline-block; margin: 8px 8px 8px 0; }
+.roadmap-controls details { margin-top: 12px; }
+.roadmap-add { margin-top: 32px; padding-top: 24px; border-top: 1px solid #d7dad0; }
+.roadmap-summary { font-weight: 700; color: #38582b; }

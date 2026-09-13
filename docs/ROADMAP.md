@@ -8,6 +8,10 @@ chosen.
 
 ## Now
 
+- [Issue #20](https://github.com/vibies-club/vibies/issues/20) has an accepted
+  Ready design and implementation is in progress. [D-018](DECISIONS.md#d-018-add-optional-personal-project-roadmaps)
+  records the decision, and [Roadmap verification](ROADMAP-VERIFICATION.md)
+  holds 14 Pending acceptance receipts. The feature is not merged or proven.
 - Issue #17 merged through [PR #18](https://github.com/vibies-club/vibies/pull/18).
   All P1 to P16 rows have receipts in [Project verification](PROJECT-VERIFICATION.md).
 - [PR #30](https://github.com/vibies-club/vibies/pull/30) merged after Member

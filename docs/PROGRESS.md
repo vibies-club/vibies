@@ -3,7 +3,7 @@
 [Documentation home](../README.md) · [Decisions](DECISIONS.md) ·
 [Roadmap](ROADMAP.md)
 
-**Updated:** 2026-09-11
+**Updated:** 2026-09-14
 
 ## Repository setup
 
@@ -73,9 +73,20 @@ The issue #17 Preview database was removed automatically after merge. The legacy
 Main was retained. These [cleanup receipts](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922)
 do not establish full Production readiness.
 
+## Issue #20 status
+
+[Issue #20](https://github.com/vibies-club/vibies/issues/20) has an accepted
+Ready design and an approved implementation plan. Implementation is in
+progress. [D-018](DECISIONS.md#d-018-add-optional-personal-project-roadmaps)
+records the decision, while the [Roadmap verification record](ROADMAP-VERIFICATION.md)
+maps its 14 acceptance criteria to receipts. All 14 receipts remain Pending
+until implementation and proof finish. This feature is not merged or proven.
+
 ## Next step
 
-Complete the review process for [PR #33](https://github.com/vibies-club/vibies/pull/33),
+Complete issue #20 implementation and its local acceptance proof, then update the
+[Roadmap verification record](ROADMAP-VERIFICATION.md) before opening its PR.
+Also complete the review process for [PR #33](https://github.com/vibies-club/vibies/pull/33),
 which contains the issue #31 database work, and
 [PR #34](https://github.com/vibies-club/vibies/pull/34), which contains the issue
 #32 Vercel cleanup. Only the Instructor merges. These PRs deploy no new app

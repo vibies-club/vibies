@@ -34,7 +34,7 @@ definition instead of creating a different version of it.
 | [Product](docs/PRODUCT.md) | Purpose, scope, roles, permissions, privacy boundaries, and exclusions |
 | [Domain](docs/DOMAIN.md) | Canonical concepts, relationships, constraints, states, and the Mermaid graph |
 | [Demo data model](docs/DATA-MODEL.md) | The synthetic Supabase table used by the public demo |
-| [Workflows](docs/WORKFLOWS.md) | How access, projects, discussion, feedback, moderation, connection, and deletion work |
+| [Workflows](docs/WORKFLOWS.md) | How access, projects, roadmaps, discussion, feedback, moderation, connection, and deletion work |
 | [Decisions](docs/DECISIONS.md) | Accepted product and documentation decisions with their reasons |
 | [Progress](docs/PROGRESS.md) | The current development snapshot and immediate next step |
 | [Roadmap](docs/ROADMAP.md) | The `Now`, `Next`, and `Later` sequence |
@@ -45,6 +45,7 @@ definition instead of creating a different version of it.
 | [Access verification](docs/ACCESS-VERIFICATION.md) | Issue #5 implementation receipts for the A1 through A16 checks specified in issue #14 |
 | [Personal Project setup](docs/PROJECT-SETUP.md) | Human App/Preview setup and exact isolated proof commands |
 | [Personal Project verification](docs/PROJECT-VERIFICATION.md) | Phase order and receipts for issue #17 |
+| [Personal Project Roadmap verification](docs/ROADMAP-VERIFICATION.md) | Pending acceptance receipts for issue #20 |
 
 ## Current status
 
@@ -60,6 +61,12 @@ It adds private Personal Project connection, publication, connection checks,
 Community reading, owner Edit/Delete, and Instructor Hide/Restore.
 The [project proof record](docs/PROJECT-VERIFICATION.md) lists local and live
 receipts in the approved stage order, plus the Member review and merge receipt.
+
+[Issue #20](https://github.com/vibies-club/vibies/issues/20) has an accepted
+Ready design and implementation is in progress. The decision is recorded in
+[D-018](docs/DECISIONS.md#d-018-add-optional-personal-project-roadmaps), and its
+14 acceptance receipts are Pending in the [Roadmap verification record](docs/ROADMAP-VERIFICATION.md).
+The feature is not merged or proven.
 
 [PR #30](https://github.com/vibies-club/vibies/pull/30) merged after Member
 review. Its [post-merge receipt](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630352747)

@@ -50,6 +50,16 @@ if (!databaseUrl) {
       tx`select vibies_private.edit_project(${session}, ${id}::uuid, ${version}::bigint, ${title}, ${summary}, ${demoUrl}) as value`);
     const remove = (session: string, id: string, version: string) => call((tx) =>
       tx`select vibies_private.delete_project(${session}, ${id}::uuid, ${version}::bigint) as value`);
+    const addMilestone = (session: string, id: string, version: string, title: string, note: string | null = null) => call((tx) =>
+      tx`select vibies_private.add_project_milestone(${session}, ${id}::uuid, ${version}::bigint, ${title}, ${note}) as value`);
+    const editMilestone = (session: string, id: string, milestoneId: string, version: string, title: string, note: string | null = null) => call((tx) =>
+      tx`select vibies_private.edit_project_milestone(${session}, ${id}::uuid, ${milestoneId}::uuid, ${version}::bigint, ${title}, ${note}) as value`);
+    const completeMilestone = (session: string, id: string, milestoneId: string, version: string, completed: boolean) => call((tx) =>
+      tx`select vibies_private.set_project_milestone_completion(${session}, ${id}::uuid, ${milestoneId}::uuid, ${version}::bigint, ${completed}) as value`);
+    const moveMilestone = (session: string, id: string, milestoneId: string, version: string, direction: string) => call((tx) =>
+      tx`select vibies_private.move_project_milestone(${session}, ${id}::uuid, ${milestoneId}::uuid, ${version}::bigint, ${direction}) as value`);
+    const removeMilestone = (session: string, id: string, milestoneId: string, version: string) => call((tx) =>
+      tx`select vibies_private.delete_project_milestone(${session}, ${id}::uuid, ${milestoneId}::uuid, ${version}::bigint) as value`);
     const moderate = (session: string, id: string, version: string, hidden: boolean) => call((tx) =>
       tx`select vibies_private.moderate_project(${session}, ${id}::uuid, ${version}::bigint, ${hidden}) as value`);
     const list = (session: string) => call((tx) =>
@@ -82,6 +92,7 @@ if (!databaseUrl) {
     try {
       // This database is name-checked and disposable. Remove only the unpublished
       // local schema shape used before the issue owner chose opaque owner IDs.
+      await sql.unsafe("drop table if exists vibies_private.project_milestones");
       await sql.unsafe("drop table if exists vibies_private.personal_projects");
       await sql.unsafe(`
         do $$ begin
@@ -92,6 +103,7 @@ if (!databaseUrl) {
       await migrationSql.unsafe(migration);
       await sql`insert into vibies_private.accounts (github_id, github_username) values ('999', 'synthetic-legacy')`;
       await sql.unsafe(`
+        drop table vibies_private.project_milestones;
         drop table vibies_private.personal_projects;
         alter table vibies_private.accounts drop column internal_id;
       `);
@@ -103,6 +115,7 @@ if (!databaseUrl) {
       assert.equal(stableBackfill.id, backfilled.id);
       await sql.unsafe(`
         truncate table
+          vibies_private.project_milestones,
           vibies_private.personal_projects,
           vibies_private.sessions,
           vibies_private.sign_in_flows,
@@ -142,12 +155,15 @@ if (!databaseUrl) {
         assert.deepEqual(identityAfter, { id: identityBefore.id, github_username: "synthetic-pending-renamed" });
         await assert.rejects(() => asRuntime((tx) => tx`select * from vibies_private.personal_projects`),
           (error: any) => error.code === "42501");
+        await assert.rejects(() => asRuntime((tx) => tx`select * from vibies_private.project_milestones`),
+          (error: any) => error.code === "42501");
         for (const role of ["anon", "authenticated"]) {
           const [rights] = await sql`
             select has_schema_privilege(${role}, 'vibies_private', 'usage') as schema,
-                   has_table_privilege(${role}, 'vibies_private.personal_projects', 'select') as table
+                   has_table_privilege(${role}, 'vibies_private.personal_projects', 'select') as projects,
+                   has_table_privilege(${role}, 'vibies_private.project_milestones', 'select') as milestones
           `;
-          assert.deepEqual(rights, { schema: false, table: false });
+          assert.deepEqual(rights, { schema: false, projects: false, milestones: false });
         }
         const [columns] = await sql`
           select jsonb_object_agg(column_name, data_type) as definitions
@@ -159,6 +175,24 @@ if (!databaseUrl) {
         }
         assert.equal("owner_github_id" in columns.definitions, false);
         assert.equal(columns.definitions.owner_account_id, "uuid");
+        const [milestoneColumns] = await sql`
+          select jsonb_object_agg(column_name, data_type) as definitions
+            from information_schema.columns
+           where table_schema = 'vibies_private' and table_name = 'project_milestones'
+        `;
+        assert.deepEqual({
+          id: milestoneColumns.definitions.id,
+          project_id: milestoneColumns.definitions.project_id,
+          title: milestoneColumns.definitions.title,
+          completed: milestoneColumns.definitions.completed,
+          blocked_note: milestoneColumns.definitions.blocked_note,
+          position: milestoneColumns.definitions.position,
+        }, {
+          id: "uuid", project_id: "uuid", title: "text", completed: "boolean",
+          blocked_note: "text", position: "integer",
+        });
+        assert.equal("progress" in milestoneColumns.definitions, false);
+        assert.equal("percentage" in milestoneColumns.definitions, false);
         const [runtime] = await sql`
           select jsonb_agg(
             format('%s(%s)', p.proname, pg_catalog.oidvectortypes(p.proargtypes))
@@ -171,22 +205,27 @@ if (!databaseUrl) {
         `;
         assert.deepEqual(runtime.functions, [
           "access_state(text)",
+          "add_project_milestone(text, uuid, bigint, text, text)",
           "begin_sign_in(text, text)",
           "change_member(text, text, text, text)",
           "connect_project(text, text, text, text, text)",
           "consume_sign_in(text, text)",
           "delete_project(text, uuid, bigint)",
+          "delete_project_milestone(text, uuid, uuid, bigint)",
           "edit_project(text, uuid, bigint, text, text, text)",
+          "edit_project_milestone(text, uuid, uuid, bigint, text, text)",
           "end_session(text)",
           "finish_sign_in(text, text, text, text)",
           "members(text)",
           "moderate_project(text, uuid, bigint, boolean)",
+          "move_project_milestone(text, uuid, uuid, bigint, text)",
           "project(text, uuid)",
           "project_actor(text)",
           "project_operation_context(text, uuid)",
           "projects(text)",
           "publish_project(text, uuid, bigint)",
           "record_project_connection(text, uuid, bigint, boolean)",
+          "set_project_milestone_completion(text, uuid, uuid, bigint, boolean)",
         ]);
         const [moderationSignatures] = await sql`
           select to_regprocedure('vibies_private.moderate_project(text,uuid,boolean)') is null as old_removed,
@@ -449,7 +488,156 @@ if (!databaseUrl) {
         assert.deepEqual(await stored(editorId), beforeInvalid);
       });
 
+      await t.test("Roadmaps enforce ownership, order, progress, visibility, limits, and stale writes", async () => {
+        let current = await context(sessions.editor, editorId);
+        const firstVersion = current.version;
+        assert.deepEqual(await addMilestone(sessions.editor, editorId, firstVersion,
+          "Prepare launch", "Waiting for synthetic access"), { kind: "added" });
+        assert.deepEqual(await addMilestone(sessions.editor, editorId, firstVersion,
+          "Old tab", null), { kind: "stale" });
+
+        current = await context(sessions.editor, editorId);
+        for (const session of [hash("signed-out"), sessions.instructor, sessions.other,
+          sessions.pending, sessions.revoked, sessions.expired]) {
+          assert.deepEqual(await addMilestone(session, editorId, current.version, "Forbidden"),
+            { kind: "forbidden" });
+        }
+        for (const [title, note] of ([
+          ["", null], ["x".repeat(81), null], ["Bad\nTitle", null],
+          ["Valid", ""], ["Valid", "x".repeat(501)], ["Valid", "bad\tnote"],
+        ] as Array<[string, string | null]>)) {
+          assert.deepEqual(await addMilestone(sessions.editor, editorId, current.version, title, note),
+            { kind: "invalid" });
+        }
+
+        assert.deepEqual(await addMilestone(sessions.editor, editorId, current.version,
+          "Review result"), { kind: "added" });
+        current = await context(sessions.editor, editorId);
+        assert.deepEqual(await addMilestone(sessions.editor, editorId, current.version,
+          "Review result"), { kind: "added" });
+
+        let ownerRead: any = await read(sessions.editor, editorId);
+        assert.equal(ownerRead.kind, "ok");
+        assert.equal(ownerRead.project.roadmapAvailable, true);
+        assert.deepEqual(ownerRead.project.roadmap, {
+          milestones: [
+            { id: ownerRead.project.roadmap.milestones[0].id, title: "Prepare launch", completed: false,
+              blockedNote: "Waiting for synthetic access" },
+            { id: ownerRead.project.roadmap.milestones[1].id, title: "Review result", completed: false,
+              blockedNote: null },
+            { id: ownerRead.project.roadmap.milestones[2].id, title: "Review result", completed: false,
+              blockedNote: null },
+          ],
+          completedCount: 0, totalCount: 3, percentage: 0,
+        });
+        const [first, second, third] = ownerRead.project.roadmap.milestones;
+
+        current = await context(sessions.editor, editorId);
+        assert.deepEqual(await editMilestone(sessions.editor, editorId, first.id,
+          current.version, "Prepare launch safely", "Waiting for synthetic review"), { kind: "edited" });
+        current = await context(sessions.editor, editorId);
+        assert.deepEqual(await editMilestone(sessions.editor, editorId, first.id,
+          current.version, "Prepare launch safely", "Waiting for synthetic review"), { kind: "unchanged" });
+        assert.equal((await context(sessions.editor, editorId)).version, current.version);
+
+        current = await context(sessions.editor, editorId);
+        assert.deepEqual(await completeMilestone(sessions.editor, editorId, first.id,
+          current.version, true), { kind: "completed" });
+        ownerRead = await read(sessions.editor, editorId);
+        assert.deepEqual({
+          completed: ownerRead.project.roadmap.milestones[0].completed,
+          note: ownerRead.project.roadmap.milestones[0].blockedNote,
+          completedCount: ownerRead.project.roadmap.completedCount,
+          percentage: ownerRead.project.roadmap.percentage,
+        }, { completed: true, note: null, completedCount: 1, percentage: 33 });
+        current = await context(sessions.editor, editorId);
+        assert.deepEqual(await editMilestone(sessions.editor, editorId, first.id,
+          current.version, "Prepare launch", "Cannot block completed work"), { kind: "invalid" });
+        assert.deepEqual(await completeMilestone(sessions.editor, editorId, first.id,
+          current.version, false), { kind: "reopened" });
+
+        current = await context(sessions.editor, editorId);
+        assert.deepEqual(await completeMilestone(sessions.editor, editorId, second.id,
+          current.version, true), { kind: "completed" });
+        current = await context(sessions.editor, editorId);
+        assert.deepEqual(await completeMilestone(sessions.editor, editorId, third.id,
+          current.version, true), { kind: "completed" });
+        ownerRead = await read(sessions.editor, editorId);
+        assert.deepEqual({ completedCount: ownerRead.project.roadmap.completedCount,
+          percentage: ownerRead.project.roadmap.percentage }, { completedCount: 2, percentage: 67 });
+
+        const beforeMove = ownerRead.project.roadmap.milestones.map((item: any) => item.id);
+        current = await context(sessions.editor, editorId);
+        assert.deepEqual(await moveMilestone(sessions.editor, editorId, third.id,
+          current.version, "up"), { kind: "moved" });
+        ownerRead = await read(sessions.editor, editorId);
+        assert.deepEqual(ownerRead.project.roadmap.milestones.map((item: any) => item.id),
+          [beforeMove[0], beforeMove[2], beforeMove[1]]);
+        current = await context(sessions.editor, editorId);
+        assert.deepEqual(await moveMilestone(sessions.editor, editorId, first.id,
+          current.version, "up"), { kind: "unchanged" });
+        assert.equal((await context(sessions.editor, editorId)).version, current.version);
+        assert.deepEqual(await moveMilestone(sessions.editor, editorId, first.id,
+          current.version, "sideways"), { kind: "invalid" });
+
+        current = await context(sessions.editor, editorId);
+        assert.deepEqual(await removeMilestone(sessions.editor, editorId, third.id,
+          current.version), { kind: "deleted" });
+        const [positions] = await sql`
+          select array_agg(position order by position) as values
+            from vibies_private.project_milestones where project_id = ${editorId}::uuid
+        `;
+        assert.deepEqual(positions.values, [1, 2]);
+
+        await sql`update vibies_private.personal_projects
+          set publication = 'Published', connection = 'Connected', moderation = 'Visible',
+              version = version + 1 where id = ${editorId}::uuid`;
+        const memberRead: any = await read(sessions.other, editorId);
+        const instructorRead: any = await read(sessions.instructor, editorId);
+        assert.equal(memberRead.project.roadmap.milestones.length, 2);
+        assert.equal(instructorRead.project.roadmap.milestones.length, 2);
+        const communityItem = (await list(sessions.other)).community.find((item: any) => item.id === editorId);
+        assert.equal(communityItem.progressPercentage, 50);
+        assert.equal("roadmap" in communityItem, false);
+        assert.equal(JSON.stringify(communityItem).includes("Prepare launch"), false);
+
+        await sql`update vibies_private.personal_projects
+          set publication = 'Archived', connection = 'Disconnected', moderation = 'Hidden',
+              version = version + 1 where id = ${editorId}::uuid`;
+        assert.deepEqual(await read(sessions.other, editorId), { kind: "missing" });
+        assert.equal((await read(sessions.instructor, editorId)).project.roadmap.totalCount, 2);
+        assert.equal((await read(sessions.editor, editorId)).project.roadmap.totalCount, 2);
+
+        const limitProject = await connect(sessions.editor, "7001", "Roadmap limit", "Limit proof");
+        assert.equal(limitProject.kind, "created");
+        for (let index = 1; index <= 19; index += 1) {
+          current = await context(sessions.editor, limitProject.id);
+          assert.deepEqual(await addMilestone(sessions.editor, limitProject.id, current.version,
+            index === 1 ? "🌱".repeat(80) : "Repeated title",
+            index === 1 ? "🌱".repeat(500) : null), { kind: "added" });
+        }
+        current = await context(sessions.editor, limitProject.id);
+        const race = await Promise.all([
+          addMilestone(sessions.editor, limitProject.id, current.version, "Twentieth"),
+          addMilestone(sessions.editor, limitProject.id, current.version, "Competing twentieth"),
+        ]);
+        assert.deepEqual(race.map((value) => value.kind).sort(), ["added", "stale"]);
+        current = await context(sessions.editor, limitProject.id);
+        assert.deepEqual(await addMilestone(sessions.editor, limitProject.id, current.version,
+          "Twenty-first"), { kind: "full" });
+        assert.equal((await read(sessions.editor, limitProject.id)).project.roadmap.totalCount, 20);
+
+        current = await context(sessions.editor, limitProject.id);
+        assert.deepEqual(await remove(sessions.editor, limitProject.id, current.version), { kind: "deleted" });
+        const [removedChildren] = await sql`select count(*)::int as count
+          from vibies_private.project_milestones where project_id = ${limitProject.id}::uuid`;
+        assert.equal(removedChildren.count, 0);
+      });
+
       await t.test("Delete is private, concurrent, frees capacity, and creates a new ID on reconnect", async () => {
+        const [milestonesBeforeDelete] = await sql`select count(*)::int as count
+          from vibies_private.project_milestones where project_id = ${editorId}::uuid`;
+        assert.equal(milestonesBeforeDelete.count, 2);
         const current = await context(sessions.editor, editorId);
         assert.deepEqual(await remove(sessions.other, editorId, current.version), { kind: "forbidden" });
         assert.deepEqual(await remove(sessions.instructor, editorId, current.version), { kind: "forbidden" });
@@ -468,6 +656,9 @@ if (!databaseUrl) {
         ]);
         assert.deepEqual(concurrent.map(value => value.kind).sort(), ["deleted", "forbidden"]);
         assert.equal(await stored(editorId), undefined);
+        const [milestonesAfterDelete] = await sql`select count(*)::int as count
+          from vibies_private.project_milestones where project_id = ${editorId}::uuid`;
+        assert.equal(milestonesAfterDelete.count, 0);
         assert.deepEqual(await remove(sessions.editor, editorId, current.version), { kind: "forbidden" });
 
         const [onboarding] = await sql`

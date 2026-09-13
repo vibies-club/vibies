@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { PROJECT_BODY_LIMIT, projectDetails, projectForm, projectId, projectVersion, repositoryId } from "../lib/project-core.ts";
+import {
+  PROJECT_BODY_LIMIT,
+  milestoneDetails,
+  projectDetails,
+  projectForm,
+  projectId,
+  projectVersion,
+  repositoryId,
+} from "../lib/project-core.ts";
 
 test("project details accept Unicode and HTTPS without provider identity imports", () => {
   assert.deepEqual(projectDetails("  Synthetic garden  ", "Line one\r\nLine two", ""),
@@ -33,4 +41,28 @@ test("bounded form accepts maximum Unicode details and rejects oversize and dupl
   for (const value of [null, "", "0", "-1", "01", "1.5", "1e3", "9223372036854775808", "9".repeat(100)]) {
     assert.equal(projectVersion(value), false);
   }
+});
+
+test("milestone details trim optional blocked notes and enforce plain-text limits", () => {
+  assert.deepEqual(milestoneDetails("  Plan the demo  ", "  Waiting for access  "), {
+    title: "Plan the demo",
+    blockedNote: "Waiting for access",
+  });
+  assert.deepEqual(milestoneDetails("Plan the demo", "  "), {
+    title: "Plan the demo",
+    blockedNote: null,
+  });
+  assert.deepEqual(milestoneDetails("Plan the demo", "Line one\r\nLine two"), {
+    title: "Plan the demo",
+    blockedNote: "Line one\nLine two",
+  });
+  assert.ok(milestoneDetails("🌱".repeat(80), "🌿".repeat(500)));
+  for (const [title, note] of [
+    ["", "note"], [" ", "note"], ["🌱".repeat(81), "note"],
+    ["title\n", "note"], ["title", "🌿".repeat(501)], ["title", "note\ttext"],
+    ["title\u200b", "note"], ["title", "note\u200b"],
+  ]) {
+    assert.equal(milestoneDetails(title, note), null, JSON.stringify([title, note]));
+  }
+  assert.deepEqual(milestoneDetails("title", null), { title: "title", blockedNote: null });
 });

@@ -461,3 +461,47 @@ The account holds no product secret and no Member identity.
 
 **Related documents:** [Contributing guide](../CONTRIBUTING.md),
 [agent rules](../AGENTS.md), and [D-011](#d-011-open-the-repository-under-vibies-club).
+
+## D-018: Add optional Personal Project roadmaps
+
+**Status:** Accepted design for [issue #20](https://github.com/vibies-club/vibies/issues/20)
+after the completed grill and approved implementation plan. Implementation is
+in progress. Proof and merge remain pending.
+
+**Decision:** Personal Projects gain an optional Roadmap with zero through 20
+ordered Milestones. Each Milestone has a plain-text title, a completion value,
+and an optional Blocked note. The owner adds one at a time, edits one at a time,
+reorders with Move up and Move down controls, completes or reopens it with one
+Complete checkbox, and deletes it after a confirmation that identifies it.
+Progress is derived from completed Milestones and shown as a rounded whole
+percentage.
+
+The full Roadmap appears on the Project detail page. Available Community cards
+show only the percentage. An empty Roadmap shows its empty message without a
+progress bar or percentage. Roadmap visibility follows Project visibility, and
+only the current approved owner can change it. The owner can manage a Roadmap in
+every retained Project state. A stale write stops without replacing newer data
+and asks the owner to reload. Roadmap controls support keyboard use and status
+does not depend on color alone.
+
+Project state changes preserve Roadmap data, and deleting a Personal Project
+deletes its Milestones. The Roadmap remains optional for publication. Dates,
+deadlines, assignees, notifications, milestone Comments, change history,
+imports, Class Project Roadmaps, and student learning Roadmaps remain outside
+the first version.
+
+**Why:** A shared Roadmap lets a Member show current progress and explain a
+blocked next step on the Project page. The 20 item limit and derived Progress
+keep the first version small and easy to understand. Current Roadmap display
+keeps the page useful without introducing public history.
+
+**Consequence:** [DOMAIN](DOMAIN.md) owns Roadmap terms and invariants,
+[PRODUCT](PRODUCT.md) owns the experience and boundaries, and
+[WORKFLOWS](WORKFLOWS.md) owns the owner and viewer flows. The implementation
+must preserve existing Personal Project ownership, availability, moderation,
+privacy, and deletion rules. [Roadmap verification](ROADMAP-VERIFICATION.md)
+tracks the 14 acceptance receipts and starts with every receipt pending.
+
+**Related documents:** [Issue #20](https://github.com/vibies-club/vibies/issues/20),
+[domain model](DOMAIN.md), [product definition](PRODUCT.md),
+[workflows](WORKFLOWS.md), and [roadmap verification](ROADMAP-VERIFICATION.md).

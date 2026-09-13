@@ -12,6 +12,8 @@ workflows apply only to Personal Projects. Issue #6 does not assign the
 organization-owned Class Project's lifecycle authority. Comment and Feedback
 creation workflows apply to any available Project. Moderation applies to any
 existing, non-deleted Project, Comment, or Feedback, including hidden content.
+Personal Project Roadmaps follow the containing Project's view and ownership
+rules. Their accepted behavior is defined in [issue #20](https://github.com/vibies-club/vibies/issues/20).
 
 ## 1. Log in and enter the Community
 
@@ -190,6 +192,9 @@ is confirmed GitHub access loss: it saves only Disconnected and stops publicatio
 preserving publication, moderation, onboarding, and the last successful check
 time. Unknown provider failures change nothing.
 
+An optional Roadmap does not change any Publish precondition and does not need a
+Milestone. Publishing preserves the Roadmap and its derived Progress.
+
 ## 6. Post a flat discussion Comment
 
 **Start:** A User submits a Comment about an available Project.
@@ -248,6 +253,9 @@ unavailable to non-owners, including the Instructor. The action
 route and database function both check Instructor access. A Member cannot use
 these controls or a direct POST to moderate. The full moderation screen remains
 outside this issue.
+
+Project moderation changes Roadmap availability through the containing Project.
+The Instructor cannot edit or rewrite Roadmap or Milestone content.
 
 Hide and Restore carry the version shown on the Instructor's project page.
 The database rejects the action if the locked project has changed since that
@@ -314,8 +322,8 @@ does not override an Instructor's moderation state.
 
 1. Vibies explains that the Project and all attached information will be removed.
 2. The Member explicitly confirms deletion.
-3. Vibies removes the Personal Project, stored repository ID and details, discussion,
-   and Feedback.
+3. Vibies removes the Personal Project, stored repository ID and details,
+   Roadmap and Milestones, discussion, and Feedback.
 4. The Project no longer counts toward the Member's three-project limit.
 5. If publishing this Project completed onboarding, onboarding remains complete.
 6. Deletion changes nothing on GitHub. Repeated deletion reveals no ownership
@@ -369,3 +377,76 @@ ownership, a deleted project, or a version conflict make no change. Stored text
 renders as plain text. Demo links send no referrer; Vibies does not fetch, embed,
 or preview their destinations. The detail form explains the privacy rules and
 the accepted GitHub Pages destination exception.
+
+## 13. Manage a Personal Project roadmap
+
+**Start:** The owner opens a retained Personal Project and chooses to manage its
+optional Roadmap.
+
+**Actor:** The current approved owner of that Personal Project.
+
+**Preconditions:** The Project belongs to the owner and has not been deleted.
+Roadmap management remains allowed in every retained combination of Project
+states: Draft, Published, or Archived; Connected or Disconnected; and Visible or
+Hidden. The protected action carries the Roadmap version that the page displayed.
+
+**Outcome: add:**
+
+1. The owner enters one valid Milestone title and, when needed, a Blocked note.
+2. Vibies validates the plain-text limits from the [domain model](DOMAIN.md#projects-and-repositories)
+   and accepts up to 20 Milestones for the Project. Duplicate titles remain
+   valid.
+3. The new Milestone starts incomplete and takes the final position. A supplied
+   Blocked note gives it `Blocked` status. Without a note it has `Incomplete`
+   status.
+4. A Roadmap remains optional. Adding no Milestones leaves Publish available.
+
+**Outcome: edit and state:**
+
+1. The owner edits one Milestone at a time. Save applies the title and note;
+   Cancel leaves the Milestone unchanged.
+2. The owner uses one Complete checkbox. Selecting it marks the Milestone
+   `Complete` and removes its Blocked note. Clearing it reopens the Milestone as
+   incomplete.
+3. An incomplete Milestone with a Blocked note is `Blocked`. An incomplete
+   Milestone without a note is `Incomplete`.
+
+**Outcome: order and deletion:**
+
+1. Move up and Move down change the Milestone's position. Completion and
+   blocking leave position unchanged.
+2. Delete identifies the Milestone and takes effect only after the owner
+   confirms. Any Milestone may be deleted.
+3. The displayed Progress recalculates from the remaining completed and total
+   Milestones. Vibies stores no separate Progress percentage.
+
+**Outcome: view:**
+
+1. A Project detail page with Milestones shows the ordered Roadmap, each status
+   and Blocked note, a progress bar, and text such as “2 of 3 complete, 67%.”
+   It appears after shared Project details and before management controls.
+2. A Community Project card shows only text such as “67% complete.”
+3. An empty Roadmap shows “No milestones yet” on the detail page, with no
+   progress bar or percentage.
+4. Everyone who can view the Project can view its Roadmap and Blocked notes.
+
+**Outcome: persistence and safety:**
+
+1. Draft, Published, Archived, Connected, Disconnected, Visible, and Hidden
+   changes preserve the Roadmap. Restored availability shows the same Roadmap.
+2. Deleting the Personal Project deletes its Milestones with it. Onboarding
+   completion remains governed by the existing publication workflow.
+3. Roadmap controls are keyboard operable, and status is clear without color
+   alone.
+
+**Failure path:** An unapproved person, Former Member, Instructor, or Member
+without current ownership cannot change a Roadmap. The Instructor can moderate
+the containing Project through the existing controls and cannot edit Milestone
+content. Invalid titles or notes, a 21st Milestone, missing ownership, missing
+Project, deleted Project, invalid action, cross-origin request, or failed access
+check changes nothing. At 20 Milestones, Add is disabled and the page explains
+the limit.
+
+A stale Roadmap version stops the action without replacing a newer change. The
+page asks the owner to reload before trying again. A successful action updates
+the current Roadmap version so a later stale action cannot overwrite it.
