@@ -9,7 +9,7 @@ Vibies is a private community where beginners build real products together.
 - Give useful feedback about the work, never the person.
 - Welcome unfinished work because every builder starts somewhere.
 
-Vibies is built for one instructor and seven active member places. The detailed
+Vibies is built for one instructor and eight active member places. The detailed
 product purpose, access model, permissions, privacy boundaries, and exclusions
 are documented in the [product definition](docs/PRODUCT.md).
 

@@ -22,6 +22,12 @@ historical proof environment. Production verification is separate.
 Change a pending entry only after its procedure completes and attach a privacy-safe receipt in the PR. A hidden control is insufficient proof;
 direct protected requests and actions must also be denied.
 
+The capacity values below are historical receipts for the seven-place rule tested
+by issue #5. [Issue #39](https://github.com/vibies-club/vibies/issues/39) amends
+the current capacity to eight active Member places in
+[D-003](DECISIONS.md). The
+original procedures and observed results remain unchanged.
+
 ## Skeptic findings
 
 The required Skeptic pass found eight risks. The approved plan has a resolution

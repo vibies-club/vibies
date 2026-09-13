@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { cpSync, mkdtempSync, mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -69,7 +69,9 @@ test("migration snapshots and committed history stay immutable", () => {
 
     const accessSource = join(fixture, "supabase", "access.sql");
     const originalAccessSource = readFileSync(accessSource);
-    const nextAccessMigration = join(fixture, "supabase", "migrations", "20260910230000_access.sql");
+    const latestVersion = readdirSync(join(fixture, "supabase", "migrations"))
+      .filter(name => name.endsWith(".sql")).sort().at(-1).slice(0, 14);
+    const nextAccessMigration = join(fixture, "supabase", "migrations", `${BigInt(latestVersion) + 1n}_access.sql`);
     writeFileSync(nextAccessMigration, originalAccessSource.subarray("begin;\n".length, -"commit;\n".length));
     const nextSnapshot = run();
     assert.equal(nextSnapshot.status, 0, nextSnapshot.stderr);

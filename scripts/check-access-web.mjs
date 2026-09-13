@@ -111,6 +111,31 @@ try {
     const [retained] = await sql`select status from vibies_private.accounts where github_id = ${ids.member}`;
     check(retained.status === "approved", "sign-out preserves approval");
     await checkProjectsWeb({sql, origin, check});
+
+    const [beforeCapacity] = await sql`select vibies_private.members(${hash(sessions.instructor)}) as result`;
+    check(beforeCapacity.result.activeCount === 2, "capacity proof starts with two active Members and a separate Instructor");
+    for (let id = 93001; id <= 93005; id++) {
+      await sql`select vibies_private.finish_sign_in(${String(id)}, ${`synthetic-${id}`}, ${hash(`capacity-${id}`)}, null)`;
+      const approved = await post("/admin/members/action", "instructor", {action:"approve", githubId:String(id), nickname:`Member ${id}`});
+      check(approved.headers.get("location") === "/admin/members?message=ok", `capacity fixture ${id} is approved through the route`);
+    }
+    const eighth = await post("/admin/members/action", "instructor", {action:"approve", githubId:ids.unapproved, nickname:"New Builder"});
+    check(eighth.headers.get("location") === "/admin/members?message=ok", "the Instructor can approve the eighth Member");
+    const fullPage = await get("/admin/members", "instructor");
+    const fullText = (await fullPage.text()).replace(/<!--.*?-->/gs, "");
+    check(fullPage.status === 200 && fullText.includes("8 of 8 Member places filled.") && fullText.includes("New Builder"),
+      "the server accepts eight Members and renders 8 of 8");
+    await sql`select vibies_private.finish_sign_in('93006', 'synthetic-93006', ${hash("capacity-93006")}, null)`;
+    const ninth = await post("/admin/members/action", "instructor", {action:"approve", githubId:"93006", nickname:"Overflow"});
+    check(ninth.headers.get("location") === "/admin/members?message=full", "ninth approval returns the full-capacity result");
+    const reapproval = await post("/admin/members/action", "instructor", {action:"reapprove", githubId:ids.revoked});
+    check(reapproval.headers.get("location") === "/admin/members?message=full", "ninth reapproval also returns the full-capacity result");
+    const fullMessage = await get("/admin/members?message=full", "instructor");
+    check(fullMessage.status === 200 && (await fullMessage.text()).includes("All eight Member places are filled."),
+      "the full-capacity message names eight Member places");
+    const [afterCapacity] = await sql`select vibies_private.members(${hash(sessions.instructor)}) as result`;
+    check(afterCapacity.result.activeCount === 8 && !afterCapacity.result.accounts.some(account => account.githubId === ids.instructor),
+      "rejected approvals retain eight Members and exclude the Instructor");
     console.log(`${checks} HTTP checks passed. Real GitHub and hosted Preview checks remain separate.`);
   }
 } finally { await sql.end(); }
