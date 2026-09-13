@@ -1,4 +1,3 @@
-begin;
 
 do $$
 begin
@@ -290,9 +289,6 @@ begin
       return true;
     end if;
 
-    if host ~* '(^|\.)(localhost|local|internal)\.?$' then
-      return true;
-    end if;
     if host ~* '(^|\.)(0x[0-9a-f]+|0[0-9]+)(\.|$)' then
       return true;
     end if;
@@ -359,6 +355,7 @@ begin
       return 'url_token';
     end if;
     if vibies_private._error_url_is_local(value)
+       or value ~* $pattern$https?://(localhost\.?|[^./:[:space:]]+\.localhost\.?|[^./:[:space:]]+\.(local|internal)\.?)(:[0-9]+)?([/?#[:space:]]|$)$pattern$
        or value ~* $pattern$https?://[^./:@[:space:]]+(:[0-9]+)?([/?#[:space:]]|$)$pattern$
        or value ~* $pattern$https?://[^/?#[:space:]]*%[0-9a-f]{2}[^/?#[:space:]]*$pattern$ then
       return 'local_url';
@@ -2028,4 +2025,3 @@ $$;
 alter default privileges in schema vibies_private revoke all on tables from public;
 alter default privileges in schema vibies_private revoke all on sequences from public;
 alter default privileges in schema vibies_private revoke all on functions from public;
-commit;

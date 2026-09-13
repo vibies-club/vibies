@@ -103,6 +103,8 @@ if (!databaseUrl) {
       assert.equal(stableBackfill.id, backfilled.id);
       await sql.unsafe(`
         truncate table
+          vibies_private.error_helpful_reactions,
+          vibies_private.error_entries,
           vibies_private.personal_projects,
           vibies_private.sessions,
           vibies_private.sign_in_flows,
@@ -175,11 +177,17 @@ if (!databaseUrl) {
           "change_member(text, text, text, text)",
           "connect_project(text, text, text, text, text)",
           "consume_sign_in(text, text)",
+          "create_error(text, text, text, text, text, text, text, boolean)",
+          "delete_error(text, uuid, bigint, boolean)",
           "delete_project(text, uuid, bigint)",
+          "edit_error(text, uuid, bigint, text, text, text, text, text, text, boolean)",
           "edit_project(text, uuid, bigint, text, text, text)",
           "end_session(text)",
+          "error(text, uuid)",
+          "errors(text, text, text, timestamp with time zone, uuid)",
           "finish_sign_in(text, text, text, text)",
           "members(text)",
+          "moderate_error(text, uuid, bigint, boolean, text, text)",
           "moderate_project(text, uuid, bigint, boolean)",
           "project(text, uuid)",
           "project_actor(text)",
@@ -187,6 +195,7 @@ if (!databaseUrl) {
           "projects(text)",
           "publish_project(text, uuid, bigint)",
           "record_project_connection(text, uuid, bigint, boolean)",
+          "set_error_helpful(text, uuid, boolean)",
         ]);
         const [moderationSignatures] = await sql`
           select to_regprocedure('vibies_private.moderate_project(text,uuid,boolean)') is null as old_removed,
