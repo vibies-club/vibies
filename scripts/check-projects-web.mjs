@@ -219,7 +219,7 @@ export async function checkProjectsWeb({ sql, origin, check }) {
 
   const blockedCommunity = await get("/projects", "second");
   const blockedCommunityText = await body(blockedCommunity);
-  check(blockedCommunityText.includes("Pocket Garden") && blockedCommunityText.includes("0% complete") &&
+  check(blockedCommunityText.includes("Pocket Garden") && rendered(blockedCommunityText).includes("0% complete") &&
     !blockedCommunityText.includes("Plan &lt;demo&gt;") && !blockedCommunityText.includes("Waiting for") &&
     !/<progress\b/.test(blockedCommunityText),
   "Issue 20 P7/P9/P10 the Community card shows only derived percentage and no milestone content or detail progress bar");
@@ -324,7 +324,7 @@ export async function checkProjectsWeb({ sql, origin, check }) {
     location(thirdCompleted) === `/projects/${mainId}?message=milestone_completed` &&
     rows.filter(row => row.completed).length === 2 &&
     rendered(progressDetailText).includes("2 of 3 complete, 67%.") && /<progress\b/.test(progressDetailText) &&
-    progressCommunityText.includes("67% complete") && !progressCommunityText.includes("Review result") &&
+    rendered(progressCommunityText).includes("67% complete") && !progressCommunityText.includes("Review result") &&
     !progressCommunityText.includes("Plan &lt;demo&gt;"),
   "Issue 20 P7/P8/P9 detail progress rounds 2 of 3 to 67% while Community shows only the percentage");
 
@@ -364,7 +364,7 @@ export async function checkProjectsWeb({ sql, origin, check }) {
   check(noMilestoneConfirmation.status === 400 && rowsAfterNoConfirmation.length === countBeforeMilestoneDelete &&
     location(confirmedMilestoneDelete) === `/projects/${mainId}?message=milestone_deleted` && rows.length === 2 &&
     !rows.some(row => row.id === thirdMilestoneId) && rendered(afterMilestoneDeleteDetailText).includes("1 of 2 complete, 50%.") &&
-    afterMilestoneDeleteCommunityText.includes("50% complete") && !afterMilestoneDeleteCommunityText.includes("Review result"),
+    rendered(afterMilestoneDeleteCommunityText).includes("50% complete") && !afterMilestoneDeleteCommunityText.includes("Review result"),
   "Issue 20 P6 milestone deletion requires identifying confirmation and recalculates progress from 2 of 3 to 1 of 2");
 
   const afterRoadmapDeleteRows = await roadmapRows(mainId);
