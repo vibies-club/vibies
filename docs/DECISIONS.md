@@ -43,8 +43,12 @@ to its authoritative definition instead of creating a competing definition.
 
 **Status:** Accepted.
 
+**Amended by:** [Issue #39](https://github.com/vibies-club/vibies/issues/39).
+The class now has eight students, so Vibies provides eight active Member places.
+The pre-established Instructor remains separate and does not occupy a Member place.
+
 **Decision:** Vibies is private, with one pre-established Instructor place and
-seven active Member places. Every User authenticates with GitHub. Instructor-
+eight active Member places. Every User authenticates with GitHub. Instructor-
 approved Membership grants Member access; the sole Instructor does not occupy a
 Member place or self-approve.
 
@@ -53,7 +57,7 @@ Instructor identity and Instructor approval of Members protect the private
 Community boundary.
 
 **Consequence:** Successful GitHub authentication alone never grants new access.
-The Instructor cannot approve more than seven active Members. Revocation creates
+The Instructor cannot approve more than eight active Members. Revocation creates
 a Former Member and temporary vacancy without deleting or rewriting content;
 Role, ownership, authorship, and onboarding completion are retained for possible
 reapproval.

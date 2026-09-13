@@ -368,6 +368,12 @@ if (!databaseUrl) {
             { kind: "ok" },
           );
         }
+        await finishSignIn("210", "synthetic-210", hash("session-210"));
+        assert.deepEqual(
+          await changeMember(instructorSession, "210", "approve", "Member 210"),
+          { kind: "ok" },
+        );
+        assert.equal((await members(instructorSession)).activeCount, 7);
         const race = await Promise.all([
           changeMember(instructorSession, "206", "approve", "Member 206"),
           changeMember(instructorSession, "207", "approve", "Member 207"),
@@ -377,7 +383,16 @@ if (!databaseUrl) {
           ["full", "ok"],
         );
         const listing = await members(instructorSession);
-        assert.equal(listing.activeCount, 7);
+        assert.equal(listing.activeCount, 8);
+        assert.equal(listing.accounts.some((account: any) => account.githubId === "100"), false);
+        for (const id of ["206", "207"]) {
+          const alreadyApproved = listing.accounts.some((account: any) =>
+            account.githubId === id && account.status === "approved");
+          assert.deepEqual(
+            await changeMember(instructorSession, id, "approve", `Member ${id}`),
+            { kind: alreadyApproved ? "ok" : "full" },
+          );
+        }
       });
 
       await t.test("revocation, reapproval, and dismissal are safe to retry", async () => {
@@ -416,6 +431,20 @@ if (!databaseUrl) {
           await changeMember(instructorSession, "208", "revoke"),
           { kind: "ok" },
         );
+        await finishSignIn("211", "synthetic-211", hash("session-211"));
+        assert.equal((await members(instructorSession)).activeCount, 7);
+        const race = await Promise.all([
+          changeMember(instructorSession, "200", "reapprove"),
+          changeMember(instructorSession, "211", "approve", "Member 211"),
+        ]);
+        assert.deepEqual(race.map(result => result.kind).sort(), ["full", "ok"]);
+        assert.equal((await members(instructorSession)).activeCount, 8);
+        if (race[1].kind === "ok") {
+          assert.deepEqual(await changeMember(instructorSession, "200", "reapprove"), { kind: "full" });
+          assert.deepEqual(await changeMember(instructorSession, "211", "revoke"), { kind: "ok" });
+        } else {
+          assert.deepEqual(await changeMember(instructorSession, "211", "approve", "Member 211"), { kind: "full" });
+        }
         assert.deepEqual(
           await changeMember(instructorSession, "200", "reapprove"),
           { kind: "ok" },
@@ -424,6 +453,7 @@ if (!databaseUrl) {
           await changeMember(instructorSession, "200", "reapprove"),
           { kind: "ok" },
         );
+        assert.equal((await members(instructorSession)).activeCount, 8);
         assert.equal((await accessState(memberSession)).onboardingComplete, true);
 
         const dismissedSession = hash("dismissed-session");

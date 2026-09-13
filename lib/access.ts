@@ -53,7 +53,7 @@ export async function members(): Promise<{kind: "ok"; activeCount: number; accou
     const result = row?.result;
     if (result?.kind === "forbidden") return { kind: "forbidden" };
     if (result?.kind !== "ok" || !Number.isInteger(result.activeCount) ||
-        result.activeCount < 0 || result.activeCount > 7 || !Array.isArray(result.accounts) ||
+        result.activeCount < 0 || result.activeCount > 8 || !Array.isArray(result.accounts) ||
         !result.accounts.every((account: Account) => account && typeof account.githubId === "string" &&
           /^[1-9]\d{0,19}$/.test(account.githubId) && typeof account.username === "string" &&
           (account.nickname === null || typeof account.nickname === "string") &&

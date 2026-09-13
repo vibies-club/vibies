@@ -7,7 +7,7 @@
 
 Vibies is a private community where beginners build, publish, discuss, and
 improve real projects together. It is built for exactly one **Instructor** and
-seven active **Member** places. A place may be temporarily vacant after access is
+eight active **Member** places. A place may be temporarily vacant after access is
 revoked and before a replacement is approved. These and other capitalized
 product terms are defined once in the [domain model](DOMAIN.md).
 
@@ -27,14 +27,14 @@ approval cannot enter or browse the Community as a Member.
 
 The sole Instructor also authenticates with GitHub, but Instructor access is
 pre-established when the private Community is created. The Instructor does not
-approve themselves and does not occupy one of the seven Member places. The
+approve themselves and does not occupy one of the eight Member places. The
 deployment owner designates this account before sign-in opens. The first visitor
 cannot become Instructor.
 
 The Instructor may revoke Membership under the [community rules](../RULES.md).
 The person then becomes a Former Member: they retain the Member Role, project
 ownership, content authorship, and permanent onboarding milestone, but cannot
-access the Community or run owner actions. Revocation opens one of the seven
+access the Community or run owner actions. Revocation opens one of the eight
 Member places and does not itself delete, rewrite, or change the states of the
 Former Member's Projects, Comments, or Feedback. Those remain subject to the
 separate moderation and deletion rules. Reapproval fills an available Member
@@ -42,7 +42,7 @@ place and restores access to the same ownership, authorship, and onboarding
 milestone.
 
 The Instructor membership screen separates unapproved accounts, active Members,
-and revoked Members. It shows the active count out of seven. Only the Instructor
+and revoked Members. It shows the active count out of eight. Only the Instructor
 can read its private identity details or perform approval, revocation, and
 dismissal actions. Approval records the Member-agreed Nickname. Revocation needs
 confirmation and blocks the next protected request or action. Dismissal removes
