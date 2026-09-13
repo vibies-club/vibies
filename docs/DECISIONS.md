@@ -428,3 +428,32 @@ the owner explicitly authorized deleting `access-review-5` and confirmed
 Builder's Production profile access. The [cleanup receipt](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922)
 records its deletion and retained main. Full Production verification remains
 separate from that access confirmation.
+
+## D-017: Review PRs with an Instructor-run agent account
+
+**Status:** Accepted by the Instructor on 2026-09-13.
+
+**Decision:** The Instructor operates one GitHub machine account,
+`Trident-app`, driven by a coding agent. The account belongs to the
+`reviewers` team with Write access, so its approval satisfies the one-approval
+rule on main. It reviews only. It never authors, commits, or pushes. It is not
+a Vibies Member and holds no Member place. A review by this account checks out
+the PR branch, runs typecheck, tests, and build, reads the diff against the
+approved plan, and approves only after the last commit it checked. The account
+profile states that it is a machine account run by the Vibies Instructor.
+
+**Why:** Members split limited AI usage between their Personal Projects and
+Vibies, so waiting for a Member review slows the platform. GitHub's terms allow
+one free personal account per person plus machine accounts for automation, so
+the reviewer is a machine account and never reviews by hand.
+
+**Consequence:** An approval from `Trident-app` is a second agent pass and
+the PR records it as such. A Member review remains welcome and counts the same.
+The [contributing guide](../CONTRIBUTING.md) and [agent rules](../AGENTS.md)
+accept either review. The account cannot open private Preview pages, so the
+Preview check stays with the PR author's receipts and the Instructor's
+confirmation before merge. The Instructor remains the only person who merges.
+The account holds no product secret and no Member identity.
+
+**Related documents:** [Contributing guide](../CONTRIBUTING.md),
+[agent rules](../AGENTS.md), and [D-011](#d-011-open-the-repository-under-vibies-club).
