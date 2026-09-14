@@ -8,9 +8,11 @@ Use a clean staging database and privacy-safe test accounts first. Never put a
 credential, real name, contact detail, or private recovery reason in this
 repository, a command transcript, an issue, or a PR.
 
-For main and GitHub-linked Previews, use [Database deployment](DATABASE-DEPLOYMENT.md)
-to apply the schema. The manual SQL application in step 2 is for a separate
-staging proof. Runtime login, TLS, OAuth, and Instructor setup remain one-time
+Use [Database deployment](DATABASE-DEPLOYMENT.md) for Production migrations and
+its [reusable staging procedure](DATABASE-DEPLOYMENT.md#reusable-staging) for the
+shared test database. The manual SQL application in step 2 records the earlier
+isolated staging procedure. Do not use it to change shared staging, which follows
+reviewed `main`. Runtime login, TLS, OAuth, and Instructor setup remain one-time
 environment setup after the migrations pass.
 
 ## 1. Inspect the staging database
@@ -255,6 +257,17 @@ The build runs before access configuration is provided to the web-test step.
 
 ## 8. Deploy and prove Preview
 
+For routine app reviews, configure steps 3 through 6 once in the separate Vercel
+staging project. Its `VIBIES_APP_ORIGIN` must equal the fixed origin recorded as
+`STAGING_ORIGIN` in the protected GitHub environment. Then select the PR with
+the manual **staging** workflow. The authoritative setup, eligibility checks,
+use, and pending rollout status are in
+[Reusable staging](DATABASE-DEPLOYMENT.md#reusable-staging). Do not create
+branch-specific runtime or OAuth settings for this path.
+
+The feature-branch instructions below preserve the original issue #5 proof. Use
+them for historical review or for an explicitly approved isolated hosted test.
+
 Add the required server values to the Vercel Preview environment for the
 feature branch only. Add
 `VIBIES_DATABASE_CA` when the database certificate needs the Supabase CA. Keep
@@ -281,11 +294,11 @@ merges. Configure and verify Production only after that reviewed merge.
 The owner authorized removal of the legacy unlinked `access-review-5` after
 confirming Builder's Production profile access. It was deleted after PR #18
 merged on 2026-09-10 UTC. Main was retained. This confirms the authorized cleanup;
-the full Production checks below remain separate. Linked ephemeral feature
-Previews follow the owner's automatic cleanup decision: they are deleted
-at PR merge or close. [Database deployment](DATABASE-DEPLOYMENT.md) owns
-the automatic migration setup, required checks, initial rollout order, and
-failure recovery. Automation starts after its separate setup PR merges.
+the full Production checks below remain separate. Existing linked ephemeral
+feature Previews keep their approved delete-at-merge-or-close lifecycle. Issue
+#37 disables new automatic paid branches only after reusable staging is proved
+and the owner inventories existing branches. [Database deployment](DATABASE-DEPLOYMENT.md)
+owns migration setup, required checks, rollout order, and failure recovery.
 
 1. After the reviewed GitHub merge, wait for the native Supabase deployment and
    verify the expected versions in main's migration history. The committed

@@ -39,7 +39,7 @@ definition instead of creating a different version of it.
 | [Progress](docs/PROGRESS.md) | The current development snapshot and immediate next step |
 | [Roadmap](docs/ROADMAP.md) | The `Now`, `Next`, and `Later` sequence |
 | [Supabase setup](docs/SUPABASE-SETUP.md) | Human setup, safety checks, local verification, and Vercel deployment |
-| [Database deployment](docs/DATABASE-DEPLOYMENT.md) | Reviewed migrations, automatic main deployment, local checks, and retry receipts |
+| [Database deployment](docs/DATABASE-DEPLOYMENT.md) | Reviewed migrations, required CI, reusable staging setup and use, and rollout receipts |
 | [Vercel Preview cleanup](docs/VERCEL-PREVIEW-CLEANUP.md) | Exact branch-setting cleanup boundary, owner setup, and proof status |
 | [Access setup](docs/ACCESS-SETUP.md) | Human database, GitHub OAuth, Instructor, recovery, and deployment setup |
 | [Access verification](docs/ACCESS-VERIFICATION.md) | Issue #5 implementation receipts for the A1 through A16 checks specified in issue #14 |
@@ -69,9 +69,19 @@ records three App settings moved to Production and a passing Ready redeploy.
 Live Production Member publishing remains pending while Builder is offline. See
 [Database deployment](docs/DATABASE-DEPLOYMENT.md) for the rollout details.
 
-The [Vercel Preview cleanup](docs/VERCEL-PREVIEW-CLEANUP.md) has local and
-bounded live script proof. Its first GitHub Actions run with the dedicated
-project token waits for the reviewed cleanup PR to merge.
+[PR #34](https://github.com/vibies-club/vibies/pull/34) merged the
+[Vercel Preview cleanup](docs/VERCEL-PREVIEW-CLEANUP.md) on 2026-09-12. Its
+first GitHub Actions run with the dedicated project token remains a post-merge
+check. [PR #40](https://github.com/vibies-club/vibies/pull/40) merged on
+2026-09-13 and raised the class to eight Member places under the amended D-003.
+[PR #42](https://github.com/vibies-club/vibies/pull/42) merged the same day and
+records the Instructor-run review agent account in D-017.
+
+[Issue #37](https://github.com/vibies-club/vibies/issues/37) approves one
+reusable Free staging environment and a manual exact-commit selection workflow.
+The [staging guide](docs/DATABASE-DEPLOYMENT.md#reusable-staging) records its
+setup, use, limits, and receipts. The first real Action deployment with the
+deploy key and the live acceptance checks remain post-merge checks.
 
 ## Run the demo locally
 
