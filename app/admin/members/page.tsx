@@ -9,13 +9,13 @@ export default async function MembersPage({ searchParams }: {searchParams: Promi
   if (state.kind === "error") return <AccessShell><Retry href="/admin/members" /></AccessShell>;
   if (state.kind !== "ok") return null;
   const { message } = await searchParams;
-  const messages: Record<string, string> = { ok: "Access updated.", full: "All seven Member places are filled.",
+  const messages: Record<string, string> = { ok: "Access updated.", full: "All eight Member places are filled.",
     nickname: "Use 2-30 letters, numbers, spaces, hyphens, or underscores. Outer spaces are removed.",
     duplicate: "That nickname is already reserved. Choose another nickname agreed with the Member.",
     missing: "That entry changed. Check the current list before trying again.",
     invalid: "The change was not applied. Check the form and try again.", error: "We could not save the change. Please try again." };
   return <AccessShell><section className="members"><p className="eyebrow">INSTRUCTOR</p><h1>Member access</h1>
-    <p className="intro">{state.activeCount} of 7 Member places filled.</p><a href="/welcome">Back to welcome</a>
+    <p className="intro">{state.activeCount} of 8 Member places filled.</p><a href="/welcome">Back to welcome</a>
     {message && Object.hasOwn(messages, message) && <p role="status">{messages[message]}</p>}
     <p className="privacy">Agree on a nickname with the Member before approval. Check it for real names and contact details. Automatic checks cannot detect every real name.</p>
     {(["unapproved", "approved", "revoked"] as const).map(status => <div key={status}>

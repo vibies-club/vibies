@@ -68,7 +68,7 @@ Membership decision.
 3. For first approval, Vibies trims outer ASCII spaces and validates the
    Nickname rules from the [domain model](DOMAIN.md#people-and-access).
 4. Reapproval keeps the Former Member's reserved Nickname and retained records.
-5. Vibies approves or reapproves the Membership only when one of the seven
+5. Vibies approves or reapproves the Membership only when one of the eight
    Member places is available. Approval, capacity enforcement, and Nickname
    reservation are one operation. Repeated submissions create no duplicate.
 6. The approved Member may enter and browse the private Community.
@@ -99,7 +99,7 @@ The entry is removed without granting access. A later successful sign-in may
 create it again. Dismissal cannot remove a revoked Member or retained content.
 
 **Failure path:** Until approval, the person cannot enter the Community. The
-Instructor cannot approve an eighth active Member, and no one else can approve or
+Instructor cannot approve a ninth active Member, and no one else can approve or
 revoke Membership. After approval, connection or publication failure leaves
 onboarding incomplete. The Member may keep browsing, but attempts to post a
 Comment or Feedback are rejected with the onboarding requirement.

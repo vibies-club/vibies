@@ -11,11 +11,11 @@ terms instead of creating alternative definitions.
 
 | Term | Definition |
 | --- | --- |
-| **Community** | The private Vibies space built for exactly one Instructor and seven active Member places. A Member place may be temporarily vacant after access is revoked. |
+| **Community** | The private Vibies space built for exactly one Instructor and eight active Member places. A Member place may be temporarily vacant after access is revoked. |
 | **User** | A person represented in Vibies. A User has one Role and is displayed only by a Nickname. Member access is governed by Membership; Instructor access is pre-established. |
 | **Role** | One authorization category held by a User: Instructor or Member. |
 | **Instructor** | The single User whose access is pre-established when the private Community is created. The Instructor authenticates with GitHub, approves or revokes Member Membership, and moderates Projects, Comments, and Feedback. “Moderator” describes this responsibility; it is not another Role. |
-| **Member** | A User with the Member Role who owns Personal Projects and collaborates on the Class Project. An approved Member occupies one of seven active Member places. |
+| **Member** | A User with the Member Role who owns Personal Projects and collaborates on the Class Project. An approved Member occupies one of eight active Member places. |
 | **Former Member** | A User who retains the Member Role, project ownership, content authorship, and onboarding milestone after Membership is revoked, but has no Community access or owner-action permission. A Former Member does not occupy an active Member place. |
 | **Membership** | Instructor-controlled Member access with `Approved` or `Revoked` status. Approval fills an available Member place and grants an authenticated Member access; revocation removes access and opens that place. Authentication alone is not Membership. |
 | **Access entry** | The private account-matching record created after a first successful sign-in. Before approval it is unapproved and has no Membership. Repeated sign-ins with the same stable GitHub account identifier reuse it. The Instructor may dismiss an unapproved entry. |
@@ -81,9 +81,9 @@ it is not a fourth state.
 
 ## Constraints
 
-- The Community has one Instructor and seven active Member places. Revocation
+- The Community has one Instructor and eight active Member places. Revocation
   may leave a place vacant until the Instructor approves a replacement.
-- The Instructor cannot approve an eighth active Member. Revoking Membership
+- The Instructor cannot approve a ninth active Member. Revoking Membership
   creates a Former Member and removes access but does not itself delete, rewrite,
   or change the states of the User's existing Projects, Comments, or Feedback.
 - A Former Member keeps the Member Role, ownership, authorship, and onboarding
@@ -101,7 +101,7 @@ it is not a fourth state.
 - A successful first sign-in creates one unapproved Access entry. Authentication
   alone creates no Membership. Dismissal applies only to an unapproved entry.
 - Approval or reapproval, capacity enforcement, and Nickname reservation succeed
-  or fail together. Competing approvals cannot create an eighth active Member,
+  or fail together. Competing approvals cannot create a ninth active Member,
   and repeated submissions create no duplicate Membership.
 - A revoked Membership keeps its Nickname, Role, ownership, authorship, content
   states, and onboarding completion.

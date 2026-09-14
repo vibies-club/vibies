@@ -43,8 +43,12 @@ to its authoritative definition instead of creating a competing definition.
 
 **Status:** Accepted.
 
+**Amended by:** [Issue #39](https://github.com/vibies-club/vibies/issues/39).
+The class now has eight students, so Vibies provides eight active Member places.
+The pre-established Instructor remains separate and does not occupy a Member place.
+
 **Decision:** Vibies is private, with one pre-established Instructor place and
-seven active Member places. Every User authenticates with GitHub. Instructor-
+eight active Member places. Every User authenticates with GitHub. Instructor-
 approved Membership grants Member access; the sole Instructor does not occupy a
 Member place or self-approve.
 
@@ -53,7 +57,7 @@ Instructor identity and Instructor approval of Members protect the private
 Community boundary.
 
 **Consequence:** Successful GitHub authentication alone never grants new access.
-The Instructor cannot approve more than seven active Members. Revocation creates
+The Instructor cannot approve more than eight active Members. Revocation creates
 a Former Member and temporary vacancy without deleting or rewriting content;
 Role, ownership, authorship, and onboarding completion are retained for possible
 reapproval.
@@ -435,6 +439,35 @@ staging passes its complete Action and hosted proof, and after the owner
 inventories all existing active branches. Existing review environments keep
 their approved review and cleanup path. A database-changing PR that needs hosted
 proof can use an isolated environment only with an agreed cost cap.
+
+## D-017: Review PRs with an Instructor-run agent account
+
+**Status:** Accepted by the Instructor on 2026-09-13.
+
+**Decision:** The Instructor operates one GitHub machine account,
+`Trident-app`, driven by a coding agent. The account belongs to the
+`reviewers` team with Write access, so its approval satisfies the one-approval
+rule on main. It reviews only. It never authors, commits, or pushes. It is not
+a Vibies Member and holds no Member place. A review by this account checks out
+the PR branch, runs typecheck, tests, and build, reads the diff against the
+approved plan, and approves only after the last commit it checked. The account
+profile states that it is a machine account run by the Vibies Instructor.
+
+**Why:** Members split limited AI usage between their Personal Projects and
+Vibies, so waiting for a Member review slows the platform. GitHub's terms allow
+one free personal account per person plus machine accounts for automation, so
+the reviewer is a machine account and never reviews by hand.
+
+**Consequence:** An approval from `Trident-app` is a second agent pass and
+the PR records it as such. A Member review remains welcome and counts the same.
+The [contributing guide](../CONTRIBUTING.md) and [agent rules](../AGENTS.md)
+accept either review. The account cannot open private Preview pages, so the
+Preview check stays with the PR author's receipts and the Instructor's
+confirmation before merge. The Instructor remains the only person who merges.
+The account holds no product secret and no Member identity.
+
+**Related documents:** [Contributing guide](../CONTRIBUTING.md),
+[agent rules](../AGENTS.md), and [D-011](#d-011-open-the-repository-under-vibies-club).
 
 ## D-018: Reuse one free staging environment for app reviews
 

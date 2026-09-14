@@ -22,6 +22,13 @@ already deployed. When a new app requires new schema, merge its database-only PR
 first, wait for successful database deployment, then merge the app PR. Keep old
 functions until the old app no longer needs them.
 
+For the [eight-Member capacity update](https://github.com/vibies-club/vibies/issues/39),
+wait for both the new access migration and the matching Vercel app deployment
+before approving or reapproving the eighth Member. Confirm the Member access
+page shows a capacity of eight. The migration changes no existing account status.
+An older app rejects a Member count of eight, so do not roll back to that app
+after filling the eighth place; deploy a compatible correction instead.
+
 For the initial rollout, PR #18 and PR #30 merged after Member review. Main at
 `a5fabc1` has the three expected migration versions. PR #30's Preview was
 removed, and the Production settings and Ready redeploy passed. Live Production

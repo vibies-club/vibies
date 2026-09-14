@@ -13,7 +13,14 @@ const migrationDirectory = join(root, "supabase", "migrations");
 const migrationFiles = (await readdir(migrationDirectory))
   .filter((name) => /^\d{14}_.+\.sql$/.test(name)).sort();
 const migrations = migrationFiles.map((name) => name.slice(0, 14));
+const deployedMigrations = [
+  "20260910065142_remote_schema.sql",
+  "20260910220000_demo_projects.sql",
+  "20260910220001_access.sql",
+];
+const capacityMigration = "20260913192500_access.sql";
 assert.equal(migrationFiles[0], "20260910065142_remote_schema.sql");
+assert.ok(migrationFiles.includes(capacityMigration), `${capacityMigration} must exist`);
 assert.equal(new Set(migrations).size, migrations.length, "migration versions must be unique");
 
 function supabase(args, shouldFail = false) {
@@ -97,9 +104,18 @@ async function retainedRows(sql) {
   };
 }
 
+async function capacityRows(sql) {
+  return {
+    ...await retainedRows(sql),
+    accounts: await sql`select to_jsonb(a) as row from vibies_private.accounts a order by github_id`,
+    sessions: await sql`select to_jsonb(s) as row from vibies_private.sessions s order by session_hash`,
+  };
+}
+
 let cleanProject;
 let upgradeProject;
 let legacyProject;
+let capacityProject;
 try {
   const config = await readFile(join(root, "supabase", "config.toml"), "utf8");
   assert.match(config, /^project_id = "vibies-migrations"$/m);
@@ -167,6 +183,65 @@ try {
     await checkBoundaries(sql);
   });
 
+  // Upgrade the exact deployed seven-place schema through the native runner.
+  capacityProject = await makeProject("capacity", deployedMigrations);
+  supabase(["db", "reset", "--local", "--workdir", capacityProject]);
+  const instructorSession = "c".repeat(64);
+  await usingDatabase(async (sql) => {
+    assert.deepEqual(await history(sql), deployedMigrations.map((name) => name.slice(0, 14)));
+    await sql`select vibies_private.designate_instructor('100', 'Mentor', 'Synthetic capacity upgrade')`;
+    await sql`insert into vibies_private.accounts
+      (internal_id, github_id, github_username, nickname, status, onboarding_completed)
+      values ('11111111-1111-4111-8111-111111111111', '200', 'synthetic-200',
+        'Member 200', 'approved', true)`;
+    for (let id = 201; id <= 206; id += 1) {
+      await sql`insert into vibies_private.accounts
+        (github_id, github_username, nickname, status)
+        values (${String(id)}, ${`synthetic-${id}`}, ${`Member ${id}`}, 'approved')`;
+    }
+    await sql`insert into vibies_private.accounts (github_id, github_username)
+      values ('207', 'synthetic-207'), ('208', 'synthetic-208')`;
+    await sql`insert into vibies_private.sessions (session_hash, github_id)
+      values (${"a".repeat(64)}, '200'), (${instructorSession}, '100')`;
+    await sql`insert into vibies_private.personal_projects
+      (id, owner_account_id, repository_id, title, summary, demo_url, publication)
+      values ('22222222-2222-4222-8222-222222222222',
+        '11111111-1111-4111-8111-111111111111', '9001', 'Retained project',
+        'Synthetic capacity upgrade proof.', 'https://example.test/demo', 'Published')`;
+    await sql`update public.demo_projects set title = 'Retained demo',
+      summary = 'Synthetic capacity upgrade row.' where id = 1`;
+    const [{ value }] = await sql`select vibies_private.change_member(
+      ${instructorSession}, '207', 'approve', 'Member 207'
+    ) as value`;
+    assert.deepEqual(value, { kind: "full" });
+    await checkBoundaries(sql);
+  });
+  const capacityBefore = await usingDatabase(capacityRows);
+  await copyFile(join(migrationDirectory, capacityMigration),
+    join(capacityProject, "supabase", "migrations", capacityMigration));
+  supabase(["db", "push", "--local", "--yes", "--workdir", capacityProject]);
+  await usingDatabase(async (sql) => {
+    assert.deepEqual(await history(sql), [...deployedMigrations, capacityMigration]
+      .map((name) => name.slice(0, 14)));
+    assert.deepEqual(await capacityRows(sql), capacityBefore);
+    await checkBoundaries(sql);
+    const [{ value: eighth }] = await sql`select vibies_private.change_member(
+      ${instructorSession}, '207', 'approve', 'Member 207'
+    ) as value`;
+    const [{ value: ninth }] = await sql`select vibies_private.change_member(
+      ${instructorSession}, '208', 'approve', 'Member 208'
+    ) as value`;
+    assert.deepEqual(eighth, { kind: "ok" });
+    assert.deepEqual(ninth, { kind: "full" });
+    const [{ active_count, instructor_accounts }] = await sql`
+      select
+        count(*) filter (where status = 'approved')::int as active_count,
+        count(*) filter (where github_id = '100')::int as instructor_accounts
+      from vibies_private.accounts
+    `;
+    assert.deepEqual({ active_count, instructor_accounts }, { active_count: 8, instructor_accounts: 0 });
+  });
+
   upgradeProject = await makeProject("upgrade", [migrationFiles[0]]);
   supabase(["db", "reset", "--local", "--workdir", upgradeProject]);
   await usingDatabase(async (sql) => {
@@ -217,8 +292,8 @@ try {
     assert.equal((await sql`select to_regclass('public.vibies_migration_rehearsal') as table_name`)[0].table_name, null);
   });
   supabase(["db", "reset", "--local", "--workdir", cleanProject]);
-  console.log("Database migration proof passed: clean chain, no-op, legacy upgrade, retained adoption, grants, rollback, and retry.");
+  console.log("Database migration proof passed: clean chain, no-op, legacy and capacity upgrades, retained adoption, grants, rollback, and retry.");
 } finally {
-  await Promise.all([cleanProject, legacyProject, upgradeProject].filter(Boolean)
+  await Promise.all([cleanProject, legacyProject, capacityProject, upgradeProject].filter(Boolean)
     .map((project) => rm(project, { recursive: true, force: true })));
 }
