@@ -84,8 +84,8 @@ records its setup receipts and post-merge checks.
 
 [PR #43](https://github.com/vibies-club/vibies/pull/43) implements the optional
 Personal Project Roadmap from issue #20. The
-[Roadmap verification record](ROADMAP-VERIFICATION.md) maps all 14 acceptance
-criteria to reproducible receipts. [D-019](DECISIONS.md#d-019-add-optional-personal-project-roadmaps)
+[Roadmap verification record](ROADMAP-VERIFICATION.md) records automated receipts
+and the pending browser checks for P8 and P13. [D-019](DECISIONS.md#d-019-add-optional-personal-project-roadmaps)
 records the accepted design.
 
 ## Next step
