@@ -3,7 +3,7 @@
 [Documentation home](../README.md) · [Decisions](DECISIONS.md) ·
 [Roadmap](ROADMAP.md)
 
-**Updated:** 2026-09-14
+**Updated:** 2026-09-15
 
 ## Repository setup
 
@@ -73,24 +73,30 @@ The issue #17 Preview database was removed automatically after merge. The legacy
 Main was retained. These [cleanup receipts](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922)
 do not establish full Production readiness.
 
-## Issue #20 status
+[PR #34](https://github.com/vibies-club/vibies/pull/34) merged the issue #32
+Vercel Preview cleanup on 2026-09-12. [PR #40](https://github.com/vibies-club/vibies/pull/40)
+merged on 2026-09-13 and raised the class to eight Member places with a fourth
+migration. [PR #42](https://github.com/vibies-club/vibies/pull/42) merged the
+same day and records the Instructor-run review agent account in D-017.
+[PR #38](https://github.com/vibies-club/vibies/pull/38) merged the reusable
+staging workflow for issue #37; the [deployment guide](DATABASE-DEPLOYMENT.md#reusable-staging)
+records its setup receipts and post-merge checks.
 
-[Issue #20](https://github.com/vibies-club/vibies/issues/20) has an accepted
-Ready design and an approved implementation plan. Implementation is in
-progress. [D-018](DECISIONS.md#d-018-add-optional-personal-project-roadmaps)
-records the decision, while the [Roadmap verification record](ROADMAP-VERIFICATION.md)
-maps its 14 acceptance criteria to receipts. All 14 receipts remain Pending
-until implementation and proof finish. This feature is not merged or proven.
+[PR #43](https://github.com/vibies-club/vibies/pull/43) implements the optional
+Personal Project Roadmap from issue #20. The
+[Roadmap verification record](ROADMAP-VERIFICATION.md) maps all 14 acceptance
+criteria to reproducible receipts. [D-019](DECISIONS.md#d-019-add-optional-personal-project-roadmaps)
+records the accepted design.
 
 ## Next step
 
-Complete issue #20 implementation and its local acceptance proof, then update the
-[Roadmap verification record](ROADMAP-VERIFICATION.md) before opening its PR.
-Also complete the review process for [PR #33](https://github.com/vibies-club/vibies/pull/33),
-which contains the issue #31 database work, and
-[PR #34](https://github.com/vibies-club/vibies/pull/34), which contains the issue
-#32 Vercel cleanup. Only the Instructor merges. These PRs deploy no new app
-feature. After PR #33 merges, verify its Production migration before starting
-the Error Library app child. After PR #34 merges, verify its first GitHub Actions run with the
-dedicated project token. Complete the live Production Member publishing check
+Run the first staging Action after merge and record its deploy-key ref update,
+Vercel trigger, and exact-commit receipt. Verify the PR #40 migration and app
+deployment, then approve the eighth student through the normal flow. Complete
+the review of [PR #33](https://github.com/vibies-club/vibies/pull/33), the
+issue #31 database work, and verify its Production migration before starting
+the Error Library app child. Review [PR #36](https://github.com/vibies-club/vibies/pull/36),
+the class command wiki, which also needs hosted staging proof.
+After PR #43 merges, verify its Production migration and application deployment.
+Only the Instructor merges. Complete the live Production Member publishing check
 when Builder is available.

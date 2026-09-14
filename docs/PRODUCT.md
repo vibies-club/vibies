@@ -130,7 +130,7 @@ a future accepted decision before implementation.
 
 Issue #20 adds an optional [Roadmap](DOMAIN.md#projects-and-repositories) to a
 Personal Project. The accepted design is recorded in
-[D-018](DECISIONS.md#d-018-add-optional-personal-project-roadmaps). A current
+[D-019](DECISIONS.md#d-019-add-optional-personal-project-roadmaps). A current
 approved owner can manage the Roadmap in every retained Project state. The
 Roadmap never blocks the existing Publish action.
 

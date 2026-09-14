@@ -24,7 +24,7 @@ const messages: Record<string, string> = {
   milestone_completed: "Milestone marked complete.",
   milestone_reopened: "Milestone marked incomplete.",
   milestone_moved: "Milestone order saved.",
-  milestone_unchanged: "Milestone is already at the requested position.",
+  milestone_unchanged: "No change was made.",
   milestone_deleted: "Milestone deleted.",
   roadmap_full: "This roadmap has the maximum of 20 milestones.",
 };

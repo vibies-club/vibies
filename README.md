@@ -39,13 +39,13 @@ definition instead of creating a different version of it.
 | [Progress](docs/PROGRESS.md) | The current development snapshot and immediate next step |
 | [Roadmap](docs/ROADMAP.md) | The `Now`, `Next`, and `Later` sequence |
 | [Supabase setup](docs/SUPABASE-SETUP.md) | Human setup, safety checks, local verification, and Vercel deployment |
-| [Database deployment](docs/DATABASE-DEPLOYMENT.md) | Reviewed migrations, automatic main deployment, local checks, and retry receipts |
+| [Database deployment](docs/DATABASE-DEPLOYMENT.md) | Reviewed migrations, required CI, reusable staging setup and use, and rollout receipts |
 | [Vercel Preview cleanup](docs/VERCEL-PREVIEW-CLEANUP.md) | Exact branch-setting cleanup boundary, owner setup, and proof status |
 | [Access setup](docs/ACCESS-SETUP.md) | Human database, GitHub OAuth, Instructor, recovery, and deployment setup |
 | [Access verification](docs/ACCESS-VERIFICATION.md) | Issue #5 implementation receipts for the A1 through A16 checks specified in issue #14 |
 | [Personal Project setup](docs/PROJECT-SETUP.md) | Human App/Preview setup and exact isolated proof commands |
 | [Personal Project verification](docs/PROJECT-VERIFICATION.md) | Phase order and receipts for issue #17 |
-| [Personal Project Roadmap verification](docs/ROADMAP-VERIFICATION.md) | Pending acceptance receipts for issue #20 |
+| [Personal Project Roadmap verification](docs/ROADMAP-VERIFICATION.md) | Acceptance receipts for issue #20 |
 
 ## Current status
 
@@ -62,11 +62,11 @@ Community reading, owner Edit/Delete, and Instructor Hide/Restore.
 The [project proof record](docs/PROJECT-VERIFICATION.md) lists local and live
 receipts in the approved stage order, plus the Member review and merge receipt.
 
-[Issue #20](https://github.com/vibies-club/vibies/issues/20) has an accepted
-Ready design and implementation is in progress. The decision is recorded in
-[D-018](docs/DECISIONS.md#d-018-add-optional-personal-project-roadmaps), and its
-14 acceptance receipts are Pending in the [Roadmap verification record](docs/ROADMAP-VERIFICATION.md).
-The feature is not merged or proven.
+Personal Project Roadmaps are defined in the
+[product definition](docs/PRODUCT.md#personal-project-roadmaps). The accepted
+design is in [D-019](docs/DECISIONS.md#d-019-add-optional-personal-project-roadmaps),
+and the [Roadmap verification record](docs/ROADMAP-VERIFICATION.md) holds its 14
+acceptance receipts.
 
 [PR #30](https://github.com/vibies-club/vibies/pull/30) merged after Member
 review. Its [post-merge receipt](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630352747)
@@ -76,9 +76,19 @@ records three App settings moved to Production and a passing Ready redeploy.
 Live Production Member publishing remains pending while Builder is offline. See
 [Database deployment](docs/DATABASE-DEPLOYMENT.md) for the rollout details.
 
-The [Vercel Preview cleanup](docs/VERCEL-PREVIEW-CLEANUP.md) has local and
-bounded live script proof. Its first GitHub Actions run with the dedicated
-project token waits for the reviewed cleanup PR to merge.
+[PR #34](https://github.com/vibies-club/vibies/pull/34) merged the
+[Vercel Preview cleanup](docs/VERCEL-PREVIEW-CLEANUP.md) on 2026-09-12. Its
+first GitHub Actions run with the dedicated project token remains a post-merge
+check. [PR #40](https://github.com/vibies-club/vibies/pull/40) merged on
+2026-09-13 and raised the class to eight Member places under the amended D-003.
+[PR #42](https://github.com/vibies-club/vibies/pull/42) merged the same day and
+records the Instructor-run review agent account in D-017.
+
+[Issue #37](https://github.com/vibies-club/vibies/issues/37) approves one
+reusable Free staging environment and a manual exact-commit selection workflow.
+The [staging guide](docs/DATABASE-DEPLOYMENT.md#reusable-staging) records its
+setup, use, limits, and receipts. The first real Action deployment with the
+deploy key and the live acceptance checks remain post-merge checks.
 
 ## Run the demo locally
 

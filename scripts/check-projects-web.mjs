@@ -318,15 +318,28 @@ export async function checkProjectsWeb({ sql, origin, check }) {
   rows = await roadmapRows(mainId);
   const progressDetail = await get(`/projects/${mainId}`, "member");
   const progressDetailText = await body(progressDetail);
+  const progressRendered = rendered(progressDetailText);
   const progressCommunity = await get("/projects", "second");
   const progressCommunityText = await body(progressCommunity);
+  const sharedDetailsIndex = progressRendered.indexOf("Draft details can change before publication.");
+  const roadmapIndex = progressRendered.indexOf(">Roadmap</h2>");
+  const managementIndex = progressRendered.indexOf(">Edit project</summary>");
   check(location(firstCompleted) === `/projects/${mainId}?message=milestone_completed` &&
     location(thirdCompleted) === `/projects/${mainId}?message=milestone_completed` &&
     rows.filter(row => row.completed).length === 2 &&
-    rendered(progressDetailText).includes("2 of 3 complete, 67%.") && /<progress\b/.test(progressDetailText) &&
+    progressRendered.includes("2 of 3 complete, 67%.") && /<progress\b/.test(progressDetailText) &&
+    sharedDetailsIndex !== -1 && sharedDetailsIndex < roadmapIndex && roadmapIndex < managementIndex &&
     rendered(progressCommunityText).includes("67% complete") && !progressCommunityText.includes("Review result") &&
     !progressCommunityText.includes("Plan &lt;demo&gt;"),
-  "Issue 20 P7/P8/P9 detail progress rounds 2 of 3 to 67% while Community shows only the percentage");
+  "Issue 20 P7/P8/P9 detail progress rounds to 67%, follows shared details, precedes management, and Community shows only percentage");
+  check(/<input[^>]*type="checkbox"[^>]*name="completed"/.test(progressRendered) &&
+    progressRendered.includes(">Save completion</button>") && progressRendered.includes(">Edit milestone</summary>") &&
+    progressRendered.includes(">Save</button>") && progressRendered.includes(">Cancel</a>") &&
+    progressRendered.includes(">Move up</button>") && progressRendered.includes(">Move down</button>") &&
+    progressRendered.includes(">Delete milestone</summary>") && progressRendered.includes(">Delete milestone</button>") &&
+    progressRendered.includes(">Add milestone</button>") && !progressRendered.includes('tabindex="-1"') &&
+    progressRendered.includes("<strong>Status:</strong> Complete"),
+  "Issue 20 P13 native roadmap controls support keyboard access and text states do not depend on color");
 
   const moveUpVersion = await storedVersion(mainId);
   const movedUp = await post("member", {
