@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { appendFileSync } from "node:fs";
 import process from "node:process";
@@ -249,14 +250,23 @@ async function requireChecks(request, sha, prNumber, context) {
   }
 }
 
-async function updateStagingRef(request, sha) {
-  await getRef(request, "staging");
-  const data = await request(`/repos/${REPOSITORY}/git/refs/heads/staging`, {
-    method: "PATCH",
-    body: { sha, force: true },
-  });
-  if (!record(data) || data.ref !== STAGING_REF || data.object?.type !== "commit" ||
-      data.object?.sha !== sha) {
+function gitPushRef(sha, previous) {
+  // ponytail: the staging ruleset admits only deploy keys, and GITHUB_TOKEN cannot
+  // bypass a ruleset, so the ref moves over SSH with the key held in the environment.
+  const remote = `git@github.com:${REPOSITORY}.git`;
+  const git = (args) => execFileSync("git", args, { stdio: ["ignore", "ignore", "inherit"] });
+  git(["fetch", "--quiet", "--depth=1", remote, sha]);
+  git(["push", "--quiet", `--force-with-lease=${STAGING_REF}:${previous}`, remote, `${sha}:${STAGING_REF}`]);
+}
+
+async function updateStagingRef(request, pushRef, sha) {
+  const previous = await getRef(request, "staging");
+  try {
+    await pushRef(sha, previous);
+  } catch {
+    throw new SafeError("the staging ref push did not complete");
+  }
+  if (await getRef(request, "staging") !== sha) {
     throw new SafeError("GitHub did not confirm the staging ref update");
   }
 }
@@ -359,6 +369,7 @@ export async function runStaging({
   baselineTree,
   githubToken,
   fetchImpl = globalThis.fetch,
+  pushRef = gitPushRef,
   now = Date.now,
   sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)),
   nonce = randomUUID,
@@ -393,7 +404,7 @@ export async function runStaging({
 
   let head = currentMain;
   let merge;
-  let selected = { head: currentMain };
+  let selected;
   if (operation === "Preview PR") {
     selected = await getPull(request, prNumber, currentMain);
     head = selected.head;
@@ -410,7 +421,7 @@ export async function runStaging({
     await requireMainUnchanged(request, currentMain);
   }
 
-  await updateStagingRef(request, head);
+  await updateStagingRef(request, pushRef, head);
   await waitForDeployment({ fetchImpl, origin, projectId, sha: head, now, sleep, nonce, timeoutMs });
 
   if (operation === "Preview PR") await recheckPreview(request, prNumber, currentMain, selected);

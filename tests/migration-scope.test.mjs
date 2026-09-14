@@ -7,9 +7,9 @@ const diff = (...fields) => Buffer.from(`${fields.join("\0")}\0`);
 test("migration scope skips only known database-independent changes", () => {
   for (const changes of [
     diff("M", "README.md", "A", "docs/STAGING.md"),
-    diff("M", "app/globals.css", "A", "app/projects/projects.css", "A", "app/wiki/page.tsx", "A", "lib/wiki.ts", "A", "tests/wiki.test.ts"),
+    diff("M", "app/globals.css", "A", "app/projects/projects.css"),
     diff("M", "app/layout.tsx", "M", "app/page.tsx"),
-    diff("R100", "docs/OLD.md", "docs/NEW.md", "D", "app/wiki/page.tsx"),
+    diff("R100", "docs/OLD.md", "docs/NEW.md", "D", "app/page.tsx"),
   ]) assert.equal(fullMigrationRequired(changes), false);
 
   for (const changes of [
@@ -21,6 +21,9 @@ test("migration scope skips only known database-independent changes", () => {
     diff("M", ".github/workflows/app.yml"),
     diff("M", "next.config.ts"),
     diff("A", "app/wiki/route.ts"),
+    diff("A", "app/wiki/page.tsx"),
+    diff("A", "lib/wiki.ts"),
+    diff("A", "tests/wiki.test.ts"),
     diff("A", "scripts/guide.md"),
     diff("A", "docs/example.sql"),
     diff("D", "lib/access.ts"),

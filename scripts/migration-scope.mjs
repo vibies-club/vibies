@@ -4,13 +4,10 @@ import { execFileSync } from "node:child_process";
 import { appendFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
+// ponytail: add a file here only in the PR that creates it, so its reviewer sees the content.
 const safeFiles = new Set([
   "app/layout.tsx",
   "app/page.tsx",
-  "app/wiki/copy-command.tsx",
-  "app/wiki/page.tsx",
-  "lib/wiki.ts",
-  "tests/wiki.test.ts",
 ]);
 const alwaysFullPaths = [
   "supabase/",

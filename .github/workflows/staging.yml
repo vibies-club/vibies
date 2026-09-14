@@ -16,7 +16,7 @@ on:
         type: string
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
   checks: read
   actions: read
@@ -40,6 +40,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Install the staging deploy key
+        env:
+          STAGING_DEPLOY_KEY: ${{ secrets.STAGING_DEPLOY_KEY }}
+        run: |
+          umask 077
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$STAGING_DEPLOY_KEY" > "$HOME/.ssh/staging_deploy_key"
+          printf 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl\n' > "$HOME/.ssh/known_hosts"
+          echo "GIT_SSH_COMMAND=ssh -i $HOME/.ssh/staging_deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts" >> "$GITHUB_ENV"
       - name: Update and verify shared staging
         env:
           GITHUB_TOKEN: ${{ github.token }}

@@ -1,3 +1,4 @@
+// ponytail: the extension stays; tests/staging-identity.test.ts loads this route under Node type stripping.
 import { stagingIdentity } from "../../lib/staging.ts";
 
 export const dynamic = "force-dynamic";

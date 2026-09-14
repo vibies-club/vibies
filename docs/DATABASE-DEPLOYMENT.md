@@ -81,13 +81,21 @@ supabase stop --no-backup
 ```
 
 The `migration-check` GitHub check is required on every PR alongside `app-check`
-and `links`, with one Member approval still required. Its snapshot, history, and
-classification guards always run. Known documentation, wiki, and static
-presentation changes can skip the disposable Supabase startup and full migration
-exercise. SQL, backend, access, migration tooling, dependency, workflow, and
-unknown changes run the full exercise. Renames and deletions check every old and
-new path. Main always receives the full proof. Unclear classifications run the
-full exercise. A missing fixture or failed command is a failure. The `app-check` suite remains
+and `links`, with one approving review still required. Its snapshot, history, and
+classification guards always run. The classification in
+[migration-scope.mjs](../scripts/migration-scope.mjs) decides whether the
+disposable Supabase startup and full migration exercise also run. This section is
+the one home of that rule. A PR takes the fast result only when every changed
+path, including both names of a rename, is one of these:
+
+- a `.md` or `.css` file outside `supabase/`, `.github/workflows/`, and `scripts/`;
+- `app/layout.tsx` or `app/page.tsx`.
+
+Every other change runs the full exercise: SQL, backend, access, migration
+tooling, dependency, workflow, type changes, unreadable diffs, and any path the
+script cannot classify. Main always receives the full proof. Add a file to the
+fast list only in the PR that creates it, so its reviewer sees what it contains.
+A missing fixture or failed command is a failure. The `app-check` suite remains
 required and unchanged.
 
 The native check applies the full migration chain, verifies an empty second
@@ -135,13 +143,7 @@ Action or the Vercel Git trigger.
    the staging test site. Configure its protection so designated reviewers can
    use Vibies sign-in without a second Vercel login. Keep this change scoped to
    the staging project.
-5. Set `VIBIES_STAGING=true` only in this Vercel project. Expose Vercel's system
-   environment variables, including `VERCEL_GIT_COMMIT_SHA` and
-   `VERCEL_PROJECT_ID`. Configure the fixed origin, runtime login, GitHub OAuth,
-   and GitHub App once through [Access setup](ACCESS-SETUP.md) and
-   [Project setup](PROJECT-SETUP.md). The public demo needs its own anonymous API
-   values from [Supabase setup](SUPABASE-SETUP.md).
-6. Create a protected GitHub Actions environment named `staging` and restrict it
+5. Create a protected GitHub Actions environment named `staging` and restrict it
    to selected branch `main`, with the Instructor as required reviewer. The
    reviewer checks the selected code before approving access to staging settings.
    Add only these public environment variables after
@@ -153,14 +155,36 @@ Action or the Vercel Git trigger.
    | `STAGING_PROJECT_ID` | Exact ID of the separate Vercel staging project |
    | `STAGING_SUPABASE_TREE` | Verified 40-character `supabase` tree from current `main` |
 
+6. Protect the `staging` ref before any staging credential exists. Create an
+   active repository ruleset named `staging-workflow-only` that targets only
+   `refs/heads/staging`, with the **Restrict updates** and **Restrict deletions**
+   rules and **Deploy keys** as its only bypass actor. Then create one ed25519
+   key pair for the workflow, add its public half as a repository deploy key with
+   write access, store its private half as the secret `STAGING_DEPLOY_KEY` in the
+   `staging` environment, and delete both local files. Keep this the
+   repository's only deploy key, because every deploy key bypasses the ruleset.
+   Rotate it by repeating this step and removing the old key. Verify the rule by
+   pushing any commit to `staging` from a collaborator account, including an
+   admin account. GitHub must reject the push with `GH013`.
+7. Set `VIBIES_STAGING=true` only in this Vercel project. Expose Vercel's system
+   environment variables, including `VERCEL_GIT_COMMIT_SHA` and
+   `VERCEL_PROJECT_ID`. Configure the fixed origin, runtime login, GitHub OAuth,
+   and GitHub App once through [Access setup](ACCESS-SETUP.md) and
+   [Project setup](PROJECT-SETUP.md). The public demo needs its own anonymous API
+   values from [Supabase setup](SUPABASE-SETUP.md).
+
 The workflow pins GitHub REST version `2022-11-28` because its PR response
 includes the test merge SHA. [GitHub supports this version until March 10, 2028](https://docs.github.com/en/rest/about-the-rest-api/api-versions); update that
 lookup before then.
 
-No Vercel or Supabase token belongs in this environment. The workflow uses its
-`GITHUB_TOKEN` to read PR and CI state, move the fixed `staging` ref, and post the
-receipt. Its contents permission covers the repository; trusted main code and
-the fixed API path enforce the single-ref limit.
+No Vercel or Supabase token belongs in this environment. Its only secret is the
+staging deploy key. The workflow's `GITHUB_TOKEN` has read-only contents access;
+it reads PR and CI state and posts the receipt. The ruleset rejects every other
+identity that tries to move `staging`, including repository admins, so nobody
+can skip reviewer selection, the CI check, or the schema guard with a push. The
+deploy key itself could write any unprotected ref. Trusted main code and its
+fixed refspec limit the workflow to `staging`, and main's push restriction
+excludes deploy keys.
 
 ### Preview a PR or clear staging
 
@@ -182,6 +206,7 @@ baseline must have the same complete `supabase` tree as current `main`.
 
 The trusted workflow checks out the pinned `main` script and moves only the
 existing `staging` ref to the exact PR head, never to the synthetic merge commit.
+It pushes with the deploy key and a lease on the ref's previous value.
 It never checks out or runs PR code in the privileged job. Vercel runs the
 selected app code with staging-only credentials after maintainer review.
 
@@ -210,8 +235,9 @@ a paid resource automatically.
 
 After each reviewed `main` schema change, wait for the native staging deployment.
 The owner verifies the applied versions and then updates
-`STAGING_SUPABASE_TREE` to the new `supabase` tree. Routine staging stays blocked
-while this attestation is stale.
+`STAGING_SUPABASE_TREE` to the new `supabase` tree. Routine staging, including
+Clear, stays blocked while this attestation is stale, because Clear verifies the
+same baseline and main CI before it moves the ref.
 
 Supabase can pause a Free project after low activity. Resume it in the dashboard,
 then verify the applied migration versions, update the baseline tree if current
@@ -306,7 +332,7 @@ define the checks. Status is recorded separately for each boundary:
 | Required GitHub migration check | [PASS after explicit owner approval](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922): main requires `migration-check`, `app-check`, and `links`, bound to GitHub Actions. One approving Member review and administrator enforcement are retained. |
 | Main deployment | [PASS after PR #30 merged](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630352747) on 2026-09-11 UTC: main was at `a5fabc1` and its hosted migration history contained the three expected versions. |
 | Production setup | [PASS for the settings and Ready redeploy](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630665472): three App settings moved to Production and the Ready redeploy passed. Live Production Member publishing remains pending while Builder is offline. |
-| Reusable staging rollout | APPROVED in issue #37 on 2026-09-13. The owner created standalone Supabase project `rftkxfkteqxyyeimpqlx` in the Free organization. It is Healthy in Frankfurt; the owner approved the native main integration and it is enabled with automatic branching off. Migrations and runtime setup are pending. The separate Vercel project and fixed `staging` ref at `76cf1e8` exist; it builds only its `staging` production branch and has `VIBIES_STAGING=true` with system variables enabled. The initial Vercel deployment of `76cf1e8` is Ready, and an unauthenticated request to `https://vibies-staging.vercel.app/demo` returned HTTP 200 without Vercel SSO. Runtime credentials are pending. The GitHub environment requires Instructor review and permits only `main`. Its origin and project ID are set; its database baseline is unset until migration verification. Member review, Instructor merge, first `GITHUB_TOKEN` ref update, native Vercel trigger, exact-commit Action receipt, and acceptance checks are pending. Wiki PR #36 also awaits its hosted staging proof and Member readability review. No provider or live acceptance criterion is recorded as passed. |
+| Reusable staging rollout | APPROVED in issue #37 on 2026-09-13. The owner created standalone Supabase project `rftkxfkteqxyyeimpqlx` in the Free organization. It is Healthy in Frankfurt; the owner approved the native main integration and it is enabled with automatic branching off. Migrations and runtime setup are pending. The separate Vercel project and fixed `staging` ref at `76cf1e8` exist; it builds only its `staging` production branch and has `VIBIES_STAGING=true` with system variables enabled. The initial Vercel deployment of `76cf1e8` is Ready, and an unauthenticated request to `https://vibies-staging.vercel.app/demo` returned HTTP 200 without Vercel SSO. Runtime credentials are pending. The GitHub environment requires Instructor review and permits only `main`. Its origin and project ID are set; its database baseline is unset until migration verification. The `staging-workflow-only` ruleset, its deploy key, and the rejected-push receipt are pending owner action as of 2026-09-14. Member review, Instructor merge, the first workflow ref update with the deploy key, native Vercel trigger, exact-commit Action receipt, and acceptance checks are pending. Wiki PR #36 also awaits its hosted staging proof and Member readability review. No provider or live acceptance criterion is recorded as passed. |
 
 The implementation review at `17ecba5` found no remaining code defect. A scan
 of its 14 changed files found no environment files, private keys, live token

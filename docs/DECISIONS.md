@@ -482,13 +482,14 @@ accepts only an open non-draft same-repository PR into `main`, a current head
 containing current `main`, passing head checks whose pull-request runs tested an
 equivalent tree, and a `supabase` tree equal to the owner-verified staging
 baseline. It updates only the fixed ref and verifies the stable URL, exact
-commit, project, ref, environment, and nonce before it records success.
+commit, project, ref, environment, and nonce before it records success. A
+repository ruleset lets only the workflow's deploy key move `staging`.
 
-The required `migration-check` always runs snapshot, history, and classification
-guards. It runs the full disposable Supabase proof for SQL, backend, access,
-migration tooling, dependency, workflow, and unknown changes. Only known
-documentation, wiki, and static presentation changes can use the fast result.
-The existing `app-check` and `links` checks remain required.
+The required `migration-check` always runs its snapshot, history, and
+classification guards, and runs the full disposable Supabase proof for every
+change outside the fast list that the
+[deployment guide](DATABASE-DEPLOYMENT.md#local-and-ci-checks) owns. The
+existing `app-check` and `links` checks remain required.
 
 **Why:** One stable test site reuses its database, OAuth settings, GitHub App,
 reviewer accounts, and URL. This removes repeated hosted setup and routine paid

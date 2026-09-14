@@ -64,6 +64,7 @@ function syntheticApi(changes = {}) {
     ],
     markerSteps: [],
     requests: [],
+    pushes: [],
     comments: [],
     mainReads: 0,
     pullReads: 0,
@@ -92,13 +93,6 @@ function syntheticApi(changes = {}) {
         return response({ ref: "refs/heads/main", object: { type: "commit", sha: state.main } });
       }
       if (method === "GET" && url.pathname === `${root}/git/ref/heads/staging`) {
-        return response({ ref: "refs/heads/staging", object: { type: "commit", sha: state.staging } });
-      }
-      if (method === "PATCH" && url.pathname === `${root}/git/refs/heads/staging`) {
-        const body = JSON.parse(init.body);
-        assert.deepEqual(Object.keys(body).sort(), ["force", "sha"]);
-        assert.equal(body.force, true);
-        state.staging = body.sha;
         return response({ ref: "refs/heads/staging", object: { type: "commit", sha: state.staging } });
       }
       if (method === "GET" && url.pathname === `${root}/pulls/${PR}`) {
@@ -255,6 +249,11 @@ function options(state, changes = {}) {
       baselineTree: SUPABASE,
       githubToken: TOKEN,
       fetchImpl: state.fetch,
+      pushRef: async (sha, previous) => {
+        assert.equal(previous, state.staging);
+        state.pushes.push(sha);
+        state.staging = sha;
+      },
       now: () => clock,
       sleep: async (milliseconds) => { clock += milliseconds; },
       nonce: () => `nonce-${++nonceNumber}`,
@@ -267,7 +266,7 @@ function options(state, changes = {}) {
 }
 
 function mutations(state) {
-  return state.requests.filter(({ init }) => ["PATCH", "POST"].includes(init.method));
+  return [...state.pushes, ...state.requests.filter(({ init }) => init.method !== "GET")];
 }
 
 test("Preview PR updates only the existing staging ref and writes exact receipts", async () => {
@@ -280,11 +279,9 @@ test("Preview PR updates only the existing staging ref and writes exact receipts
   assert.equal(result.head, HEAD);
   assert.equal(result.merge, MERGE);
   assert.deepEqual(result.versions, ["20260910065142", "20260910220000"]);
-  const changed = mutations(state);
-  assert.equal(changed.filter(({ init }) => init.method === "PATCH").length, 1);
-  assert.equal(changed[0].url.pathname, `/repos/${REPOSITORY}/git/refs/heads/staging`);
-  assert.deepEqual(JSON.parse(changed[0].init.body), { sha: HEAD, force: true });
-  assert.equal(state.requests.some(({ url }) => url.pathname.includes("git/refs/heads/main")), false);
+  assert.deepEqual(state.pushes, [HEAD]);
+  assert.equal(mutations(state).length, 2);
+  assert.equal(state.requests.some(({ url }) => url.pathname.includes("/git/refs/")), false);
   assert.equal(state.comments.length, 1);
   assert.equal(call.summaries.length, 1);
   for (const receipt of [state.comments[0], call.summaries[0]]) {
@@ -511,6 +508,29 @@ test("a changed main blocks mutation and blocks the success receipt", async (t) 
   });
 });
 
+test("a rejected or ineffective push cannot create a success receipt", async (t) => {
+  for (const [name, pushRef, pattern] of [
+    ["rejected push", async () => { throw new Error("remote: GH013 body canary"); }, /push did not complete/],
+    ["silent push", async () => {}, /did not confirm/],
+  ]) {
+    await t.test(name, async () => {
+      const state = syntheticApi();
+      const call = options(state, { pushRef });
+      let failure;
+      try {
+        await runStaging(call.values);
+      } catch (error) {
+        failure = error;
+      }
+      assert.match(failure?.message ?? "", pattern);
+      assert.doesNotMatch(failure?.message ?? "", /canary/);
+      assert.equal(state.staging, OLD_STAGING);
+      assert.equal(state.comments.length, 0);
+      assert.deepEqual(call.summaries, []);
+    });
+  }
+});
+
 test("polling tolerates request failure and stale alias, and uses a new nonce each time", async () => {
   const state = syntheticApi({ markerSteps: [
     new Error("network body canary"),
@@ -580,7 +600,7 @@ test("workflow is manual, main-only, serialized, protected, and checks out its p
   assert.match(workflow, /^on:\n  workflow_dispatch:/m);
   assert.doesNotMatch(workflow, /pull_request:|pull_request_target:|\n  push:/);
   assert.match(workflow, /options:\n\s+- Preview PR\n\s+- Clear/);
-  assert.match(workflow, /contents: write\n\s+pull-requests: write\n\s+checks: read\n\s+actions: read/);
+  assert.match(workflow, /contents: read\n\s+pull-requests: write\n\s+checks: read\n\s+actions: read/);
   assert.match(workflow, /group: reusable-staging\n\s+cancel-in-progress: false/);
   assert.match(workflow, /environment: staging/);
   assert.match(workflow, /github\.repository == 'vibies-club\/vibies'.*github\.ref == 'refs\/heads\/main'/);
@@ -588,5 +608,8 @@ test("workflow is manual, main-only, serialized, protected, and checks out its p
   assert.match(workflow, /node-version: 24/);
   assert.match(workflow, /STAGING_WORKFLOW_SHA: \$\{\{ github\.sha \}\}/);
   assert.match(workflow, /STAGING_ORIGIN: \$\{\{ vars\.STAGING_ORIGIN \}\}/);
-  assert.doesNotMatch(workflow, /VERCEL_TOKEN|secrets\./);
+  assert.deepEqual([...workflow.matchAll(/secrets\.(\w+)/g)].map((match) => match[1]), ["STAGING_DEPLOY_KEY"]);
+  assert.match(workflow, /StrictHostKeyChecking=yes/);
+  assert.match(workflow, /github\.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl\\n/);
+  assert.doesNotMatch(workflow, /VERCEL_TOKEN|SUPABASE_ACCESS_TOKEN/);
 });
