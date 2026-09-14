@@ -69,16 +69,19 @@ records three App settings moved to Production and a passing Ready redeploy.
 Live Production Member publishing remains pending while Builder is offline. See
 [Database deployment](docs/DATABASE-DEPLOYMENT.md) for the rollout details.
 
-The [Vercel Preview cleanup](docs/VERCEL-PREVIEW-CLEANUP.md) has local and
-bounded live script proof. Its first GitHub Actions run with the dedicated
-project token waits for the reviewed cleanup PR to merge.
+[PR #34](https://github.com/vibies-club/vibies/pull/34) merged the
+[Vercel Preview cleanup](docs/VERCEL-PREVIEW-CLEANUP.md) on 2026-09-12. Its
+first GitHub Actions run with the dedicated project token remains a post-merge
+check. [PR #40](https://github.com/vibies-club/vibies/pull/40) merged on
+2026-09-13 and raised the class to eight Member places under the amended D-003.
+[PR #42](https://github.com/vibies-club/vibies/pull/42) merged the same day and
+records the Instructor-run review agent account in D-017.
 
 [Issue #37](https://github.com/vibies-club/vibies/issues/37) approves one
 reusable Free staging environment and a manual exact-commit selection workflow.
 The [staging guide](docs/DATABASE-DEPLOYMENT.md#reusable-staging) records its
-setup, use, limits, and receipts. Provider setup, Member review, Instructor
-merge, the first real Action deployment, and live acceptance checks remain
-pending.
+setup, use, limits, and receipts. The first real Action deployment with the
+deploy key and the live acceptance checks remain post-merge checks.
 
 ## Run the demo locally
 

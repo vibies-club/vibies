@@ -15,15 +15,24 @@ chosen.
   passed for main at `a5fabc1`, all three migration versions, and Preview
   cleanup. The [Production settings and Ready redeploy](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630665472)
   also passed.
-- Complete the review process for [PR #33](https://github.com/vibies-club/vibies/pull/33)
-  for issue #31 and [PR #34](https://github.com/vibies-club/vibies/pull/34)
-  for issue #32. They deploy no new app feature. Only the Instructor merges.
+- [PR #34](https://github.com/vibies-club/vibies/pull/34) merged on 2026-09-12,
+  [PR #40](https://github.com/vibies-club/vibies/pull/40) on 2026-09-13 with
+  eight Member places, and [PR #42](https://github.com/vibies-club/vibies/pull/42)
+  on 2026-09-13 with the review agent account.
+- [PR #38](https://github.com/vibies-club/vibies/pull/38) merged the reusable
+  staging workflow for issue #37. Its first deploy-key ref update, Vercel
+  trigger, and exact-commit receipt are post-merge checks.
+- Review [PR #33](https://github.com/vibies-club/vibies/pull/33) for issue #31
+  and [PR #36](https://github.com/vibies-club/vibies/pull/36) for issue #25.
+  [PR #43](https://github.com/vibies-club/vibies/pull/43) for issue #20 has
+  changes requested. Only the Instructor merges.
 
 ## Next
 
-- After PR #34 merges, verify the first Vercel cleanup workflow run with the
-  dedicated project token. Verify the first automatic cleanup after a later
-  same-repository feature PR merges.
+- Verify the first Vercel cleanup workflow run with the dedicated project token
+  after a later same-repository feature PR merges.
+- Verify the PR #40 migration and app deployment, then approve the eighth
+  student through the normal flow.
 - Complete live Production Member publishing when Builder is available.
 - After PR #33 merges, verify its Production migration before starting the
   Error Library app child under issue #27.
