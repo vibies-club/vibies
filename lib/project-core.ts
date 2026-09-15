@@ -1,5 +1,7 @@
 export const PROJECT_BODY_LIMIT = 32_768;
 export type ProjectDetails = { title: string; summary: string; demoUrl: string | null };
+export const MILESTONE_TITLE_LIMIT = 80;
+export const MILESTONE_BLOCKED_NOTE_LIMIT = 500;
 
 export function projectDetails(title: unknown, summary: unknown, demoUrl: unknown): ProjectDetails | null {
   if (typeof title !== "string" || typeof summary !== "string" || typeof demoUrl !== "string") return null;
@@ -16,6 +18,23 @@ export function projectDetails(title: unknown, summary: unknown, demoUrl: unknow
     } catch { return null; }
   }
   return details;
+}
+
+export type MilestoneDetails = { title: string; blockedNote: string | null };
+
+export function milestoneDetails(title: unknown, blockedNote: unknown): MilestoneDetails | null {
+  if (typeof title !== "string" || (blockedNote !== null && typeof blockedNote !== "string")) return null;
+  if (/[\p{Cc}\p{Cf}]/u.test(title)) return null;
+  const normalizedTitle = title.trim();
+  if ([...normalizedTitle].length < 1 || [...normalizedTitle].length > MILESTONE_TITLE_LIMIT) return null;
+
+  if (blockedNote === null) return { title: normalizedTitle, blockedNote: null };
+  const noteLines = blockedNote.replace(/\r\n/g, "\n");
+  if (/[\p{Cc}\p{Cf}]/u.test(noteLines.replace(/\n/g, ""))) return null;
+  const normalizedNote = noteLines.trim();
+  if (!normalizedNote) return { title: normalizedTitle, blockedNote: null };
+  if ([...normalizedNote].length > MILESTONE_BLOCKED_NOTE_LIMIT) return null;
+  return { title: normalizedTitle, blockedNote: normalizedNote };
 }
 
 export const projectId = (value: unknown): value is string => typeof value === "string" &&

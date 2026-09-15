@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { accessState } from "../../lib/access";
 import { projects } from "../../lib/projects";
 import { AccessShell, Retry } from "../access-shell";
-import { ProjectMessage, SharedDetails } from "./project-ui";
+import { ProjectMessage, RoadmapProgress, SharedDetails } from "./project-ui";
 
 export const dynamic = "force-dynamic";
 export default async function ProjectsPage({ searchParams }: {searchParams:Promise<{message?:string}>}) {
@@ -27,6 +27,6 @@ export default async function ProjectsPage({ searchParams }: {searchParams:Promi
     <h2>Community projects</h2>
     {result.community.length === 0 && <p>No projects are available yet.</p>}
     {result.community.map(project => <article key={project.id}><h3><a href={`/projects/${project.id}`}>{project.title}</a></h3>
-      <SharedDetails project={project} /></article>)}
+      <SharedDetails project={project} /><RoadmapProgress project={project} /></article>)}
   </section></AccessShell>;
 }

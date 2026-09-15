@@ -3,7 +3,7 @@
 [Documentation home](../README.md) · [Decisions](DECISIONS.md) ·
 [Roadmap](ROADMAP.md)
 
-**Updated:** 2026-09-11
+**Updated:** 2026-09-15
 
 ## Repository setup
 
@@ -82,6 +82,12 @@ same day and records the Instructor-run review agent account in D-017.
 staging workflow for issue #37; the [deployment guide](DATABASE-DEPLOYMENT.md#reusable-staging)
 records its setup receipts and post-merge checks.
 
+[PR #43](https://github.com/vibies-club/vibies/pull/43) implements the optional
+Personal Project Roadmap from issue #20. The
+[Roadmap verification record](ROADMAP-VERIFICATION.md) records automated receipts
+and the pending browser checks for P8 and P13. [D-019](DECISIONS.md#d-019-add-optional-personal-project-roadmaps)
+records the accepted design.
+
 ## Next step
 
 Run the first staging Action after merge and record its deploy-key ref update,
@@ -91,6 +97,6 @@ the review of [PR #33](https://github.com/vibies-club/vibies/pull/33), the
 issue #31 database work, and verify its Production migration before starting
 the Error Library app child. Review [PR #36](https://github.com/vibies-club/vibies/pull/36),
 the class command wiki, which also needs hosted staging proof.
-[PR #43](https://github.com/vibies-club/vibies/pull/43), the issue #20 roadmaps,
-has changes requested for its receipts. Only the Instructor merges. Complete the
-live Production Member publishing check when Builder is available.
+After PR #43 merges, verify its Production migration and application deployment.
+Only the Instructor merges. Complete the live Production Member publishing check
+when Builder is available.

@@ -38,6 +38,7 @@ export async function checkProjectsWeb({ sql, origin, check }) {
     return form;
   };
   const body = response => response.text();
+  const rendered = text => text.replaceAll("<!-- -->", "");
   const location = response => response.headers.get("location") ?? "";
   const projectId = response => location(response).match(/^\/projects\/([0-9a-f-]{36})\?message=(?:created|existing)$/)?.[1];
   const snapshot = async repositoryId => {
@@ -55,6 +56,20 @@ export async function checkProjectsWeb({ sql, origin, check }) {
     after.version !== before.version && ["title", "summary", "demo_url", "publication", "connection",
       "last_checked_at", "onboarding_completed"].every(key => after[key] === before[key]);
   const formVersion = html => html.match(/name="version" value="([1-9]\d*)"/)?.[1];
+  const roadmapRows = projectId => sql`
+    select id::text, title, completed, blocked_note, position
+      from vibies_private.project_milestones
+     where project_id = ${projectId}::uuid
+     order by position
+  `;
+  const storedVersion = async projectId => {
+    const [row] = await sql`
+      select version::text as version
+        from vibies_private.personal_projects
+       where id = ${projectId}::uuid
+    `;
+    return row?.version;
+  };
   const setUsername = username => sql`
     update vibies_private.accounts set github_username = ${username}
      where github_id = ${ids.member}
@@ -161,6 +176,211 @@ export async function checkProjectsWeb({ sql, origin, check }) {
   check(publishedRow?.publication === "Published" && publishedRow.connection === "Connected" &&
     publishedRow.moderation === "Visible" && publishedRow.onboarding_completed === true,
   "P1/P5 publication and onboarding persist while connection and moderation stay unchanged");
+
+  const emptyRoadmap = await get(`/projects/${mainId}`, "member");
+  const emptyRoadmapText = await body(emptyRoadmap);
+  const emptyCommunity = await get("/projects", "second");
+  const emptyCommunityText = await body(emptyCommunity);
+  const emptyRoadmapVersion = formVersion(emptyRoadmapText);
+  check(emptyRoadmap.status === 200 && Boolean(emptyRoadmapVersion) &&
+    emptyRoadmapText.includes(">Roadmap</h2>") && emptyRoadmapText.includes("No milestones yet.") &&
+    !/<progress\b/.test(emptyRoadmapText) && !emptyRoadmapText.includes("% complete") &&
+    emptyCommunity.status === 200 && emptyCommunityText.includes("Pocket Garden") &&
+    !emptyCommunityText.includes("No milestones yet") && !emptyCommunityText.includes("% complete"),
+  "Issue 20 P9 an empty roadmap shows its detail message without a progress bar or percentage and leaks no empty state to Community");
+  if (!emptyRoadmapVersion) throw new Error("Empty roadmap page did not render a project version");
+
+  const firstMilestoneTitle = "Plan <demo>";
+  const firstBlockedNote = 'Waiting for <script>alert("x")</script>';
+  const firstAdd = await post("member", {
+    action: "milestone_add", id: mainId, version: emptyRoadmapVersion,
+    title: firstMilestoneTitle, blockedNote: firstBlockedNote,
+  });
+  let rows = await roadmapRows(mainId);
+  const firstMilestoneId = rows[0]?.id;
+  check(location(firstAdd) === `/projects/${mainId}?message=milestone_added` && rows.length === 1 &&
+    rows[0]?.title === firstMilestoneTitle && rows[0]?.completed === false &&
+    rows[0]?.blocked_note === firstBlockedNote && Boolean(firstMilestoneId),
+  "Issue 20 P1/P3 the owner adds one incomplete blocked milestone with the submitted version");
+  if (!firstMilestoneId) throw new Error("Roadmap add did not return a milestone row");
+
+  const blockedOwner = await get(`/projects/${mainId}`, "member");
+  const blockedOwnerText = await body(blockedOwner);
+  const blockedViewer = await get(`/projects/${mainId}`, "second");
+  const blockedViewerText = await body(blockedViewer);
+  const blockedInstructor = await get(`/projects/${mainId}`, "instructor");
+  const blockedInstructorText = await body(blockedInstructor);
+  const escapedBlockedNote = "Waiting for &lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;";
+  check(rendered(blockedOwnerText).includes("Plan &lt;demo&gt;") && rendered(blockedOwnerText).includes("Status:</strong> Blocked") &&
+    rendered(blockedOwnerText).includes(escapedBlockedNote) && !blockedOwnerText.includes(firstBlockedNote) &&
+    blockedViewer.status === 200 && rendered(blockedViewerText).includes(escapedBlockedNote) &&
+    blockedInstructor.status === 200 && rendered(blockedInstructorText).includes(escapedBlockedNote),
+  "Issue 20 P3/P10/P13 viewers see an escaped blocked note and clear Blocked status");
+
+  const blockedCommunity = await get("/projects", "second");
+  const blockedCommunityText = await body(blockedCommunity);
+  check(blockedCommunityText.includes("Pocket Garden") && rendered(blockedCommunityText).includes("0% complete") &&
+    !blockedCommunityText.includes("Plan &lt;demo&gt;") && !blockedCommunityText.includes("Waiting for") &&
+    !/<progress\b/.test(blockedCommunityText),
+  "Issue 20 P7/P9/P10 the Community card shows only derived percentage and no milestone content or detail progress bar");
+
+  const protectedRoadmapVersion = await storedVersion(mainId);
+  const deniedRoadmap = await Promise.all([undefined, "unapproved", "revoked", "expired", "instructor", "second"]
+    .map(role => post(role, { action: "milestone_add", id: mainId, version: protectedRoadmapVersion,
+      title: "Denied roadmap write", blockedNote: "Must remain unchanged.", })));
+  const deniedRoadmapBodies = await Promise.all(deniedRoadmap.map(body));
+  check(deniedRoadmap.every(response => response.status === 403) &&
+    deniedRoadmapBodies.every(text => !text.includes("Denied roadmap write") && !text.includes(ids.member)),
+  "Issue 20 P10 signed-out, inactive, expired, Instructor, and wrong-owner roadmap writes are denied without project identity");
+  const crossOriginRoadmap = await post("member", { action: "milestone_add", id: mainId,
+    version: protectedRoadmapVersion, title: "Cross-origin roadmap write", blockedNote: "Must remain unchanged.", }, "https://other.test");
+  check(crossOriginRoadmap.status === 403, "Issue 20 P10 cross-origin roadmap writes are denied");
+
+  const secondAdd = await post("member", {
+    action: "milestone_add", id: mainId, version: protectedRoadmapVersion,
+    title: "Review result", blockedNote: "",
+  });
+  rows = await roadmapRows(mainId);
+  const secondMilestoneId = rows[1]?.id;
+  const staleAdd = await post("member", {
+    action: "milestone_add", id: mainId, version: protectedRoadmapVersion,
+    title: "Stale roadmap write", blockedNote: "",
+  });
+  const staleRows = await roadmapRows(mainId);
+  const stalePage = await get(`/projects/${mainId}?message=stale`, "member");
+  const stalePageText = await body(stalePage);
+  check(location(secondAdd) === `/projects/${mainId}?message=milestone_added` && rows.length === 2 &&
+    rows[1]?.title === "Review result" && Boolean(secondMilestoneId) &&
+    location(staleAdd) === `/projects/${mainId}?message=stale` && staleRows.length === 2 &&
+    !staleRows.some(row => row.title === "Stale roadmap write") && stalePageText.includes("Reload the page"),
+  "Issue 20 P12 an exact submitted roadmap version prevents a stale add from replacing newer data and asks the owner to reload");
+  if (!secondMilestoneId) throw new Error("Second roadmap add did not return a milestone row");
+
+  const secondVersionPage = await get(`/projects/${mainId}`, "member");
+  const secondVersionPageText = await body(secondVersionPage);
+  const secondVersion = formVersion(secondVersionPageText);
+  if (!secondVersion) throw new Error("Roadmap page did not render the current version after add");
+  const thirdAdd = await post("member", {
+    action: "milestone_add", id: mainId, version: secondVersion,
+    title: "Review result", blockedNote: "Needs review",
+  });
+  rows = await roadmapRows(mainId);
+  const thirdMilestoneId = rows[2]?.id;
+  check(location(thirdAdd) === `/projects/${mainId}?message=milestone_added` && rows.length === 3 &&
+    rows[1]?.title === "Review result" && rows[2]?.title === "Review result" &&
+    rows[2]?.blocked_note === "Needs review" && Boolean(thirdMilestoneId),
+  "Issue 20 P2/P3 the owner can add a duplicate title at the end of the roadmap");
+  if (!thirdMilestoneId) throw new Error("Third roadmap add did not return a milestone row");
+
+  const editVersion = await storedVersion(mainId);
+  const edited = await post("member", {
+    action: "milestone_edit", id: mainId, milestoneId: secondMilestoneId, version: editVersion,
+    title: "Review result edited", blockedNote: "Still waiting",
+  });
+  rows = await roadmapRows(mainId);
+  check(location(edited) === `/projects/${mainId}?message=milestone_edited` && rows.length === 3 &&
+    rows[1]?.id === secondMilestoneId && rows[1]?.title === "Review result edited" &&
+    rows[1]?.blocked_note === "Still waiting" && rows[0]?.id === firstMilestoneId && rows[2]?.id === thirdMilestoneId,
+  "Issue 20 P5 the owner edits one milestone with its own Save action while preserving order");
+
+  const completeVersion = await storedVersion(mainId);
+  const orderBeforeCompletion = rows.map(row => row.id).join(",");
+  const completed = await post("member", {
+    action: "milestone_complete", id: mainId, milestoneId: secondMilestoneId,
+    version: completeVersion, completed: "yes",
+  });
+  rows = await roadmapRows(mainId);
+  check(location(completed) === `/projects/${mainId}?message=milestone_completed` &&
+    rows[1]?.completed === true && rows[1]?.blocked_note === null &&
+    rows.map(row => row.id).join(",") === orderBeforeCompletion,
+  "Issue 20 P4/P5 Complete removes a blocked note and leaves milestone order unchanged");
+
+  const reopenVersion = await storedVersion(mainId);
+  const reopened = await post("member", {
+    action: "milestone_complete", id: mainId, milestoneId: secondMilestoneId,
+    version: reopenVersion, completed: "no",
+  });
+  rows = await roadmapRows(mainId);
+  check(location(reopened) === `/projects/${mainId}?message=milestone_reopened` &&
+    rows[1]?.completed === false && rows[1]?.blocked_note === null,
+  "Issue 20 P4 clearing the Complete checkbox reopens the milestone as Incomplete");
+
+  const firstCompleteVersion = await storedVersion(mainId);
+  const firstCompleted = await post("member", {
+    action: "milestone_complete", id: mainId, milestoneId: firstMilestoneId,
+    version: firstCompleteVersion, completed: "yes",
+  });
+  const thirdCompleteVersion = await storedVersion(mainId);
+  const thirdCompleted = await post("member", {
+    action: "milestone_complete", id: mainId, milestoneId: thirdMilestoneId,
+    version: thirdCompleteVersion, completed: "yes",
+  });
+  rows = await roadmapRows(mainId);
+  const progressDetail = await get(`/projects/${mainId}`, "member");
+  const progressDetailText = await body(progressDetail);
+  const progressRendered = rendered(progressDetailText);
+  const progressCommunity = await get("/projects", "second");
+  const progressCommunityText = await body(progressCommunity);
+  const sharedDetailsIndex = progressRendered.indexOf("Draft details can change before publication.");
+  const roadmapIndex = progressRendered.indexOf(">Roadmap</h2>");
+  const managementIndex = progressRendered.indexOf(">Edit project</summary>");
+  check(location(firstCompleted) === `/projects/${mainId}?message=milestone_completed` &&
+    location(thirdCompleted) === `/projects/${mainId}?message=milestone_completed` &&
+    rows.filter(row => row.completed).length === 2 &&
+    progressRendered.includes("2 of 3 complete, 67%.") && /<progress\b/.test(progressDetailText) &&
+    sharedDetailsIndex !== -1 && sharedDetailsIndex < roadmapIndex && roadmapIndex < managementIndex &&
+    rendered(progressCommunityText).includes("67% complete") && !progressCommunityText.includes("Review result") &&
+    !progressCommunityText.includes("Plan &lt;demo&gt;"),
+  "Issue 20 P7/P8/P9 detail progress rounds to 67%, follows shared details, precedes management, and Community shows only percentage");
+  check(/<input[^>]*type="checkbox"[^>]*name="completed"/.test(progressRendered) &&
+    progressRendered.includes(">Save completion</button>") && progressRendered.includes(">Edit milestone</summary>") &&
+    progressRendered.includes(">Save</button>") && progressRendered.includes(">Cancel</a>") &&
+    progressRendered.includes(">Move up</button>") && progressRendered.includes(">Move down</button>") &&
+    progressRendered.includes(">Delete milestone</summary>") && progressRendered.includes(">Delete milestone</button>") &&
+    progressRendered.includes(">Add milestone</button>") && !progressRendered.includes('tabindex="-1"') &&
+    progressRendered.includes("<strong>Status:</strong> Complete"),
+  "Issue 20 P13 native roadmap controls support keyboard access and text states do not depend on color");
+
+  const moveUpVersion = await storedVersion(mainId);
+  const movedUp = await post("member", {
+    action: "milestone_move", id: mainId, milestoneId: thirdMilestoneId,
+    version: moveUpVersion, direction: "up",
+  });
+  const movedUpRows = await roadmapRows(mainId);
+  const moveDownVersion = await storedVersion(mainId);
+  const movedDown = await post("member", {
+    action: "milestone_move", id: mainId, milestoneId: thirdMilestoneId,
+    version: moveDownVersion, direction: "down",
+  });
+  rows = await roadmapRows(mainId);
+  check(location(movedUp) === `/projects/${mainId}?message=milestone_moved` &&
+    movedUpRows[1]?.id === thirdMilestoneId && movedUpRows[2]?.id === secondMilestoneId &&
+    location(movedDown) === `/projects/${mainId}?message=milestone_moved` &&
+    rows[0]?.id === firstMilestoneId && rows[1]?.id === secondMilestoneId && rows[2]?.id === thirdMilestoneId,
+  "Issue 20 P5 Move up and Move down reorder one milestone without changing its completion state");
+
+  const deleteVersion = await storedVersion(mainId);
+  const countBeforeMilestoneDelete = rows.length;
+  const noMilestoneConfirmation = await post("member", {
+    action: "milestone_delete", id: mainId, milestoneId: thirdMilestoneId, version: deleteVersion,
+  });
+  const rowsAfterNoConfirmation = await roadmapRows(mainId);
+  const confirmedMilestoneDelete = await post("member", {
+    action: "milestone_delete", id: mainId, milestoneId: thirdMilestoneId,
+    version: deleteVersion, confirm: "yes",
+  });
+  rows = await roadmapRows(mainId);
+  const afterMilestoneDeleteDetail = await get(`/projects/${mainId}`, "member");
+  const afterMilestoneDeleteDetailText = await body(afterMilestoneDeleteDetail);
+  const afterMilestoneDeleteCommunity = await get("/projects", "second");
+  const afterMilestoneDeleteCommunityText = await body(afterMilestoneDeleteCommunity);
+  check(noMilestoneConfirmation.status === 400 && rowsAfterNoConfirmation.length === countBeforeMilestoneDelete &&
+    location(confirmedMilestoneDelete) === `/projects/${mainId}?message=milestone_deleted` && rows.length === 2 &&
+    !rows.some(row => row.id === thirdMilestoneId) && rendered(afterMilestoneDeleteDetailText).includes("1 of 2 complete, 50%.") &&
+    rendered(afterMilestoneDeleteCommunityText).includes("50% complete") && !afterMilestoneDeleteCommunityText.includes("Review result"),
+  "Issue 20 P6 milestone deletion requires identifying confirmation and recalculates progress from 2 of 3 to 1 of 2");
+
+  const afterRoadmapDeleteRows = await roadmapRows(mainId);
 
   await setUsername("synthetic-member-unknown");
   const maxTitle = "🌱".repeat(80);
@@ -465,6 +685,9 @@ export async function checkProjectsWeb({ sql, origin, check }) {
     afterRestore.publication === beforeManualLoss.publication && afterRestore.moderation === beforeManualLoss.moderation &&
     afterRestore.title === beforeManualLoss.title && afterRestore.last_checked_at !== beforeManualLoss.last_checked_at,
   "P9 a successful manual check restores the same repository and preserves independent states");
+  const roadmapAfterConnectionRestore = await roadmapRows(mainId);
+  check(JSON.stringify(roadmapAfterConnectionRestore) === JSON.stringify(afterRoadmapDeleteRows),
+    "Issue 20 P11 restoring a disconnected project preserves its roadmap and milestone order");
 
   await sql`update vibies_private.personal_projects set connection = 'Disconnected', version = version + 1
              where id = ${hiddenId}::uuid`;
@@ -573,6 +796,9 @@ export async function checkProjectsWeb({ sql, origin, check }) {
     restoredGuideText.includes("Project restored. It is available only when Published and Connected.") &&
     restoredGuideText.includes("Pocket Garden") && (await body(restoredMemberDetail)).includes("Pocket Garden"),
   "P16 Restore preserves independent state and returns an eligible project to the Community without GitHub");
+  const roadmapAfterModerationRestore = await roadmapRows(mainId);
+  check(JSON.stringify(roadmapAfterModerationRestore) === JSON.stringify(afterRoadmapDeleteRows),
+    "Issue 20 P11 hiding and restoring a project preserves its roadmap and blocked-note data");
 
   await sql`update vibies_private.personal_projects set moderation = 'Hidden', version = version + 1
              where id in (${draftId}::uuid, ${archivedId}::uuid, ${disconnectedId}::uuid)`;
@@ -603,6 +829,14 @@ export async function checkProjectsWeb({ sql, origin, check }) {
   const deleteId = projectId(deleteTarget);
   const anchorId = projectId(capacityAnchor);
   check(Boolean(deleteId) && Boolean(anchorId), "P11 synthetic setup fills all three retained project places");
+  const deleteTargetPage = await get(`/projects/${deleteId}`, "member");
+  const deleteTargetPageText = await body(deleteTargetPage);
+  const deleteTargetVersion = formVersion(deleteTargetPageText);
+  const cascadeAdd = await post("member", { action: "milestone_add", id: deleteId,
+    version: deleteTargetVersion, title: "Cascade child", blockedNote: "" });
+  check(location(cascadeAdd) === `/projects/${deleteId}?message=milestone_added` &&
+    (await roadmapRows(deleteId)).length === 1,
+  "Issue 20 P11 a project can retain a milestone before project deletion");
 
   const beforeDelete = await snapshot("17102");
   const noConfirmation = await post("member", { action: "delete", id: deleteId });
@@ -624,13 +858,27 @@ export async function checkProjectsWeb({ sql, origin, check }) {
   const deletedListText = await body(deletedList);
   const afterDeleteCount = await sql`select count(*)::int as count from vibies_private.personal_projects`;
   const deletedRows = await sql`select id from vibies_private.personal_projects where id = ${deleteId}::uuid`;
+  const cascadeRows = await roadmapRows(deleteId);
   const [memberAfterDelete] = await sql`select onboarding_completed from vibies_private.accounts where github_id = ${ids.member}`;
   check(location(confirmedDelete) === "/projects?message=deleted" && repeatedDelete.status === 403 &&
     deletedList.status === 200 && deletedListText.includes("Project deleted. A project place is now free.") &&
     !deletedListText.includes("Delete Target") && deletedListText.includes("Pocket Garden") &&
     deletedListText.includes("Capacity Anchor") && afterDeleteCount[0].count === beforeDeleteCount[0].count - 1 &&
-    deletedRows.length === 0 && memberAfterDelete.onboarding_completed === true,
-  "P11 confirmed Delete removes only the project, keeps onboarding, succeeds without GitHub, and makes retry safe");
+    deletedRows.length === 0 && cascadeRows.length === 0 && memberAfterDelete.onboarding_completed === true,
+  "P11/Issue 20 P11 confirmed Delete removes the project and Roadmap, keeps onboarding, succeeds without GitHub, and makes retry safe");
+
+  await sql`
+    insert into vibies_private.project_milestones (project_id, title, position)
+    select ${anchorId}::uuid, 'Capacity milestone ' || n::text, n
+      from generate_series(1, 20) as series(n)
+  `;
+  const capacityPage = await get(`/projects/${anchorId}`, "member");
+  const capacityPageText = await body(capacityPage);
+  const capacityRows = await roadmapRows(anchorId);
+  check(capacityPage.status === 200 && capacityRows.length === 20 &&
+    /<button[^>]*disabled[^>]*>Add milestone<\/button>/.test(capacityPageText) &&
+    capacityPageText.includes("This roadmap has the maximum of 20 milestones."),
+  "Issue 20 P2/P13 a 20-milestone roadmap disables Add and explains the limit");
 
   await setUsername("synthetic-member");
   const replacement = await post("member", { action: "connect", repositoryId: "17104", title: "Freed Place",

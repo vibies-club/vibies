@@ -126,6 +126,38 @@ limits, but it does not assign authority for connecting, syncing, publishing,
 archiving, disconnecting, or deleting the Class Project. That lifecycle requires
 a future accepted decision before implementation.
 
+### Personal Project roadmaps
+
+Issue #20 adds an optional [Roadmap](DOMAIN.md#projects-and-repositories) to a
+Personal Project. The accepted design is recorded in
+[D-019](DECISIONS.md#d-019-add-optional-personal-project-roadmaps). A current
+approved owner can manage the Roadmap in every retained Project state. The
+Roadmap never blocks the existing Publish action.
+
+Each Roadmap contains up to 20 ordered Milestones. The owner adds one at a time,
+edits one at a time with Save or Cancel, reorders with Move up or Move down, and
+deletes after a confirmation that identifies the Milestone. A Milestone uses one
+Complete checkbox. Its status is Incomplete, Blocked, or Complete according to
+the [domain model](DOMAIN.md#projects-and-repositories). Completion removes a
+Blocked note, and reopening makes the Milestone incomplete. Completion does not
+change its position.
+
+The project detail page shows the ordered Roadmap after shared Project details
+and before management controls. When Milestones exist, it shows each status and
+Blocked note, a progress bar, and the completed count with the rounded whole
+percentage. An empty Roadmap shows “No milestones yet” and no progress bar or
+percentage. A Community Project card shows only the rounded percentage, such as
+“67% complete.” Progress is derived from the Milestone records each time it is
+shown.
+
+Roadmap visibility follows the existing Personal Project visibility rules. Every
+person who can view a Project can view its Roadmap and Blocked notes. Only the
+current approved owner can change them. The Instructor can use existing Project
+moderation and cannot edit Milestone content. State changes preserve the
+Roadmap, and deleting a Personal Project deletes its Milestones. A stale owner
+action stops without replacing newer data and asks the owner to reload. Roadmap
+controls work with a keyboard, and status remains clear without color alone.
+
 ## Project availability
 
 The three project state groups are independent and are defined in the
@@ -149,7 +181,7 @@ moderation decision. Reconnection makes it available again only if it is still
 | Capability | Authenticated prospective Member, not approved | Approved Member onboarding | Member onboarding complete | Instructor |
 | --- | --- | --- | --- | --- |
 | Enter and browse the Community | No | Yes | Yes | Yes |
-| Run Personal Project owner workflows | No | Own projects only | Own projects only | No |
+| Run Personal Project owner workflows | No | Own projects only, including Roadmap actions | Own projects only, including Roadmap actions | No |
 | Publish a Personal Project | No | Own projects only | Own projects only | No |
 | Post a Comment | No | No | Yes, including on an owned project | Yes |
 | Submit Feedback | No | No | Yes, except on an owned project | Yes |
@@ -237,3 +269,8 @@ and delete operations are also deliberately undecided. They require later
 product decisions rather than assumptions in this foundation.
 
 Future feature work must be planned separately against these definitions.
+
+Issue #20 keeps these items outside the first Roadmap version: dates, deadlines,
+assignees, notifications, milestone Comments, public change history, imports,
+Class Project Roadmaps, and student learning Roadmaps. They need separate
+approved plans.

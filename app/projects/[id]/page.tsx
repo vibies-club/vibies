@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { accessState } from "../../../lib/access";
 import { project } from "../../../lib/projects";
 import { AccessShell, Retry } from "../../access-shell";
-import { ProjectAction, ProjectFields, ProjectMessage, SharedDetails } from "../project-ui";
+import { ProjectAction, ProjectFields, ProjectMessage, ProjectRoadmap, SharedDetails } from "../project-ui";
 
 export const dynamic = "force-dynamic";
 export default async function ProjectPage({ params, searchParams }: {params:Promise<{id:string}>;searchParams:Promise<{message?:string}>}) {
@@ -20,6 +20,7 @@ export default async function ProjectPage({ params, searchParams }: {params:Prom
   return <AccessShell><section><p className="eyebrow">PERSONAL PROJECT</p><h1>{item.title}</h1><a href="/projects">Back to projects</a>
     <SharedDetails project={item} />
     {(item.isOwner || access.kind === "instructor") && <ProjectMessage message={message} />}
+    <ProjectRoadmap project={item} />
     {access.kind === "instructor" && <>
       <p>{item.moderation === "Hidden" ? "Hidden from the Community." : "Visible to the Community."}</p>
       <ProjectAction id={item.id} version={item.version} action={item.moderation === "Hidden" ? "restore" : "hide"}>

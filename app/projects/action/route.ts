@@ -1,6 +1,6 @@
 import { accessState, database, sessionHash } from "../../../lib/access";
 import { allowedPost, go, safeError } from "../../../lib/access-http";
-import { projectDetails, projectForm, projectId, projectVersion, repositoryId } from "../../../lib/project-core";
+import { milestoneDetails, projectDetails, projectForm, projectId, projectVersion, repositoryId } from "../../../lib/project-core";
 import { projectActor, verifyProject, type ProjectContext } from "../../../lib/projects";
 
 export async function POST(request: Request) {
@@ -11,7 +11,8 @@ export async function POST(request: Request) {
     const form = await projectForm(request);
     if (typeof form === "number") return safeError(form);
     const action = form.get("action");
-    if (!["connect", "publish", "check", "edit", "delete", "hide", "restore"].includes(action ?? "")) return safeError(400);
+    if (!["connect", "publish", "check", "edit", "delete", "hide", "restore", "milestone_add", "milestone_edit",
+      "milestone_complete", "milestone_move", "milestone_delete"].includes(action ?? "")) return safeError(400);
     if (form.has("kind")) return safeError(400);
     if (action === "connect") {
       const actor = await projectActor(hash);
@@ -29,6 +30,49 @@ export async function POST(request: Request) {
     }
     const id = form.get("id");
     if (!projectId(id)) return safeError(404);
+    if (["milestone_add", "milestone_edit", "milestone_complete", "milestone_move", "milestone_delete"].includes(action ?? "")) {
+      const context = await projectActor(hash, id) as ProjectContext | null;
+      if (!context) return safeError(403);
+      const version = form.get("version");
+      if (!projectVersion(version)) return safeError(400);
+      const milestoneId = form.get("milestoneId");
+      if (action !== "milestone_add" && !projectId(milestoneId)) return safeError(404);
+      let result;
+      if (action === "milestone_add" || action === "milestone_edit") {
+        const details = milestoneDetails(form.get("title"), form.get("blockedNote") ?? null);
+        if (!details) return go(`/projects/${id}?message=invalid`);
+        const [row] = action === "milestone_add"
+          ? await database()`select vibies_private.add_project_milestone(${hash}, ${id}::uuid, ${version}::bigint, ${details.title}, ${details.blockedNote}) as result`
+          : await database()`select vibies_private.edit_project_milestone(${hash}, ${id}::uuid, ${milestoneId}::uuid, ${version}::bigint, ${details.title}, ${details.blockedNote}) as result`;
+        result = row.result;
+      } else if (action === "milestone_complete") {
+        const completed = form.get("completed");
+        if (completed !== null && completed !== "yes" && completed !== "no") return safeError(400);
+        const [row] = await database()`select vibies_private.set_project_milestone_completion(${hash}, ${id}::uuid, ${milestoneId}::uuid, ${version}::bigint, ${completed === "yes"}) as result`;
+        result = row.result;
+      } else if (action === "milestone_move") {
+        const direction = form.get("direction");
+        if (direction !== "up" && direction !== "down") return safeError(400);
+        const [row] = await database()`select vibies_private.move_project_milestone(${hash}, ${id}::uuid, ${milestoneId}::uuid, ${version}::bigint, ${direction}) as result`;
+        result = row.result;
+      } else {
+        if (form.get("confirm") !== "yes") return safeError(400);
+        const [row] = await database()`select vibies_private.delete_project_milestone(${hash}, ${id}::uuid, ${milestoneId}::uuid, ${version}::bigint) as result`;
+        result = row.result;
+      }
+      if (result.kind === "forbidden") return safeError(403);
+      const message = result.kind === "added" ? "milestone_added"
+        : result.kind === "edited" ? "milestone_edited"
+        : result.kind === "completed" ? "milestone_completed"
+        : result.kind === "reopened" ? "milestone_reopened"
+        : result.kind === "moved" ? "milestone_moved"
+        : result.kind === "unchanged" ? "milestone_unchanged"
+        : result.kind === "deleted" ? "milestone_deleted"
+        : result.kind === "full" ? "roadmap_full"
+        : result.kind === "stale" ? "stale"
+        : "invalid";
+      return go(`/projects/${id}?message=${message}`);
+    }
     if (action === "hide" || action === "restore") {
       const access = await accessState();
       if (access.kind === "error") return safeError();

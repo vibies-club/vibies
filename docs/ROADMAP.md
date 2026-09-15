@@ -8,6 +8,11 @@ chosen.
 
 ## Now
 
+- Personal Project Roadmaps are defined in the
+  [product definition](PRODUCT.md#personal-project-roadmaps). The accepted
+  design is in [D-019](DECISIONS.md#d-019-add-optional-personal-project-roadmaps),
+  and [Roadmap verification](ROADMAP-VERIFICATION.md) holds the 14 acceptance
+  receipts for issue #20.
 - Issue #17 merged through [PR #18](https://github.com/vibies-club/vibies/pull/18).
   All P1 to P16 rows have receipts in [Project verification](PROJECT-VERIFICATION.md).
 - [PR #30](https://github.com/vibies-club/vibies/pull/30) merged after Member
@@ -24,8 +29,7 @@ chosen.
   trigger, and exact-commit receipt are post-merge checks.
 - Review [PR #33](https://github.com/vibies-club/vibies/pull/33) for issue #31
   and [PR #36](https://github.com/vibies-club/vibies/pull/36) for issue #25.
-  [PR #43](https://github.com/vibies-club/vibies/pull/43) for issue #20 has
-  changes requested. Only the Instructor merges.
+  Only the Instructor merges.
 
 ## Next
 

@@ -71,6 +71,7 @@ if (!databaseUrl) {
       await migrationSql.unsafe(migration);
       await sql.unsafe(`
         truncate table
+          vibies_private.project_milestones,
           vibies_private.personal_projects,
           vibies_private.sessions,
           vibies_private.sign_in_flows,

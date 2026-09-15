@@ -29,6 +29,14 @@ page shows a capacity of eight. The migration changes no existing account status
 An older app rejects a Member count of eight, so do not roll back to that app
 after filling the eighth place; deploy a compatible correction instead.
 
+Issue #20 keeps its database and application changes in one reviewed PR while
+remaining safe during independent deployment. The existing application ignores
+the new Roadmap fields and continues to use every existing private function. The
+new application treats an absent Roadmap result as temporarily unavailable and
+shows no Roadmap write controls until the migration is present. A direct early
+Roadmap write fails safely. The feature is ready only after both the Supabase
+migration and Vercel deployment pass.
+
 For the initial rollout, PR #18 and PR #30 merged after Member review. Main at
 `a5fabc1` has the three expected migration versions. PR #30's Preview was
 removed, and the Production settings and Ready redeploy passed. Live Production

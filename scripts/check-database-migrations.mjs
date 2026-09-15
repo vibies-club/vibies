@@ -19,8 +19,10 @@ const deployedMigrations = [
   "20260910220001_access.sql",
 ];
 const capacityMigration = "20260913192500_access.sql";
+const roadmapMigration = "20260913212638_access.sql";
 assert.equal(migrationFiles[0], "20260910065142_remote_schema.sql");
 assert.ok(migrationFiles.includes(capacityMigration), `${capacityMigration} must exist`);
+assert.ok(migrationFiles.includes(roadmapMigration), `${roadmapMigration} must exist`);
 assert.equal(new Set(migrations).size, migrations.length, "migration versions must be unique");
 
 function supabase(args, shouldFail = false) {
@@ -61,7 +63,7 @@ async function makeProject(label, files) {
   return project;
 }
 
-async function checkBoundaries(sql) {
+async function checkBoundaries(sql, runtimeFunctions = 22) {
   const [role] = await sql`
     select rolcanlogin, rolinherit from pg_roles where rolname = 'vibies_runtime'
   `;
@@ -84,7 +86,7 @@ async function checkBoundaries(sql) {
       has_table_privilege('authenticated', 'public.demo_projects', 'SELECT') as authenticated_demo
   `;
   assert.deepEqual(privileges, {
-    runtime_functions: 17, runtime_tables: 0, anon_private: false,
+    runtime_functions: runtimeFunctions, runtime_tables: 0, anon_private: false,
     authenticated_private: false, anon_demo: true, anon_demo_write: false,
     authenticated_demo: false,
   });
@@ -129,7 +131,7 @@ try {
     assert.deepEqual(server, { database: "postgres", major: 17 });
     assert.ok((await history(sql)).every((version) => migrations.includes(version)),
       "the local stack contains unrelated migration history");
-    for (const table of ["accounts", "sessions", "personal_projects"]) {
+    for (const table of ["accounts", "sessions", "personal_projects", "project_milestones"]) {
       const [{ present }] = await sql`
         select to_regclass(${`vibies_private.${table}`}) is not null as present
       `;
@@ -214,7 +216,7 @@ try {
       ${instructorSession}, '207', 'approve', 'Member 207'
     ) as value`;
     assert.deepEqual(value, { kind: "full" });
-    await checkBoundaries(sql);
+    await checkBoundaries(sql, 17);
   });
   const capacityBefore = await usingDatabase(capacityRows);
   await copyFile(join(migrationDirectory, capacityMigration),
@@ -224,7 +226,7 @@ try {
     assert.deepEqual(await history(sql), [...deployedMigrations, capacityMigration]
       .map((name) => name.slice(0, 14)));
     assert.deepEqual(await capacityRows(sql), capacityBefore);
-    await checkBoundaries(sql);
+    await checkBoundaries(sql, 17);
     const [{ value: eighth }] = await sql`select vibies_private.change_member(
       ${instructorSession}, '207', 'approve', 'Member 207'
     ) as value`;
@@ -240,6 +242,20 @@ try {
       from vibies_private.accounts
     `;
     assert.deepEqual({ active_count, instructor_accounts }, { active_count: 8, instructor_accounts: 0 });
+  });
+  const capacityBeforeRoadmap = await usingDatabase(capacityRows);
+  await copyFile(join(migrationDirectory, roadmapMigration),
+    join(capacityProject, "supabase", "migrations", roadmapMigration));
+  supabase(["db", "push", "--local", "--yes", "--workdir", capacityProject]);
+  await usingDatabase(async (sql) => {
+    assert.deepEqual(await history(sql), [...deployedMigrations, capacityMigration, roadmapMigration]
+      .map((name) => name.slice(0, 14)));
+    assert.deepEqual(await capacityRows(sql), capacityBeforeRoadmap);
+    const [{ milestone_table }] = await sql`
+      select to_regclass('vibies_private.project_milestones') is not null as milestone_table
+    `;
+    assert.equal(milestone_table, true);
+    await checkBoundaries(sql);
   });
 
   upgradeProject = await makeProject("upgrade", [migrationFiles[0]]);
