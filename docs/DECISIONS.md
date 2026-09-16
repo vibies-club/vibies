@@ -440,6 +440,18 @@ inventories all existing active branches. Existing review environments keep
 their approved review and cleanup path. A database-changing PR that needs hosted
 proof can use an isolated environment only with an agreed cost cap.
 
+**Owner action on 2026-09-16:** Both conditions were met. Shared staging passed
+its Action proof twice, and the owner inventoried the Production project's
+branches: only `feature/error-library-database-31`, for the open PR #33,
+remained, because the native lifecycle had already removed the merged PR #40 and
+PR #43 branches. With the owner's explicit approval, that branch was deleted and
+**Automatic branching** was switched off, with **Deploy to production** kept on
+for `main`. Schema-changing PRs now rely on the full disposable migration proof
+in `migration-check`. A hosted database branch is an explicit exception with an
+agreed cost cap, created and deleted by the owner. The
+[cleanup receipt](https://github.com/vibies-club/vibies/issues/37#issuecomment-5693405515)
+records both actions.
+
 ## D-017: Review PRs with an Instructor-run agent account
 
 **Status:** Accepted by the Instructor on 2026-09-13.

@@ -266,7 +266,7 @@ GitHub connection for the intended repository and set:
 | Working directory | `.` |
 | Production branch | `main` |
 | Deploy to production | On |
-| Automatic branching | On during the reusable staging rollout |
+| Automatic branching | Off since 2026-09-16; on only during the reusable staging rollout |
 | Branch limit | 3 |
 | Supabase changes only | On |
 
@@ -278,11 +278,13 @@ works on all Supabase plans; automatic Preview branches require Pro and can add
 branch compute charges. No GitHub Actions deployment token or database password
 is needed.
 
-After reusable staging passes its first complete Action proof, inventory every
-existing Supabase Preview branch before turning automatic branching off for
-future PRs. Keep each existing branch until its current review or approved
-cleanup is complete. This transition does not alter the historical receipts
-below.
+Automatic branching was turned off on 2026-09-16, after shared staging passed
+its Action proof and the owner inventoried the one remaining preview branch and
+deleted it with explicit approval. New PRs create no Supabase Preview branch. A
+PR that needs hosted database proof asks the owner for a temporary branch with
+an agreed cost cap; the owner creates it, links it to the PR's GitHub branch, and
+deletes it when the review ends. The cleanup section below then applies to that
+exception branch. This transition does not alter the historical receipts below.
 
 ## Automatic cleanup after merge
 
