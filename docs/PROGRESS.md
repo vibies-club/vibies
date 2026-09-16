@@ -80,7 +80,9 @@ migration. [PR #42](https://github.com/vibies-club/vibies/pull/42) merged the
 same day and records the Instructor-run review agent account in D-017.
 [PR #38](https://github.com/vibies-club/vibies/pull/38) merged the reusable
 staging workflow for issue #37; the [deployment guide](DATABASE-DEPLOYMENT.md#reusable-staging)
-records its setup receipts and post-merge checks.
+records its setup receipts and post-merge checks. Automatic Supabase Preview
+branching has been off since 2026-09-16; schema PRs use the full migration
+proof in CI.
 
 [PR #43](https://github.com/vibies-club/vibies/pull/43) implements the optional
 Personal Project Roadmap from issue #20. The
