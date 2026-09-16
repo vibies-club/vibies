@@ -22,8 +22,9 @@ reported names are correct. Both paths use the same server-side checks.
 
 ## Owner setup
 
-1. Create a dedicated Vercel token scoped to the Vibies project, with a 90-day
-   expiry. This uses Vercel's [project-scoped token API](https://vercel.com/docs/rest-api/authentication/create-an-auth-token).
+1. Done on 2026-09-11; repeat only at rotation before 2026-12-10. Create a
+   dedicated Vercel token scoped to the Vibies project, with a 90-day expiry.
+   This uses Vercel's [project-scoped token API](https://vercel.com/docs/rest-api/authentication/create-an-auth-token).
 2. Create the GitHub Actions environment `preview-cleanup`. Limit its deployment
    branches to selected branch `main`.
 3. Add the environment secret `VERCEL_CLEANUP_TOKEN`.
@@ -43,10 +44,11 @@ it when it expires or when this cleanup stops.
 | Dedicated project-scoped credential and protected GitHub environment | [PASS on 2026-09-11](https://github.com/vibies-club/vibies/issues/32#issuecomment-5630680040). The project-scoped credential expires on 2026-12-10. The `preview-cleanup` environment accepts only `main`, contains the cleanup secret, and contains the public project and team IDs. |
 | Guarded script with live GitHub and Vercel metadata | [PASS on 2026-09-11](https://github.com/vibies-club/vibies/issues/32#issuecomment-5630741907) using a temporary native CLI transport and synthetic settings. The dry-run matched one exact merged-branch Preview row and deleted zero. Apply deleted that row. Shared Preview, Production, another branch's row, and the prior metadata inventory stayed unchanged. A repeat matched zero, and final cleanup restored the original inventory. |
 | PR #34 hosted checks | PASS for `c6fef96`: [app-check](https://github.com/vibies-club/vibies/actions/runs/34572661916/job/103177974422) in 51 seconds, [links](https://github.com/vibies-club/vibies/actions/runs/34572661860/job/103177973969), [migration-check](https://github.com/vibies-club/vibies/actions/runs/34572661840/job/103177974029) in 3 minutes 8 seconds, and the [Vercel build](https://vercel.com/beta-momo/vibies/ArRWr6Ne6gSChbHG4uwUUd26wt9P). The native Supabase Preview check skipped because this PR changes no SQL. That expected skip is not database proof. |
-| First GitHub Actions run with the dedicated project token | Pending the reviewed cleanup PR. |
-| First automatic cleanup after a same-repository feature PR merges | Pending the reviewed cleanup PR and a later feature merge. |
+| First GitHub Actions run with the dedicated project token | PASS on 2026-09-12: the workflow ran automatically with the dedicated token when PR #34 merged, and it has run with success on every merged same-repository PR since, six runs by 2026-09-16. |
+| First automatic cleanup after a same-repository feature PR merges | PASS on 2026-09-12 after the PR #34 merge. Example receipt: [run 34952915853](https://github.com/vibies-club/vibies/actions/runs/34952915853) after PR #43 merged, with 0 matching settings and 0 deleted. |
 
-The temporary live transport used an existing CLI session. It did not test the
-dedicated token or the GitHub Actions path. A live receipt records only the pull
-request, source branch, setting names, counts, result, and time. It must not
-contain setting values, provider response bodies, or credentials.
+The temporary live transport used an existing CLI session. The automatic runs
+above prove the dedicated token and the GitHub Actions path. A live receipt
+records only the pull request, source branch, setting names, counts, result, and
+time. It must not contain setting values, provider response bodies, or
+credentials.

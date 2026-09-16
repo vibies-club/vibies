@@ -8,7 +8,7 @@ up the synthetic public demo for issue #13. Use a Supabase project that contains
 no real Vibies data.
 
 These manual SQL steps are for a standalone demo environment. The maintained
-main database and GitHub-linked Previews use the reviewed migrations in
+main database and the shared staging database use the reviewed migrations in
 [Database deployment](DATABASE-DEPLOYMENT.md).
 
 ## 1. Inspect the database before any change
@@ -155,10 +155,15 @@ linked to it. Reuse this project. Its Git provider is connected to
 Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` with
 the same validated public values for both Preview and Production. Do this in
 the Vercel project settings. Do not use a service role or legacy anonymous key.
+The separate `vibies-staging` Vercel project holds its own pair of these values
+for the staging Supabase project.
 
-Before merge, create a Preview deployment from the feature branch. Open `/` and
-`/demo` on its HTTPS URL and record the acceptance receipts. The instructor is
-the only person who merges to main. After the instructor merges the reviewed
-PR, verify the Production deployment with the same checks and record its URL.
+Before merge, prove `/` and `/demo` on staging by asking the Instructor to
+select the PR with the manual **staging** workflow in
+[Preview a PR or clear staging](DATABASE-DEPLOYMENT.md#preview-a-pr-or-clear-staging),
+or locally with `npm run dev`, and record the acceptance receipts. The
+instructor is the only person who merges to main. After the instructor merges
+the reviewed PR, verify the Production deployment with the same checks and
+record its URL.
 
 Record verified deployment URLs and acceptance receipts in the PR.

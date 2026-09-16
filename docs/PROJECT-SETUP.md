@@ -9,40 +9,45 @@ definitions. The [workflows](WORKFLOWS.md) own user behavior.
 
 [PR #18](https://github.com/vibies-club/vibies/pull/18) is merged. Its isolated
 Preview database was deleted, with main retained, as recorded in
-[Database deployment](DATABASE-DEPLOYMENT.md#automatic-cleanup-after-merge).
-The steps below record the original issue #17 setup. For routine app reviews,
-configure the GitHub App once in the separate staging project and use the
-[reusable staging workflow](DATABASE-DEPLOYMENT.md#reusable-staging). Use a new
-GitHub-linked Preview only for an approved isolated hosted test.
+[Database deployment](DATABASE-DEPLOYMENT.md#exception-branch-cleanup).
+The steps below record the original issue #17 setup. Automatic Supabase
+Preview branching has been off since 2026-09-16; a temporary branch is an
+owner-granted exception with a cost cap under
+[Shared staging limits](DATABASE-DEPLOYMENT.md#shared-staging-limits).
 
-## Human setup for the live Preview
+## Human setup for the issue #17 Preview, as history
 
-1. Use an isolated Preview database. Follow [Access setup](ACCESS-SETUP.md) for
-   GitHub sign-in, the runtime login, TLS, and Instructor designation. Apply
-   `supabase/access.sql` as the database owner twice. Verify retained rows and
-   runtime grants. Never run test fixture commands against this database.
-2. Register a separate GitHub App with installation by Any account. This requires
-   a public App. Request Metadata read-only and no optional permissions. Disable
-   webhooks and user authorization during installation. This App is separate
-   from the existing OAuth sign-in application.
-3. Put `VIBIES_GITHUB_APP_ID`, `VIBIES_GITHUB_APP_PRIVATE_KEY`, and
+Routine app reviews use reusable staging, configured once, including the GitHub
+App; see [Reusable staging](DATABASE-DEPLOYMENT.md#reusable-staging). The issue
+#17 proof used this setup, kept here as history:
+
+1. An isolated Preview database. The owner followed
+   [Access setup](ACCESS-SETUP.md) for GitHub sign-in, the runtime login, TLS,
+   and Instructor designation, applied `supabase/access.sql` as the database
+   owner twice, and verified retained rows and runtime grants. Test fixture
+   commands were never run against this database.
+2. A separate GitHub App registered with installation by Any account, which
+   requires a public App. It requested Metadata read-only and no optional
+   permissions, with webhooks and user authorization during installation
+   disabled. This App is separate from the existing OAuth sign-in application.
+3. `VIBIES_GITHUB_APP_ID`, `VIBIES_GITHUB_APP_PRIVATE_KEY`, and
    `VIBIES_GITHUB_APP_SLUG` in server-only Preview configuration. The private key
-   is the App's PEM value with actual newlines. Keep it outside the repository
-   and receipts. Agents must not read or write it. The installation link is
+   is the App's PEM value with actual newlines. It stays outside the repository
+   and receipts, and agents must not read or write it. The installation link is
    derived from the slug as `https://github.com/apps/SLUG/installations/new`.
-4. Scope the existing access settings and these three App settings to
-   `feature/personal-projects-17`. Set `VIBIES_APP_ORIGIN` to the fixed Preview
-   origin. Configure the OAuth callback as that origin plus `/auth/callback`.
-   Redeploy after configuration changes.
-5. Confirm that both Members can pass Vercel's separate Preview access gate.
-   If Vercel asks for access, each participant signs in to Vercel and requests
-   access to this branch Preview. The deployment owner grants access before
-   application testing. A Vercel SSO redirect does not prove a Vibies access rule.
-6. The Instructor and two approved Members sign in in separate browser sessions.
-   Use a private personal repository with synthetic content for the live proof.
-   The owning Member selects only that repository in the App installation and
-   returns to `/projects/connect` to refresh the eligible list. The repository
-   must stay private.
+4. The existing access settings and these three App settings scoped to
+   `feature/personal-projects-17`, with `VIBIES_APP_ORIGIN` set to the fixed
+   Preview origin, the OAuth callback set to that origin plus `/auth/callback`,
+   and a redeploy after each configuration change.
+5. Both Members passed Vercel's separate Preview access gate. When Vercel asked
+   for access, each participant signed in to Vercel and requested access to the
+   branch Preview, and the deployment owner granted access before application
+   testing. A Vercel SSO redirect does not prove a Vibies access rule.
+6. The Instructor and two approved Members signed in in separate browser
+   sessions, using a private personal repository with synthetic content for the
+   live proof. The owning Member selected only that repository in the App
+   installation and returned to `/projects/connect` to refresh the eligible
+   list. The repository stays private.
 
 GitHub documents [App registration](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/registering-a-github-app),
 [user installation lookup](https://docs.github.com/en/rest/apps/apps#get-a-user-installation-for-the-authenticated-app),
@@ -126,9 +131,9 @@ completed layer from pending live work.
 
 ## Live P1 and P15 procedure
 
-1. As the owning Member, open the configured Preview, refresh the eligible list,
-   and connect the selected private repository. Save a synthetic title and
-   summary, review the Draft, and choose Publish.
+1. As the owning Member, open the hosted test site (staging for later runs),
+   refresh the eligible list, and connect the selected private repository.
+   Save a synthetic title and summary, review the Draft, and choose Publish.
 2. Confirm Published, Connected, Visible, completed onboarding, and the shared
    details. In the second Member session and Instructor session, load the
    Community list and direct project page. Confirm only the chosen shared
@@ -139,7 +144,7 @@ completed layer from pending live work.
    project leaves the next Community read without losing publication or
    onboarding. Restore selected access, run Check connection, and confirm the
    same project returns.
-5. Record the Preview URL, tested commit, time, Nicknames, synthetic project
+5. Record the tested URL, tested commit, time, Nicknames, synthetic project
    details, and observed outcomes in the proof record. Do not include account
    identifiers, repository links, installation IDs, cookies, keys, or raw
    provider responses. Synthetic HTTP results cannot replace this procedure.
@@ -147,8 +152,8 @@ completed layer from pending live work.
 Issue #17 completed this stage order before Member review and merge. Its
 [proof record](PROJECT-VERIFICATION.md) contains every acceptance receipt.
 For later routine changes, finish the approved proof on reusable staging before
-merging. Existing linked ephemeral Previews keep their native cleanup behavior
-while the issue #37 transition is pending.
+merging; see
+[Preview a PR or clear staging](DATABASE-DEPLOYMENT.md#preview-a-pr-or-clear-staging).
 
 ## Production setup
 
