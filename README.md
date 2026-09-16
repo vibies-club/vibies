@@ -45,7 +45,7 @@ definition instead of creating a different version of it.
 | [Access verification](docs/ACCESS-VERIFICATION.md) | Issue #5 implementation receipts for the A1 through A16 checks specified in issue #14 |
 | [Personal Project setup](docs/PROJECT-SETUP.md) | Human App/Preview setup and exact isolated proof commands |
 | [Personal Project verification](docs/PROJECT-VERIFICATION.md) | Phase order and receipts for issue #17 |
-| [Personal Project Roadmap verification](docs/ROADMAP-VERIFICATION.md) | Acceptance receipts for issue #20 |
+| [Personal Project Roadmap verification](docs/ROADMAP-VERIFICATION.md) | Acceptance receipts for issue #20, two browser rows pending |
 
 ## Current status
 

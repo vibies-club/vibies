@@ -4,8 +4,10 @@
 [Decision D-019](DECISIONS.md#d-019-add-optional-personal-project-roadmaps) ·
 [Roadmap workflow](WORKFLOWS.md#13-manage-a-personal-project-roadmap)
 
-**Status:** Automated database and HTTP receipts are recorded below. The browser
-checks requested for P8 and P13 remain pending.
+**Status:** The implementation merged in
+[PR #43](https://github.com/vibies-club/vibies/pull/43) on 2026-09-15. Automated
+database and HTTP receipts are recorded below. Only the P8 and P13 browser
+checks remain pending.
 
 The built-server checks fetch HTML and inspect text and markup. They do not
 launch a browser, move keyboard focus, or operate controls with a keyboard.
@@ -40,8 +42,10 @@ and an isolated database. The canonical behavior lives in the
 
 ## Pending browser proof
 
-Use an approved test environment with synthetic content and Nicknames. Record
-the deployed commit, URL, date, browser, reviewer Nickname, actions, and results.
+Sign in with GitHub at https://vibies-staging.vercel.app/sign-in and use
+synthetic content and Nicknames. The Instructor must first approve the account
+on staging, because production Membership does not carry over. Record the
+deployed commit, URL, date, browser, reviewer Nickname, actions, and results.
 A Ready deployment alone does not complete these checks.
 
 1. As an approved owner, open a project with three milestones, two complete.
@@ -55,5 +59,8 @@ A Ready deployment alone does not complete these checks.
 3. Check that Complete, Incomplete, and Blocked states are understandable from
    their visible text. At 20 milestones, confirm Add is disabled and its limit
    explanation remains readable.
-4. Attach the receipt to PR #43. Update P8 and P13 only for actions actually
-   checked; keep any remaining step pending for the Instructor's review.
+4. Open a small docs PR that replaces the two pending cells with the receipt
+   (commit, URL, date, browser, reviewer Nickname, actions, and results) and
+   link it from [issue #20](https://github.com/vibies-club/vibies/issues/20).
+   Update P8 and P13 only for actions actually checked; keep any remaining step
+   pending for the Instructor's review.

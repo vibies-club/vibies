@@ -6,7 +6,7 @@
 This log records why the Vibies knowledge foundation has its current shape. The
 linked documents remain authoritative for the detailed definitions and behavior.
 
-## D-001 — Build shared knowledge before features
+## D-001: Build shared knowledge before features
 
 **Status:** Accepted.
 
@@ -23,7 +23,7 @@ planning begins only after this foundation is reviewed.
 **Related documents:** [Product definition](PRODUCT.md),
 [progress](PROGRESS.md), and [roadmap](ROADMAP.md).
 
-## D-002 — Give each kind of knowledge one home
+## D-002: Give each kind of knowledge one home
 
 **Status:** Accepted.
 
@@ -39,11 +39,12 @@ to its authoritative definition instead of creating a competing definition.
 
 **Related document:** [Documentation index](../README.md).
 
-## D-003 — Require both identity proof and approval
+## D-003: Require both identity proof and approval
 
 **Status:** Accepted.
 
-**Amended by:** [Issue #39](https://github.com/vibies-club/vibies/issues/39).
+**Amended by:** [Issue #39](https://github.com/vibies-club/vibies/issues/39),
+shipped in [PR #40](https://github.com/vibies-club/vibies/pull/40) on 2026-09-13.
 The class now has eight students, so Vibies provides eight active Member places.
 The pre-established Instructor remains separate and does not occupy a Member place.
 
@@ -65,7 +66,7 @@ reapproval.
 **Related documents:** [Product community boundary](PRODUCT.md) and
 [domain people and access](DOMAIN.md).
 
-## D-004 — Display nicknames and minimize private data
+## D-004: Display nicknames and minimize private data
 
 **Status:** Accepted.
 
@@ -85,7 +86,7 @@ and must not expose GitHub profile identity.
 **Related documents:** [Product privacy boundaries](PRODUCT.md) and
 [community rules](../RULES.md).
 
-## D-005 — Center onboarding on a Personal Project
+## D-005: Center onboarding on a Personal Project
 
 **Status:** Accepted.
 
@@ -106,7 +107,7 @@ first published project do not reset onboarding.
 **Related documents:** [Product member journey](PRODUCT.md) and
 [domain constraints](DOMAIN.md).
 
-## D-006 — Keep GitHub access selected, minimal, and manual
+## D-006: Keep GitHub access selected, minimal, and manual
 
 **Status:** Accepted.
 
@@ -128,7 +129,7 @@ implementation are outside this foundation.
 **Related documents:** [Product projects and GitHub](PRODUCT.md) and
 [sync workflow](WORKFLOWS.md).
 
-## D-007 — Separate discussion from structured Feedback
+## D-007: Separate discussion from structured Feedback
 
 **Status:** Accepted.
 
@@ -148,7 +149,7 @@ by the word “manage.”
 [discussion and Feedback workflows](WORKFLOWS.md), and
 [community feedback rules](../RULES.md).
 
-## D-008 — Keep project state groups independent
+## D-008: Keep project state groups independent
 
 **Status:** Accepted.
 
@@ -166,9 +167,14 @@ different events and must not silently overwrite one another.
 **Related documents:** [Domain project state groups](DOMAIN.md) and
 [project availability](PRODUCT.md).
 
-## D-009 — Distinguish disconnection, moderation, and deletion
+## D-009: Distinguish disconnection, moderation, and deletion
 
 **Status:** Accepted.
+
+**Supplemented by:** [D-015](#d-015-share-member-written-personal-projects-with-checked-repository-access),
+which replaces imported metadata with Member-written details, and
+[D-019](#d-019-add-optional-personal-project-roadmaps), which deletes a
+Roadmap and its Milestones with the Personal Project.
 
 **Decision:** Disconnection preserves a Project for reconnection. Instructor
 moderation hides or restores content without rewriting it. Confirmed owner
@@ -185,7 +191,7 @@ does not clear a moderation decision.
 **Related documents:** [Product moderation, disconnection, and deletion](PRODUCT.md)
 and [corresponding workflows](WORKFLOWS.md).
 
-## D-010 — Do not invent unassigned lifecycle authority
+## D-010: Do not invent unassigned lifecycle authority
 
 **Status:** Accepted.
 
@@ -208,6 +214,10 @@ words such as “collaborate” or “manage.”
 
 **Status:** Accepted.
 
+**Supplemented by:** [D-017](#d-017-review-prs-with-an-instructor-run-agent-account),
+which lets the Instructor's review agent account satisfy the review rule, so
+the approving review comes from a Member or from `Trident-app`.
+
 **Decision:** The repository moves to the `vibies-club` organization and
 becomes public under the Apache License 2.0. Members receive Write access
 through a reviewers team so their PR approvals count toward the review
@@ -224,8 +234,8 @@ main keeps merge authority with the instructor.
 requirement on, member repository creation off), the transfer, the visibility
 change, the branch protection, and the invitations after the readiness PR
 merges. Protection on main comes before invitations. This heading uses a
-colon because the writing rules exclude em dashes; older headings keep their
-format until a cleanup issue.
+colon because the writing rules exclude em dashes; the older headings now use
+the same form.
 
 **Related documents:** [Contributing guide](../CONTRIBUTING.md),
 [community rules](../RULES.md), and [agent rules](../AGENTS.md).
@@ -269,11 +279,9 @@ records. It does not store profile names, avatars, email addresses, or
 biographies. The GitHub profile response is transient and is discarded after
 projecting the stable identifier and username.
 
-The Instructor records a Member-agreed Nickname during first approval. Vibies
-trims outer ASCII spaces, counts Unicode code points, accepts 2 through 30
-characters made from Unicode letters (including letter numbers), Unicode decimal digits, spaces, hyphens,
-and underscores, and enforces case-insensitive uniqueness. Revoked Members keep
-their Nicknames reserved. Nickname editing is outside this feature.
+The Instructor records a Member-agreed Nickname during first approval. The
+Nickname rules are defined in [DOMAIN](DOMAIN.md#people-and-access). Nickname
+editing is outside this feature.
 
 **Why:** The Instructor needs enough private information to distinguish accounts
 without exposing GitHub identity to Members or retaining unrelated profile data.
@@ -473,8 +481,8 @@ the reviewer is a machine account and never reviews by hand.
 **Consequence:** An approval from `Trident-app` is a second agent pass and
 the PR records it as such. A Member review remains welcome and counts the same.
 The [contributing guide](../CONTRIBUTING.md) and [agent rules](../AGENTS.md)
-accept either review. The account cannot open private Preview pages, so the
-Preview check stays with the PR author's receipts and the Instructor's
+accept either review. The account cannot open the staging site, so the
+hosted check stays with the PR author's receipts and the Instructor's
 confirmation before merge. The Instructor remains the only person who merges.
 The account holds no product secret and no Member identity.
 
@@ -484,7 +492,11 @@ The account holds no product secret and no Member identity.
 ## D-018: Reuse one free staging environment for app reviews
 
 **Status:** Accepted in [issue #37](https://github.com/vibies-club/vibies/issues/37)
-on 2026-09-13. Provider setup and live proof are pending.
+on 2026-09-13. Live since [PR #38](https://github.com/vibies-club/vibies/pull/38)
+merged on 2026-09-14. Two Clear runs passed, on 2026-09-14 and 2026-09-15. The
+first Preview PR selection is pending. Automatic Supabase Preview branching has
+been off since 2026-09-16, recorded as the owner action in
+[D-016](#d-016-deploy-reviewed-schema-changes-through-native-migrations).
 
 **Decision:** Use one standalone Supabase Free project that follows reviewed
 `main` migrations and one separate Vercel project with the fixed `staging` ref
@@ -519,22 +531,22 @@ operation, limits, and rollout receipts.
 
 **Status:** Accepted design from the completed grill for the
 [Ready body in issue #20](https://github.com/vibies-club/vibies/issues/20).
+Shipped in [PR #43](https://github.com/vibies-club/vibies/pull/43) on
+2026-09-15; P8 and P13 browser receipts pending on staging.
 
 **Decision:** Personal Projects gain an optional Roadmap with zero through 20
 ordered Milestones. Each Milestone has a plain-text title, a completion value,
 and an optional Blocked note. The owner adds one at a time, edits one at a time,
 reorders with Move up and Move down controls, completes or reopens it with one
 Complete checkbox, and deletes it after a confirmation that identifies it.
-Progress is derived from completed Milestones and shown as a rounded whole
-percentage.
+Progress is derived from completed Milestones.
 
-The full Roadmap appears on the Project detail page. Available Community cards
-show only the percentage. An empty Roadmap shows its empty message without a
-progress bar or percentage. Roadmap visibility follows Project visibility, and
-only the current approved owner can change it. The owner can manage a Roadmap in
-every retained Project state. A stale write stops without replacing newer data
-and asks the owner to reload. Roadmap controls support keyboard use and status
-does not depend on color alone.
+Roadmap visibility follows Project visibility, and only the current approved
+owner can change it. The owner can manage a Roadmap in every retained Project
+state. A stale write stops without replacing newer data and asks the owner to
+reload. The experience is defined in
+[PRODUCT](PRODUCT.md#personal-project-roadmaps) and the invariants in
+[DOMAIN](DOMAIN.md#projects-and-repositories).
 
 Project state changes preserve Roadmap data, and deleting a Personal Project
 deletes its Milestones. The Roadmap remains optional for publication. Dates,

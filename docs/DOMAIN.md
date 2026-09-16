@@ -59,7 +59,7 @@ one value does not silently change either of the others.
 | Group | Values | Meaning |
 | --- | --- | --- |
 | Publication | `Draft`, `Published`, `Archived` | `Draft` has not been published. `Published` is published to the Community when the other states allow it. `Archived` is retained but no longer active. Archived is not deleted. |
-| GitHub connection | `Connected`, `Disconnected` | `Connected` means the last completed check verified repository access. Without background checks, later GitHub changes remain unknown until Publish or Check connection. `Disconnected` does not and makes the Project unavailable, without changing publication or moderation. |
+| GitHub connection | `Connected`, `Disconnected` | `Connected` means the last completed check verified repository access. Without background checks, later GitHub changes remain unknown until Publish or Check connection. `Disconnected` means the last completed check found no access; it makes the Project unavailable, without changing publication or moderation. |
 | Moderation | `Visible`, `Hidden` | `Visible` is not suppressed by moderation. `Hidden` is suppressed by the Instructor until restored, without changing publication or connection. |
 
 A Project is available to the Community exactly when it is `Published`,
@@ -164,8 +164,6 @@ it is not a fourth state.
   Milestones. Restoring availability shows the retained Roadmap.
 - A protected Roadmap write carries the version it read. A stale write changes
   nothing and asks the owner to reload.
-- Roadmap controls are keyboard operable, and Milestone status remains clear
-  without color alone.
 
 ## Mermaid graph
 
