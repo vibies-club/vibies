@@ -32,14 +32,13 @@ deployment owner designates this account before sign-in opens. The first visitor
 cannot become Instructor.
 
 The Instructor may revoke Membership under the [community rules](../RULES.md).
-The person then becomes a Former Member: they retain the Member Role, project
-ownership, content authorship, and permanent onboarding milestone, but cannot
-access the Community or run owner actions. Revocation opens one of the eight
-Member places and does not itself delete, rewrite, or change the states of the
-Former Member's Projects, Comments, or Feedback. Those remain subject to the
-separate moderation and deletion rules. Reapproval fills an available Member
-place and restores access to the same ownership, authorship, and onboarding
-milestone.
+The person then becomes a Former Member: they lose access and their Member
+place, and keep the Role and records the
+[domain model](DOMAIN.md#people-and-access) lists. Revocation does not itself
+delete, rewrite, or change the states of the Former Member's Projects, Comments,
+or Feedback. Those remain subject to the separate moderation and deletion rules.
+Reapproval fills an available Member place and restores access to the retained
+records.
 
 The Instructor membership screen separates unapproved accounts, active Members,
 and revoked Members. It shows the active count out of eight. Only the Instructor
@@ -67,16 +66,15 @@ sign-out action. Approved Members may open a minimal welcome page while
 onboarding is incomplete. The Instructor can also open membership administration.
 Every signed-in page provides sign-out.
 
-Private access expires 24 hours after sign-in. Sign-out ends the current browser
-session without changing Membership. Each protected request and action checks
-the current session and access status, so revocation takes effect on the next
-one. A cancelled sign-in returns to sign-in. Authentication and membership
-lookup failures deny access and show a safe retry without exposing internal
-details or claiming the person is revoked.
-
-One browser session may start sign-in 10 times in 10 minutes. Further starts wait
-until the limit permits another attempt. This is repeated-click protection. It
-is not complete abuse prevention.
+Sessions expire absolutely 24 hours after sign-in and each browser may start
+sign-in 10 times in 10 minutes, as the
+[domain model](DOMAIN.md#people-and-access) defines. Sign-out ends the current
+browser session without changing Membership, and revocation takes effect on the
+next protected request or action. A cancelled sign-in returns to sign-in.
+Authentication and membership lookup failures deny access and show a safe retry
+without exposing internal details or claiming the person is revoked. Sign-in
+starts past the limit wait until it permits another attempt. This is
+repeated-click protection. It is not complete abuse prevention.
 
 ## Member journey
 
@@ -134,13 +132,12 @@ Personal Project. The accepted design is recorded in
 approved owner can manage the Roadmap in every retained Project state. The
 Roadmap never blocks the existing Publish action.
 
-Each Roadmap contains up to 20 ordered Milestones. The owner adds one at a time,
-edits one at a time with Save or Cancel, reorders with Move up or Move down, and
-deletes after a confirmation that identifies the Milestone. A Milestone uses one
-Complete checkbox. Its status is Incomplete, Blocked, or Complete according to
-the [domain model](DOMAIN.md#projects-and-repositories). Completion removes a
-Blocked note, and reopening makes the Milestone incomplete. Completion does not
-change its position.
+Each Roadmap holds ordered Milestones, with the limit, order, status, and
+Blocked note rules defined in the
+[domain model](DOMAIN.md#projects-and-repositories). The owner adds one at a
+time, edits one at a time with Save or Cancel, reorders with Move up or Move
+down, deletes after a confirmation that identifies the Milestone, and completes
+or reopens with one Complete checkbox.
 
 The project detail page shows the ordered Roadmap after shared Project details
 and before management controls. When Milestones exist, it shows each status and
@@ -153,10 +150,11 @@ shown.
 Roadmap visibility follows the existing Personal Project visibility rules. Every
 person who can view a Project can view its Roadmap and Blocked notes. Only the
 current approved owner can change them. The Instructor can use existing Project
-moderation and cannot edit Milestone content. State changes preserve the
-Roadmap, and deleting a Personal Project deletes its Milestones. A stale owner
-action stops without replacing newer data and asks the owner to reload. Roadmap
-controls work with a keyboard, and status remains clear without color alone.
+moderation and cannot edit Milestone content. Retention across state changes,
+deletion with the Project, and stale-write protection follow the
+[domain model](DOMAIN.md#projects-and-repositories); a stale owner action asks
+the owner to reload. Roadmap controls work with a keyboard, and status remains
+clear without color alone.
 
 ## Project availability
 

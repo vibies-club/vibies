@@ -10,8 +10,9 @@ Nicknames. Never record a credential, GitHub profile, real name, contact detail,
 or private recovery reason.
 
 Local results below were rechecked on 2026-09-10 using synthetic accounts.
-Hosted staging was configured for these checks. Real Instructor sign-in and
-cancellation passed.
+Hosted staging for these checks was the temporary Supabase Preview branch
+`access-review-5`, since deleted. It is separate from the reusable staging in
+D-018. Real Instructor sign-in and cancellation passed.
 Dated Member welcome, first-time denial, and recovery/restoration receipts are
 recorded below. A1 through A16 pass with the stated evidence sources.
 [PR #16](https://github.com/vibies-club/vibies/pull/16) received Member approval
@@ -103,8 +104,9 @@ following corrections when teaching this PR from that deck:
 
 The slides' complete publishing journey cannot be demonstrated with this PR.
 For this access walkthrough, use sign-in, unapproved denial, Instructor approval,
-Member welcome, revocation, and sign-out. Keep Preview proof before merge and
-Production proof after the reviewed merge.
+Member welcome, revocation, and sign-out. Hosted proof ran on the per-branch
+Preview on 2026-09-10, with Production proof after the reviewed merge. New
+features use [reusable staging](DATABASE-DEPLOYMENT.md#reusable-staging).
 
 ## Automated receipts
 
@@ -253,6 +255,9 @@ above completed the missing live checks before the Member approval and merge
 recorded above.
 
 ## Issue #14 acceptance record
+
+The procedures below name the 2026-09-10 Preview; run them on
+[reusable staging](DATABASE-DEPLOYMENT.md#reusable-staging) today.
 
 | Check | Procedure | Observed result | Receipt |
 | --- | --- | --- | --- |

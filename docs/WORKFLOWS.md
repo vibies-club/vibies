@@ -13,7 +13,7 @@ organization-owned Class Project's lifecycle authority. Comment and Feedback
 creation workflows apply to any available Project. Moderation applies to any
 existing, non-deleted Project, Comment, or Feedback, including hidden content.
 Personal Project Roadmaps follow the containing Project's view and ownership
-rules. Their accepted behavior is defined in [issue #20](https://github.com/vibies-club/vibies/issues/20).
+rules. Their accepted behavior is defined in [D-019](DECISIONS.md#d-019-add-optional-personal-project-roadmaps).
 
 ## 1. Log in and enter the Community
 
@@ -24,12 +24,12 @@ Instructor.
 
 **Outcome:**
 
-1. Vibies allows the sign-in start when this browser session has made fewer
-   than 10 starts in the current 10-minute window.
+1. Vibies allows the sign-in start while this browser is within its sign-in
+   start limit.
 2. GitHub authenticates the person's identity.
 3. Vibies matches the stable GitHub account identifier. A first successful
    sign-in creates one unapproved Access entry, and repeated sign-ins reuse it.
-4. Vibies starts an opaque browser Session with an absolute 24-hour lifetime.
+4. Vibies starts an opaque browser Session.
 5. Vibies checks whether the identity is the designated Instructor or a Member
    with approved Membership.
 6. The recognized Instructor or approved Member enters the Community. An
@@ -40,10 +40,11 @@ Instructor.
 Authentication proves identity only. It does not approve Member Membership or
 provision a new Instructor.
 
-Every protected page and action checks the current Session and current access
-status. At 24 hours, the person must sign in again. Sign-out deletes the current
-browser Session without changing Membership. Every signed-in page offers this
-action.
+Sessions expire absolutely 24 hours after sign-in and each browser may start
+sign-in 10 times in 10 minutes, as the
+[domain model](DOMAIN.md#people-and-access) defines. At 24 hours, the person
+must sign in again. Sign-out deletes the current browser Session without
+changing Membership. Every signed-in page offers this action.
 
 **Failure path:** Cancellation returns to sign-in. Authentication failure and an
 expired Session grant no access and offer a safe retry. If the Membership lookup
@@ -60,7 +61,7 @@ Membership decision.
 
 **Actors:** Instructor and prospective, returning, or Former Member.
 
-**Outcome — approval:**
+**Outcome: approval:**
 
 1. The Instructor opens the private membership screen and identifies the account
    using its GitHub username and stable identifier.
@@ -82,19 +83,19 @@ Membership decision.
 10. A Member whose onboarding is complete can post Comments and Feedback under
    the normal permissions.
 
-A reapproved Former Member returns with the same project ownership, content
-authorship, and onboarding milestone they had before revocation.
+A reapproved Former Member returns with the same retained records they had
+before revocation.
 
 Later archiving, disconnection, hiding, or deletion of the first project does not
 reverse onboarding completion.
 
-**Outcome — revocation:** Under the [community rules](../RULES.md), the Instructor
+**Outcome: revocation:** Under the [community rules](../RULES.md), the Instructor
 reviews a warning that access ends while existing content remains. Cancellation
 changes nothing. After confirmation, the person becomes a Former Member. The
 next protected request or action is blocked, even when a Session remains valid.
-This opens a Member place but preserves the Member Role, Nickname, project
-ownership, content authorship, onboarding milestone, and existing content states.
-Separate moderation and deletion rules continue to apply.
+This opens a Member place and preserves what the
+[domain model](DOMAIN.md#people-and-access) says a Former Member keeps. Separate
+moderation and deletion rules continue to apply.
 
 **Outcome: dismissal:** The Instructor may dismiss an unapproved Access entry.
 The entry is removed without granting access. A later successful sign-in may
@@ -161,7 +162,7 @@ Published Personal Project.
 **Preconditions:** The Project is non-deleted and belongs to the Member. A Project
 must be `Connected` for publication.
 
-**Outcome — publish:**
+**Outcome: publish:**
 
 1. The server route checks current ownership and runs a fresh GitHub verification,
    including for repeated or direct Publish requests. A browser-supplied
@@ -262,11 +263,11 @@ The database rejects the action if the locked project has changed since that
 page was opened. The Instructor must review the current content before trying
 again. A rejected old form changes nothing.
 
-**Outcome — hide:** The Instructor changes the target's moderation visibility to
+**Outcome: hide:** The Instructor changes the target's moderation visibility to
 hidden. For a Project, this means changing only its moderation state to `Hidden`.
 The original content and authorship remain unchanged.
 
-**Outcome — restore:** The Instructor restores the same unchanged content. For a
+**Outcome: restore:** The Instructor restores the same unchanged content. For a
 Project, this means changing only its moderation state to `Visible`; availability
 still depends on publication and connection.
 
@@ -285,7 +286,7 @@ restore access. Deliberate owner Disconnect is a separate planned action outside
 
 **Actors:** Personal Project owner; Vibies may detect lost GitHub access.
 
-**Outcome — disconnect:**
+**Outcome: disconnect:**
 
 1. The connection state changes to `Disconnected`.
 2. The Project becomes unavailable to the Community.
@@ -293,7 +294,7 @@ restore access. Deliberate owner Disconnect is a separate planned action outside
 4. The Project, stored repository ID and authored details, discussion, and Feedback are retained for
    later restoration.
 
-**Outcome — reconnect:**
+**Outcome: reconnect:**
 
 1. The owner restores metadata-only GitHub App access to the repository.
 2. Vibies verifies selected, metadata-only access for the same stable repository
@@ -393,9 +394,8 @@ Hidden. The protected action carries the Roadmap version that the page displayed
 **Outcome: add:**
 
 1. The owner enters one valid Milestone title and, when needed, a Blocked note.
-2. Vibies validates the plain-text limits from the [domain model](DOMAIN.md#projects-and-repositories)
-   and accepts up to 20 Milestones for the Project. Duplicate titles remain
-   valid.
+2. Vibies validates the title, note, and Milestone count limits from the
+   [domain model](DOMAIN.md#projects-and-repositories).
 3. The new Milestone starts incomplete and takes the final position. A supplied
    Blocked note gives it `Blocked` status. Without a note it has `Incomplete`
    status.
@@ -408,8 +408,8 @@ Hidden. The protected action carries the Roadmap version that the page displayed
 2. The owner uses one Complete checkbox. Selecting it marks the Milestone
    `Complete` and removes its Blocked note. Clearing it reopens the Milestone as
    incomplete.
-3. An incomplete Milestone with a Blocked note is `Blocked`. An incomplete
-   Milestone without a note is `Incomplete`.
+3. The resulting status follows the
+   [Milestone status](DOMAIN.md#projects-and-repositories) definition.
 
 **Outcome: order and deletion:**
 
@@ -417,27 +417,26 @@ Hidden. The protected action carries the Roadmap version that the page displayed
    blocking leave position unchanged.
 2. Delete identifies the Milestone and takes effect only after the owner
    confirms. Any Milestone may be deleted.
-3. The displayed Progress recalculates from the remaining completed and total
-   Milestones. Vibies stores no separate Progress percentage.
+3. The displayed [Progress](DOMAIN.md#projects-and-repositories) recalculates
+   from the remaining Milestones.
 
 **Outcome: view:**
 
 1. A Project detail page with Milestones shows the ordered Roadmap, each status
-   and Blocked note, a progress bar, and text such as “2 of 3 complete, 67%.”
-   It appears after shared Project details and before management controls.
-2. A Community Project card shows only text such as “67% complete.”
-3. An empty Roadmap shows “No milestones yet” on the detail page, with no
+   and Blocked note, a progress bar, and the completed count with the rounded
+   percentage.
+2. A Community Project card shows only the rounded percentage.
+3. An empty Roadmap shows the empty message on the detail page, with no
    progress bar or percentage.
 4. Everyone who can view the Project can view its Roadmap and Blocked notes.
 
-**Outcome: persistence and safety:**
+Placement and the exact display strings live in the
+[product definition](PRODUCT.md#personal-project-roadmaps).
 
-1. Draft, Published, Archived, Connected, Disconnected, Visible, and Hidden
-   changes preserve the Roadmap. Restored availability shows the same Roadmap.
-2. Deleting the Personal Project deletes its Milestones with it. Onboarding
-   completion remains governed by the existing publication workflow.
-3. Roadmap controls are keyboard operable, and status is clear without color
-   alone.
+**Outcome: persistence and safety:** Project state changes preserve the Roadmap,
+deleting the Personal Project deletes its Milestones, and a stale write changes
+nothing, as the [domain model](DOMAIN.md#projects-and-repositories) defines.
+Onboarding completion remains governed by the existing publication workflow.
 
 **Failure path:** An unapproved person, Former Member, Instructor, or Member
 without current ownership cannot change a Roadmap. The Instructor can moderate
@@ -447,6 +446,6 @@ Project, deleted Project, invalid action, cross-origin request, or failed access
 check changes nothing. At 20 Milestones, Add is disabled and the page explains
 the limit.
 
-A stale Roadmap version stops the action without replacing a newer change. The
-page asks the owner to reload before trying again. A successful action updates
+A stale Roadmap version stops the action, and the page asks the owner to reload
+before trying again. A successful action updates
 the current Roadmap version so a later stale action cannot overwrite it.

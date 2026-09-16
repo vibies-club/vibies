@@ -1,13 +1,13 @@
 # Vibies Community Rules
 
 Vibies is a private club where beginners build real products together.
-These rules keep it safe and useful for everyone — including our youngest members.
+These rules keep it safe and useful for everyone, including our youngest members.
 
 ## Who we are
 
 - We are builders. Everyone here makes things and shows them.
-- We use **nicknames**, not full names.
-- No photos, phone numbers, or addresses — yours or anyone else's.
+- We use **nicknames** only, and keep full names private.
+- No photos, phone numbers, or addresses, yours or anyone else's.
 
 ## How we give feedback
 
@@ -18,13 +18,13 @@ These rules keep it safe and useful for everyone — including our youngest memb
 
 ## How we behave
 
-- Be kind and be patient — everyone here was a total beginner recently.
-- Questions are always welcome. Asking is a builder's skill, not a weakness.
+- Be kind and be patient. Everyone here was a total beginner recently.
+- Questions are always welcome. Asking is a builder's skill.
 - When someone ships, celebrate loudly.
 
 ## Not allowed
 
-- Mocking, insults, or harsh sarcasm — even as a "joke."
+- Mocking, insults, or harsh sarcasm, even as a "joke."
 - Sharing anyone's personal information.
 - Sharing passwords, API keys, or invite links outside the club.
 
@@ -47,4 +47,4 @@ restore content but does not rewrite member content. See the
 
 ---
 
-*These rules are version 1. Like everything at Vibies, they can be improved — open a pull request.*
+*These rules are version 1. Like everything at Vibies, they can be improved: open a pull request.*

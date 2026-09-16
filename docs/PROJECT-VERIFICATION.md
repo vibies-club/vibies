@@ -9,8 +9,8 @@
 at `5e55642` after Member approval. All P1 to P16 receipts below are complete.
 The isolated Preview database was then removed by native cleanup. Preview links
 below identify the historical test environment; they are not a live setup for
-new tests. [Database deployment](DATABASE-DEPLOYMENT.md) records cleanup and the
-remaining Production rollout checks in PR #30.
+new tests. [Database deployment](DATABASE-DEPLOYMENT.md#receipts) records cleanup and the
+Production rollout, which completed through PR #30 on 2026-09-11.
 
 ## Approved order
 
@@ -56,11 +56,11 @@ account identifiers, or private repository links are included in this record.
 | GitHub App | PASS: authenticated App metadata reports only Metadata read and no events; settings show no webhook or user authorization during installation | Registration check. Member installation evidence follows below. |
 | Preview configuration | PASS: ten configuration entries target Preview and only `feature/personal-projects-17` | Metadata check confirms branch scope. Separate OAuth callback and application origin use the fixed Preview URL; public demo configuration points to the isolated database. |
 | Instructor sign-in | PASS: real GitHub OAuth returned to the Preview and displayed Guide | Hosted browser journey. |
-| Member approval | PASS: Guide approved Builder and Scout through membership management; the page showed two of seven places filled and no unapproved accounts | Hosted Instructor actions. Member access evidence follows below. |
+| Member approval | PASS: Guide approved Builder and Scout through membership management; the page showed two of seven places filled (the seven-place rule at the time; eight since PR #40) and no unapproved accounts | Hosted Instructor actions. Member access evidence follows below. |
 | Instructor Community read | PASS: `/projects` displayed an empty Community list | No published project existed for the three-person read proof. |
 | Signed-out app boundary | PASS: after application sign-out, `/projects` and a synthetic direct project URL both redirected to `/sign-in?message=expired` | Browser retained Vercel access but had no Vibies session. This does not prove denial of a real published project's details. |
 | Public demo | PASS: `/demo` displayed the fixed fictional sample while signed out of Vibies | Hosted browser read from isolated demo setup. |
-| Temporary setup cleanup | PASS: local helper stopped and its temporary credential files were removed | Live credentials remain in the scoped Preview configuration. |
+| Temporary setup cleanup | PASS: local helper stopped and its temporary credential files were removed | Live credentials remained in the branch-scoped Preview configuration; those rows were the cleanup target of [Vercel Preview cleanup](VERCEL-PREVIEW-CLEANUP.md). |
 | Vercel protection | At setup, sharing listed only team members and unauthenticated requests redirected to Vercel SSO | The Vercel redirect is not application-denial proof. Subsequent participant access is recorded below. |
 
 ## Live journey receipts
@@ -218,7 +218,8 @@ the remaining **Project B**. Its raw title and project URL are omitted here.
 
 The live moderation check used Guide's session. Member denial and Hidden Draft,
 Archived, and Disconnected restoration rules are proven in the isolated database
-and HTTP tests, not represented as additional human-run journeys. Project B was
+and HTTP tests. They are not represented as additional human-run journeys.
+Project B was
 left Published, Connected, and Visible.
 
 ## Acceptance rows
@@ -259,4 +260,5 @@ at 21:51:57 UTC. The [PR #18 review and merge record](https://github.com/vibies-
 shows the normal protected merge at 21:59:40 UTC, commit
 `5e556428d4c54dc1ea0e1317822e70ff4b29d86d`. Scout reviewed code, receipts, and
 remote checks, without independently repeating the tests or live journey.
-Production deployment is a separate follow-up, as stated in the current status.
+The Production rollout completed through PR #30 on 2026-09-11; see
+[Database deployment](DATABASE-DEPLOYMENT.md#receipts).
