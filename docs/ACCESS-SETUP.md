@@ -255,7 +255,7 @@ The `app-check` CI job runs the unit, database, build, and HTTP checks on each P
 update. It creates a separate web-test database and uses synthetic configuration.
 The build runs before access configuration is provided to the web-test step.
 
-## 8. Deploy and prove Preview
+## 8. Hosted proof, and the issue #5 Preview as history
 
 Routine app reviews use the live shared staging site at
 `https://vibies-staging.vercel.app`, configured once with steps 3 through 6 in
@@ -290,7 +290,7 @@ recorded explicitly. A1 through A16 and Member review all passed before the
 Instructor merged, and Production was configured and verified only after that
 reviewed merge.
 
-## 9. Move the approved change to Production, then remove Preview
+## 9. Move the approved change to Production
 
 The owner authorized removal of the legacy unlinked `access-review-5` after
 confirming Builder's Production profile access. It was deleted after PR #18

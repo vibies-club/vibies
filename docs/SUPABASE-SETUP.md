@@ -158,8 +158,8 @@ the Vercel project settings. Do not use a service role or legacy anonymous key.
 The separate `vibies-staging` Vercel project holds its own pair of these values
 for the staging Supabase project.
 
-Before merge, prove `/` and `/demo` on staging through the manual **staging**
-workflow in
+Before merge, prove `/` and `/demo` on staging by asking the Instructor to
+select the PR with the manual **staging** workflow in
 [Preview a PR or clear staging](DATABASE-DEPLOYMENT.md#preview-a-pr-or-clear-staging),
 or locally with `npm run dev`, and record the acceptance receipts. The
 instructor is the only person who merges to main. After the instructor merges

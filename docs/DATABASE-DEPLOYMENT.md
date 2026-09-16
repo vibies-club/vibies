@@ -266,6 +266,8 @@ without Production data.
 
 ### Operator runbook
 
+Contributors do not run these steps. Ask the Instructor in the PR.
+
 **After a schema merge.** Wait for the native staging deployment, then confirm
 in the staging dashboard that the applied migration list equals main's. Set the
 baseline with
@@ -280,15 +282,15 @@ refuses, its summary names the reason. These reasons are for the PR author:
 
 | Refusal message | What to tell the author |
 | --- | --- |
-| `PR #<number> is not an open same-repository PR into current main` | Open the PR against `main` from a branch in this repository, mark it ready for review, resolve any merge conflict, and rebase onto current `main`. A head branch named `main` or `staging` cannot be selected. |
-| `current main is not an ancestor of the PR head` | Rebase onto current `main` and push. |
-| `PR merge commit does not exactly combine current main and the selected head` | Rebase onto current `main`, push, and wait a minute for GitHub to recompute the merge commit. |
+| `PR #<number> is not an open same-repository PR into current main` | Open the PR against `main` from a branch in this repository, mark it ready for review, resolve any merge conflict, and merge current `main` into current `main`. A head branch named `main` or `staging` cannot be selected. |
+| `current main is not an ancestor of the PR head` | Merge current `main` into the branch and push. |
+| `PR merge commit does not exactly combine current main and the selected head` | Merge current `main` into the branch, push, and wait a minute for GitHub to recompute the merge commit. |
 | `commit does not have one valid supabase tree` | The PR removes or replaces the `supabase` directory. It changes the schema, so it cannot use staging. |
 | `PR, main, and staging Supabase trees do not match` | This PR changes the schema, so it cannot use staging. Use the full migration proof in CI. |
 | `required check <name> is missing or ambiguous` | Wait for `app-check`, `migration-check`, and `links` to start on the exact head, or push the head again. |
 | `required check <name> did not complete successfully in GitHub Actions` | Wait for the checks to finish, or fix the failing check and push. |
-| `required check <name> is not for the selected pull request` | `main` moved after the checks ran. Rebase onto current `main` and push so the checks run again. |
-| `main changed during the staging operation` | `main` moved during the run. Rebase onto current `main`, push, and ask for another run. |
+| `required check <name> is not for the selected pull request` | `main` moved after the checks ran. Merge current `main` into the branch and push so the checks run again. |
+| `main changed during the staging operation` | `main` moved during the run. Merge current `main` into the branch, push, and ask for another run. |
 | `PR head or merge commit changed during the staging operation` | Do not push while a run is in progress. Ask for another run. |
 | `staging deployment timed out: ...` | The staging build did not serve the head in time. Check the `vibies-staging` Vercel build for this commit, then ask for another run. |
 | `staging returned an invalid marker schema` | The PR changes the shape of the `/staging.json` response. Keep that route unchanged. |
@@ -302,8 +304,8 @@ checks to finish before Clear.
 
 **Approve a student on staging.** The student signs in once at the staging
 origin, then the Instructor approves them on `/admin/members` there. Production
-Membership does not carry over. Agree a privacy-safe Nickname that does not
-contain the GitHub username. See [Access setup](ACCESS-SETUP.md).
+Membership does not carry over. Agree a Nickname that follows the
+[safety rules](../CONTRIBUTING.md#safety). See [Access setup](ACCESS-SETUP.md).
 
 **Resume a paused Free project.** Resume it in the Supabase dashboard, verify
 the applied migration versions, update the baseline if `main` changed, and prove
@@ -332,8 +334,8 @@ GitHub connection for the intended repository and set:
 | Production branch | `main` |
 | Deploy to production | On |
 | Automatic branching | Off (since 2026-09-16) |
-| Branch limit | 3 |
-| Supabase changes only | On |
+| Branch limit | 3 (unused while branching is off) |
+| Supabase changes only | On (unused while branching is off) |
 
 Review the project and branch on the provider page before saving. Keep the
 existing Vercel integration unchanged. Production deployment works on all

@@ -15,7 +15,7 @@ Preview branching has been off since 2026-09-16; a temporary branch is an
 owner-granted exception with a cost cap under
 [Shared staging limits](DATABASE-DEPLOYMENT.md#shared-staging-limits).
 
-## Human setup for the live Preview
+## Human setup for the issue #17 Preview, as history
 
 Routine app reviews use reusable staging, configured once, including the GitHub
 App; see [Reusable staging](DATABASE-DEPLOYMENT.md#reusable-staging). The issue

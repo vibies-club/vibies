@@ -19,8 +19,8 @@ vague idea → grill → Ready → plan → Skeptic → build → prove → PR �
    The taught way is the `$grill-me` skill; any equivalent interview works.
 2. Write the result as a Ready issue: what to build, plus numbered acceptance
    criteria that say when it is done, plus a proof plan.
-3. Post your plan on the issue and wait for your human's approval before you
-   change code.
+3. Post your plan on the issue and wait for the Instructor's approval before
+   you change code.
 4. Run a Skeptic pass on the approved plan and post it on the issue: attack
    it, find what breaks it, record the answers.
 5. Branch from current `main` with a `feature/`, `fix/`, `docs/`, or `chore/`
@@ -40,43 +40,27 @@ vague idea → grill → Ready → plan → Skeptic → build → prove → PR �
 
 ## The three required checks
 
-Every PR runs `app-check` (typecheck, offline tests, the database suites on an
-isolated Postgres, the production build, and the built-server HTTP checks),
-`migration-check` (the snapshot and history guards, plus the full disposable
-Supabase proof unless every changed file is on the fast list), and `links`
-(every local Markdown link and anchor). Make a red check green before you ask
-for review. The fast list and the full proof are defined in the
-[deployment guide](docs/DATABASE-DEPLOYMENT.md#local-and-ci-checks).
+Every PR must pass `app-check`, `migration-check`, and `links` on its head
+commit. Make a red check green before you ask for review. What each check runs
+and which files take the fast migration path are defined in
+[CONTRIBUTING](CONTRIBUTING.md#the-three-required-checks).
 
 ## Hosted proof on staging
 
-Vibies has one shared test site, https://vibies-staging.vercel.app, whose
-database always equals `main`. The Instructor puts one PR on it at a time. A
-PR qualifies only when all of these hold:
-
-- it is open, ready rather than a draft, and comes from this repository into
-  `main`;
-- its head contains current `main`, so merge `main` into the branch and push
-  before you ask;
-- its required checks passed on that exact head;
-- its `supabase/` folder is identical to `main`'s.
-
-A PR that changes the schema cannot use staging before it merges. Its proof is
-the full migration check in CI plus local receipts. Sign-in on staging is
-separate from production: sign in once with GitHub, then ask the Instructor to
-approve your account there. The workflow posts a receipt on the PR with the
-exact deployed commit; quote it. A Ready deployment alone proves nothing. The
-full rules live in [CONTRIBUTING](CONTRIBUTING.md#hosted-proof-on-staging) and
-the [deployment guide](docs/DATABASE-DEPLOYMENT.md#reusable-staging).
+Vibies has one shared test site whose database follows `main`'s merged schema.
+The Instructor puts one PR on it at a time; contributors never run that
+workflow. Before you ask, merge current `main` into your branch, push, and
+confirm the checks are green. A PR that changes `supabase/` cannot use staging
+before it merges. Sign-in on staging needs the Instructor's approval there,
+separately from production. Quote the workflow's receipt comment in your PR.
+The eligibility rules are in
+[CONTRIBUTING](CONTRIBUTING.md#hosted-proof-on-staging).
 
 ## After merge
 
-Supabase applies new migrations to production and to staging, Vercel deploys
-`main` to production, and the cleanup workflow removes any branch-specific
-Preview settings. After a schema merge the Instructor updates the staging
-baseline and runs Clear before staging accepts the next PR. Keep your issue
-open until every post-merge receipt it asks for is recorded. Details are in
-[CONTRIBUTING](CONTRIBUTING.md#after-merge).
+Merging deploys `main` to production and applies its migrations. Keep your
+issue open until every post-merge receipt it asks for is recorded. What else
+happens after a merge is in [CONTRIBUTING](CONTRIBUTING.md#after-merge).
 
 ## Branch rules (hard)
 
@@ -94,10 +78,8 @@ definitions live in [CONTRIBUTING](CONTRIBUTING.md#the-merge-gate-six-checks).
 2. Nothing unrelated.
 3. No secrets.
 4. Matches the approved plan.
-5. Build succeeded: the three required checks are green on the head commit
-   and the local build passes.
-6. Proof satisfies the acceptance criteria: local receipts for local claims,
-   the staging receipt for hosted claims.
+5. Build succeeded.
+6. Proof satisfies the acceptance criteria.
 
 ## Writing rules
 
@@ -110,9 +92,9 @@ definitions live in [CONTRIBUTING](CONTRIBUTING.md#the-merge-gate-six-checks).
 ## Safety and privacy (hard)
 
 - Never read or write `.env` files, credentials, or secrets.
-- Nicknames only. Keep real names, photos, contact details, and all other
-  personal data out of the repository. A Nickname must not contain a GitHub
-  username.
+- Nicknames only, as the [safety rules](CONTRIBUTING.md#safety) define. Keep
+  real names, photos, contact details, and all other personal data out of the
+  repository.
 - Community conduct, feedback style, and enforcement live in
   [RULES.md](RULES.md). Feedback follows its keep-and-improve format.
 

@@ -62,7 +62,7 @@ migration proof. Make a red check green before you ask for review.
 ## Hosted proof on staging
 
 Vibies has one shared test site, https://vibies-staging.vercel.app, whose
-database always equals `main`. The Instructor puts one PR on it at a time with
+database follows `main`'s merged schema. The Instructor puts one PR on it at a time with
 the manual **staging** workflow. Your PR is eligible only when all of these
 hold:
 
@@ -79,8 +79,8 @@ hosted database proof, the Instructor can grant a temporary branch with an
 agreed cost cap.
 
 Sign-in on staging is separate from production. Sign in once with GitHub at
-the staging origin, then ask the Instructor to approve your account there.
-Choose a Nickname that does not contain your GitHub username.
+the staging origin, then ask the Instructor to approve your account there with
+a Nickname that follows the [safety rules](#safety).
 
 The workflow posts a receipt comment on the PR with the exact deployed commit.
 Quote it in your receipts. A Ready deployment alone proves nothing. The guards,
@@ -107,4 +107,5 @@ recorded.
 
 - Keep `.env` files, credentials, and secrets out of every commit.
 - Nicknames only. Keep real names, photos, contact details, and all other
-  personal data out of the repository.
+  personal data out of the repository. A Nickname must not contain your GitHub
+  username, on production or on staging.
