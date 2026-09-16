@@ -142,7 +142,7 @@ or reopens with one Complete checkbox.
 The project detail page shows the ordered Roadmap after shared Project details
 and before management controls. When Milestones exist, it shows each status and
 Blocked note, a progress bar, and the completed count with the rounded whole
-percentage. An empty Roadmap shows “No milestones yet” and no progress bar or
+percentage, such as “2 of 3 complete, 67%.” An empty Roadmap shows “No milestones yet” and no progress bar or
 percentage. A Community Project card shows only the rounded percentage, such as
 “67% complete.” Progress is derived from the Milestone records each time it is
 shown.

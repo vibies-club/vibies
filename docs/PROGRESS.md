@@ -91,8 +91,9 @@ and records that automatic Supabase Preview branching is off.
 [PR #47](https://github.com/vibies-club/vibies/pull/47) merged the same day and
 documents the staging-era workflow for contributors and agents. The 2026-09-16
 cleanup deleted the last Supabase preview branch, switched automatic branching
-off, and removed 65 stale Vercel preview deployments from both projects; schema
-PRs use the full migration proof in CI.
+off, and removed 65 stale Vercel preview deployments from both projects
+([receipt](https://github.com/vibies-club/vibies/issues/32#issuecomment-5694991727));
+schema PRs use the full migration proof in CI.
 
 [PR #43](https://github.com/vibies-club/vibies/pull/43) merged the optional
 Personal Project Roadmap from issue #20 on 2026-09-15. Production and staging

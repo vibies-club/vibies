@@ -10,7 +10,8 @@ at `5e55642` after Member approval. All P1 to P16 receipts below are complete.
 The isolated Preview database was then removed by native cleanup. Preview links
 below identify the historical test environment; they are not a live setup for
 new tests. [Database deployment](DATABASE-DEPLOYMENT.md#receipts) records cleanup and the
-Production rollout, which completed through PR #30 on 2026-09-11.
+Production migration and settings rollout, which completed through PR #30 on
+2026-09-11; the live Member publishing check remains pending.
 
 ## Approved order
 
@@ -260,5 +261,6 @@ at 21:51:57 UTC. The [PR #18 review and merge record](https://github.com/vibies-
 shows the normal protected merge at 21:59:40 UTC, commit
 `5e556428d4c54dc1ea0e1317822e70ff4b29d86d`. Scout reviewed code, receipts, and
 remote checks, without independently repeating the tests or live journey.
-The Production rollout completed through PR #30 on 2026-09-11; see
+The Production migration and settings rollout completed through PR #30 on
+2026-09-11, with the live Member publishing check still pending; see
 [Database deployment](DATABASE-DEPLOYMENT.md#receipts).
