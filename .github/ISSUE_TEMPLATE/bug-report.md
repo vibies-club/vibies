@@ -8,6 +8,11 @@ assignees: ''
 
 ## What happened
 
+## Where
+
+Production, staging (https://vibies-staging.vercel.app), or local, and the
+commit or deployment if you know it.
+
 ## What you expected
 
 ## Steps to reproduce

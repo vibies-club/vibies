@@ -1,1 +1,5 @@
 blank_issues_enabled: true
+contact_links:
+  - name: Ask a question
+    url: https://github.com/vibies-club/vibies/blob/main/SUPPORT.md
+    about: Class members ask in the Telegram group. Everyone can open an issue.

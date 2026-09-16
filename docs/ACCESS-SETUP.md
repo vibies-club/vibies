@@ -257,47 +257,49 @@ The build runs before access configuration is provided to the web-test step.
 
 ## 8. Deploy and prove Preview
 
-For routine app reviews, configure steps 3 through 6 once in the separate Vercel
-staging project. Its `VIBIES_APP_ORIGIN` must equal the fixed origin recorded as
-`STAGING_ORIGIN` in the protected GitHub environment. Then select the PR with
-the manual **staging** workflow. The authoritative setup, eligibility checks,
-use, and pending rollout status are in
-[Reusable staging](DATABASE-DEPLOYMENT.md#reusable-staging). Do not create
-branch-specific runtime or OAuth settings for this path.
+Routine app reviews use the live shared staging site at
+`https://vibies-staging.vercel.app`, configured once with steps 3 through 6 in
+the separate Vercel staging project, where `VIBIES_APP_ORIGIN` equals the
+`STAGING_ORIGIN` recorded in the protected GitHub environment; the manual
+**staging** workflow in
+[Preview a PR or clear staging](DATABASE-DEPLOYMENT.md#preview-a-pr-or-clear-staging)
+puts a PR there.
 
-The feature-branch instructions below preserve the original issue #5 proof. Use
-them for historical review or for an explicitly approved isolated hosted test.
+The rest of this section records the issue #5 proof on 2026-09-10 as history;
+nothing below is a routine step.
 
-Add the required server values to the Vercel Preview environment for the
-feature branch only. Add
-`VIBIES_DATABASE_CA` when the database certificate needs the Supabase CA. Keep
-the existing public demo values. Deploy the feature branch and complete every
-human procedure in [Access verification](ACCESS-VERIFICATION.md), including the
-real GitHub flow, direct access denials, privacy inspection, Session expiry, and
-recovery.
+For that proof, the owner added the required server values to the Vercel
+Preview environment for the feature branch only, with `VIBIES_DATABASE_CA`
+where the database certificate needed the Supabase CA, kept the existing public
+demo values, deployed the feature branch, and completed every human procedure in
+[Access verification](ACCESS-VERIFICATION.md), including the real GitHub flow,
+direct access denials, privacy inspection, Session expiry, and recovery.
 
-For the recovery exercise, use clean staging and separate privacy-safe test
-accounts. Verify the replacement through the trusted channel, record the reason
-privately, and call `designate_instructor` with the replacement. Confirm that the
-old account's next protected request is blocked, exactly one Instructor remains,
-and the active Member count is unchanged. A Member account must be rejected as a
-replacement. Restore the intended staging Instructor through the same verified
-procedure after the exercise.
+For the recovery exercise, the owner used clean staging and separate
+privacy-safe test accounts, verified the replacement through the trusted
+channel, recorded the reason privately, and called `designate_instructor` with
+the replacement. The proof confirmed that the old account's next protected
+request was blocked, exactly one Instructor remained, the active Member count
+was unchanged, and a Member account was rejected as a replacement. The intended
+staging Instructor was restored through the same verified procedure after the
+exercise.
 
-When implementation, automated checks, and the configured Preview are ready,
-mark the PR ready for Member review. Record any remaining participant checks
-explicitly. A1 through A16 and Member review must all pass before the Instructor
-merges. Configure and verify Production only after that reviewed merge.
+Once implementation, automated checks, and the configured Preview were ready,
+the PR was marked ready for Member review, with any remaining participant checks
+recorded explicitly. A1 through A16 and Member review all passed before the
+Instructor merged, and Production was configured and verified only after that
+reviewed merge.
 
 ## 9. Move the approved change to Production, then remove Preview
 
 The owner authorized removal of the legacy unlinked `access-review-5` after
 confirming Builder's Production profile access. It was deleted after PR #18
 merged on 2026-09-10 UTC. Main was retained. This confirms the authorized cleanup;
-the full Production checks below remain separate. Existing linked ephemeral
-feature Previews keep their approved delete-at-merge-or-close lifecycle. Issue
-#37 disables new automatic paid branches only after reusable staging is proved
-and the owner inventories existing branches. [Database deployment](DATABASE-DEPLOYMENT.md)
+the full Production checks below remain separate. Reusable staging is live and
+automatic Supabase Preview branching has been off since 2026-09-16, so a
+temporary branch is an owner-granted exception with a cost cap under
+[Shared staging limits](DATABASE-DEPLOYMENT.md#shared-staging-limits).
+[Database deployment](DATABASE-DEPLOYMENT.md)
 owns migration setup, required checks, rollout order, and failure recovery.
 
 1. After the reviewed GitHub merge, wait for the native Supabase deployment and
@@ -308,7 +310,10 @@ owns migration setup, required checks, rollout order, and failure recovery.
 2. Have the database owner configure the dedicated Production login, TLS,
    fixed Production OAuth origin and callback, and server settings using steps
    3 through 6. Keep all secret values in the providers' private settings.
-3. Account for the intended Instructor and each Member before removing Preview.
+3. Account for the intended Instructor and each Member before Production
+   sign-in opens. Students sign in on staging with GitHub and the Instructor
+   approves them there, separately from Production, so staging accounts do not
+   carry over.
    [Branch data does not move with a merge](https://supabase.com/docs/guides/deployment/branching/troubleshooting#data-issues).
    The owner must preserve durable access records privately or repeat verified
    Instructor setup and Member sign-in/approval on Production. Compare Nicknames,

@@ -37,14 +37,15 @@ shows no Roadmap write controls until the migration is present. A direct early
 Roadmap write fails safely. The feature is ready only after both the Supabase
 migration and Vercel deployment pass.
 
-For the initial rollout, PR #18 and PR #30 merged after Member review. Main at
-`a5fabc1` has the three expected migration versions. PR #30's Preview was
-removed, and the Production settings and Ready redeploy passed. Live Production
-Member publishing remains pending while Builder is offline. The issue #31
-database work in PR #33 and the issue #32 Vercel cleanup in PR #34 have separate
-reviews and deploy no new app feature. The owner requested automatic feature
-Preview cleanup at merge; it does not wait for Production verification. Do not
-treat an early Vercel success as database proof.
+For the initial rollout, PR #18 and PR #30 merged after Member review. Main now
+holds five migration versions, ending with `20260913212638`; the earlier
+three-version state at `a5fabc1` is recorded as history in the receipts below.
+PR #30's Preview was removed, and the Production settings and Ready redeploy
+passed. Live Production Member publishing remains pending while Builder is
+offline. The issue #31 database work in PR #33 and the issue #32 Vercel cleanup
+in PR #34 have separate reviews and deploy no new app feature. While automatic
+branching was on, feature Preview cleanup at merge did not wait for Production
+verification. Do not treat an early Vercel success as database proof.
 
 ## Add a database change
 
@@ -121,10 +122,15 @@ receipts after the first merge.
 ## Reusable staging
 
 Issue #37 replaces repeated feature-specific hosted setup with one stable test
-site and one standalone Supabase Free project. This rollout is approved and its
-provider setup is unfinished. Member review, Instructor merge, and the first real
-GitHub Actions deployment are pending. A local script run is not proof of the
-Action or the Vercel Git trigger.
+site and one standalone Supabase Free project. Shared staging is live since
+[PR #38](https://github.com/vibies-club/vibies/pull/38) merged on 2026-09-14.
+The first Clear, [run 34868183241](https://github.com/vibies-club/vibies/actions/runs/34868183241)
+on 2026-09-14, moved `staging` from `76cf1e8` to `d73a73d` with the deploy key.
+The second Clear, [run 34953066342](https://github.com/vibies-club/vibies/actions/runs/34953066342)
+on 2026-09-15, moved it from `d73a73d` to `a53b4f3` after the PR #43 schema
+merge, and the site reported that commit. The first Preview PR selection is
+still pending. A local script run is not proof of the Action or the Vercel Git
+trigger.
 
 ### Configure it once
 
@@ -204,8 +210,9 @@ serialized through deployment and verification. Ordinary feature pushes do not
 change the shared site. Clear after the selected PR is closed, rejected, or
 merged. This moves the app ref and does not reset the shared database.
 
-Preview accepts only an open, non-draft, same-repository PR into `main`. Current
-`main` must be an ancestor of its unchanged head. The exact head must have passing
+Preview accepts only an open, non-draft, same-repository PR into `main`. It
+rejects a PR whose head branch is named `main` or `staging`. Current `main` must
+be an ancestor of its unchanged head. The exact head must have passing
 `app-check`, `migration-check`, and `links` checks from
 `.github/workflows/app.yml`, `.github/workflows/database.yml`, and
 `.github/workflows/docs.yml`. Their GitHub Actions `pull_request` run metadata
@@ -220,7 +227,8 @@ It pushes with the deploy key and a lease on the ref's previous value.
 It never checks out or runs PR code in the privileged job. Vercel runs the
 selected app code with staging-only credentials after maintainer review.
 
-After the ref moves, verification waits at most 10 minutes for the fixed origin.
+After the ref moves, verification waits at most 570 seconds, nine and a half
+minutes, for the fixed origin, inside the job's 12-minute limit.
 `/staging.json` must report the full selected commit SHA, the configured Vercel
 project ID, the echoed request nonce, and `staging` as its Git ref. The endpoint
 is available only when Vercel also reports its `production` environment and the
@@ -228,7 +236,8 @@ fixed `staging` ref. This prevents an older feature Preview with the same SHA
 from passing. The operation then rechecks `main`, the PR head, and the fixed ref.
 A detected change, timeout, provider failure, wrong alias, wrong project, or wrong
 commit fails the operation and cannot produce a success receipt. Clear staging
-uses the same checks for the exact current `main` commit.
+uses the same checks for the exact current `main` commit, and it requires each
+required check's latest run on `main` to be a push run for `main`.
 
 The receipt records the operation, PR when applicable, current main, exact head,
 tested merge commit, fixed URL, project ID, verified `supabase` tree,
@@ -255,6 +264,62 @@ then verify the applied migration versions, update the baseline tree if current
 keep-alive job. Test data is recreated through the migration and setup procedures,
 without Production data.
 
+### Operator runbook
+
+**After a schema merge.** Wait for the native staging deployment, then confirm
+in the staging dashboard that the applied migration list equals main's. Set the
+baseline with
+`gh variable set STAGING_SUPABASE_TREE --env staging --repo vibies-club/vibies --body $(git rev-parse origin/main:supabase)`,
+then run Clear. See [Shared staging limits](#shared-staging-limits).
+
+**Select a PR.** Open Actions, choose the **staging** workflow, click **Run
+workflow** from `main`, choose **Preview PR**, enter the number, and approve the
+`staging` environment prompt. See
+[Preview a PR or clear staging](#preview-a-pr-or-clear-staging). When the run
+refuses, its summary names the reason. These reasons are for the PR author:
+
+| Refusal message | What to tell the author |
+| --- | --- |
+| `PR #<number> is not an open same-repository PR into current main` | Open the PR against `main` from a branch in this repository, mark it ready for review, resolve any merge conflict, and rebase onto current `main`. A head branch named `main` or `staging` cannot be selected. |
+| `current main is not an ancestor of the PR head` | Rebase onto current `main` and push. |
+| `PR merge commit does not exactly combine current main and the selected head` | Rebase onto current `main`, push, and wait a minute for GitHub to recompute the merge commit. |
+| `commit does not have one valid supabase tree` | The PR removes or replaces the `supabase` directory. It changes the schema, so it cannot use staging. |
+| `PR, main, and staging Supabase trees do not match` | This PR changes the schema, so it cannot use staging. Use the full migration proof in CI. |
+| `required check <name> is missing or ambiguous` | Wait for `app-check`, `migration-check`, and `links` to start on the exact head, or push the head again. |
+| `required check <name> did not complete successfully in GitHub Actions` | Wait for the checks to finish, or fix the failing check and push. |
+| `required check <name> is not for the selected pull request` | `main` moved after the checks ran. Rebase onto current `main` and push so the checks run again. |
+| `main changed during the staging operation` | `main` moved during the run. Rebase onto current `main`, push, and ask for another run. |
+| `PR head or merge commit changed during the staging operation` | Do not push while a run is in progress. Ask for another run. |
+| `staging deployment timed out: ...` | The staging build did not serve the head in time. Check the `vibies-staging` Vercel build for this commit, then ask for another run. |
+| `staging returned an invalid marker schema` | The PR changes the shape of the `/staging.json` response. Keep that route unchanged. |
+| `staging marker identity did not match this request` | The PR changes the project ID, ref, or nonce that `/staging.json` reports. Keep that route unchanged. |
+
+Every other message is for the operator. `the workflow commit is not current
+main` means run the workflow again from current `main`. `current main does not
+match the staging Supabase baseline` means follow the entry above for a schema
+merge. `required check <name> is not a main push run` means wait for main's push
+checks to finish before Clear.
+
+**Approve a student on staging.** The student signs in once at the staging
+origin, then the Instructor approves them on `/admin/members` there. Production
+Membership does not carry over. Agree a privacy-safe Nickname that does not
+contain the GitHub username. See [Access setup](ACCESS-SETUP.md).
+
+**Resume a paused Free project.** Resume it in the Supabase dashboard, verify
+the applied migration versions, update the baseline if `main` changed, and prove
+sign-in before accepting a receipt. See
+[Shared staging limits](#shared-staging-limits).
+
+**Rotate the deploy key.** Create a new ed25519 pair, add its public half as the
+repository's only write deploy key, update `STAGING_DEPLOY_KEY` in the `staging`
+environment, remove the old key, and delete both local files. See step 6 of
+[Configure it once](#configure-it-once).
+
+**Grant an exception branch.** For a schema PR that needs hosted database proof,
+the owner agrees a cost cap, creates a temporary branch on the main Supabase
+project, and links it to the PR's GitHub branch. The owner deletes it when the
+review ends. See [Exception branch cleanup](#exception-branch-cleanup).
+
 ## Configure main automatic deployment once
 
 In the main Supabase project's Settings > Integrations, authorize Supabase's
@@ -266,17 +331,15 @@ GitHub connection for the intended repository and set:
 | Working directory | `.` |
 | Production branch | `main` |
 | Deploy to production | On |
-| Automatic branching | Off since 2026-09-16; on only during the reusable staging rollout |
+| Automatic branching | Off (since 2026-09-16) |
 | Branch limit | 3 |
 | Supabase changes only | On |
 
 Review the project and branch on the provider page before saving. Keep the
-existing Vercel integration unchanged. The owner originally chose to keep
-automatic Preview branches on. New PRs with Supabase changes can receive a native
-Preview migration check while that setting remains on. Production deployment
-works on all Supabase plans; automatic Preview branches require Pro and can add
-branch compute charges. No GitHub Actions deployment token or database password
-is needed.
+existing Vercel integration unchanged. Production deployment works on all
+Supabase plans; automatic Preview branches require Pro and can add branch
+compute charges. No GitHub Actions deployment token or database password is
+needed.
 
 Automatic branching was turned off on 2026-09-16, after shared staging passed
 its Action proof and the owner inventoried the one remaining preview branch and
@@ -286,13 +349,16 @@ an agreed cost cap; the owner creates it, links it to the PR's GitHub branch, an
 deletes it when the review ends. The cleanup section below then applies to that
 exception branch. This transition does not alter the historical receipts below.
 
-## Automatic cleanup after merge
+## Exception branch cleanup
 
-Use ephemeral, non-default Preview branches linked to the feature's GitHub
-branch. Keep their Persistent setting off. The native integration
+This section applies only to a temporary branch the owner creates for a schema
+PR that needs hosted database proof. Ordinary PRs create no branch. Link the
+exception branch to the PR's GitHub branch and keep its Persistent setting off.
+The native integration
 [deletes an ephemeral Preview when its PR merges or closes](https://supabase.com/docs/guides/deployment/branching).
-This ends the unused feature database's running compute. Main and persistent
-environments are outside this cleanup. No additional deletion job is needed.
+The owner deletes the branch when the review ends if it still exists. This ends
+the unused feature database's running compute. Main and persistent environments
+are outside this cleanup. No additional deletion job is needed.
 
 Preview data is disposable. Complete its proof before merge, because cleanup
 does not wait for a successful Production deployment and branch data does not
@@ -344,7 +410,8 @@ define the checks. Status is recorded separately for each boundary:
 | Required GitHub migration check | [PASS after explicit owner approval](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922): main requires `migration-check`, `app-check`, and `links`, bound to GitHub Actions. One approving Member review and administrator enforcement are retained. |
 | Main deployment | [PASS after PR #30 merged](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630352747) on 2026-09-11 UTC: main was at `a5fabc1` and its hosted migration history contained the three expected versions. |
 | Production setup | [PASS for the settings and Ready redeploy](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630665472): three App settings moved to Production and the Ready redeploy passed. Live Production Member publishing remains pending while Builder is offline. |
-| Reusable staging rollout | APPROVED in issue #37 on 2026-09-13. The owner created standalone Supabase project `rftkxfkteqxyyeimpqlx` in the Free organization. It is Healthy in Frankfurt; the owner approved the native main integration and it is enabled with automatic branching off. Migrations and runtime setup are pending. The separate Vercel project and fixed `staging` ref at `76cf1e8` exist; it builds only its `staging` production branch and has `VIBIES_STAGING=true` with system variables enabled. The initial Vercel deployment of `76cf1e8` is Ready, and an unauthenticated request to `https://vibies-staging.vercel.app/demo` returned HTTP 200 without Vercel SSO. Runtime credentials are pending. The GitHub environment requires Instructor review and permits only `main`. Its origin and project ID are set; its database baseline is unset until migration verification. Ruleset `staging-workflow-only` (id 23322240) was created on 2026-09-14 at 15:22 UTC: active, update and deletion rules, `refs/heads/staging` only, deploy keys as the sole bypass actor, and `current_user_can_bypass` reported `never` for the admin account. On the same day an admin push of `fef90e4` to `staging` over HTTPS was rejected with `GH013: Repository rule violations found for refs/heads/staging`, `Cannot update this protected ref`, and `push declined due to repository rule violations`; the ref stayed at `76cf1e8`. After the organization enabled deploy keys, write deploy key `163269059` was registered at 15:34 UTC as the repository's only deploy key, and `STAGING_DEPLOY_KEY` in the `staging` environment was updated at 15:37 UTC with its private half; two superseded keys from repeated setup runs were deleted. The first workflow push with this key is a post-merge receipt. Member review, Instructor merge, the first workflow ref update with the deploy key, native Vercel trigger, exact-commit Action receipt, and acceptance checks are pending. Wiki PR #36 also awaits its hosted staging proof and Member readability review. No provider or live acceptance criterion is recorded as passed. |
+| Reusable staging rollout | APPROVED in issue #37 on 2026-09-13. The owner created standalone Supabase project `rftkxfkteqxyyeimpqlx` in the Free organization. It is Healthy in Frankfurt; the owner approved the native main integration and it is enabled with automatic branching off. The separate Vercel project and fixed `staging` ref at `76cf1e8` exist; it builds only its `staging` production branch and has `VIBIES_STAGING=true` with system variables enabled. The initial Vercel deployment of `76cf1e8` is Ready, and an unauthenticated request to `https://vibies-staging.vercel.app/demo` returned HTTP 200 without Vercel SSO. The GitHub environment requires Instructor review and permits only `main`. Its origin and project ID are set; its database baseline was set after merge, as the next row records. Ruleset `staging-workflow-only` (id 23322240) was created on 2026-09-14 at 15:22 UTC: active, update and deletion rules, `refs/heads/staging` only, deploy keys as the sole bypass actor, and `current_user_can_bypass` reported `never` for the admin account. On the same day an admin push of `fef90e4` to `staging` over HTTPS was rejected with `GH013: Repository rule violations found for refs/heads/staging`, `Cannot update this protected ref`, and `push declined due to repository rule violations`; the ref stayed at `76cf1e8`. After the organization enabled deploy keys, write deploy key `163269059` was registered at 15:34 UTC as the repository's only deploy key, and `STAGING_DEPLOY_KEY` in the `staging` environment was updated at 15:37 UTC with its private half; two superseded keys from repeated setup runs were deleted. The first workflow push with this key is recorded in the next row. Wiki PR #36 still awaits its hosted staging proof and Member readability review. |
+| Reusable staging live | PASS. [PR #38](https://github.com/vibies-club/vibies/pull/38) merged on 2026-09-14 at `d73a73d`. The [baseline receipt](https://github.com/vibies-club/vibies/issues/37#issuecomment-5666956406) records the staging migration history equal to main's versions and `STAGING_SUPABASE_TREE` set. The [first Clear receipt](https://github.com/vibies-club/vibies/issues/37#issuecomment-5667239388) records [run 34868183241](https://github.com/vibies-club/vibies/actions/runs/34868183241) on 2026-09-14: every step succeeded and `staging` moved from `76cf1e8` to `d73a73d` through the deploy key. The [runtime receipt](https://github.com/vibies-club/vibies/issues/37#issuecomment-5667351537) records all eleven runtime variables on the `vibies-staging` Vercel project, a sign-in start that reaches GitHub, and the designated staging Instructor. After the PR #43 schema merge, the [second Clear receipt](https://github.com/vibies-club/vibies/issues/37#issuecomment-5678045912) records the baseline verified against five versions ending `20260913212638`, `STAGING_SUPABASE_TREE` updated, and [run 34953066342](https://github.com/vibies-club/vibies/actions/runs/34953066342) on 2026-09-15 moving `staging` from `d73a73d` to `a53b4f3`, with the site reporting that commit. One staging Member is approved. The [cleanup receipt](https://github.com/vibies-club/vibies/issues/37#issuecomment-5693405515) records automatic branching off on 2026-09-16. The first Preview PR selection has not run yet. |
 
 The implementation review at `17ecba5` found no remaining code defect. A scan
 of its 14 changed files found no environment files, private keys, live token

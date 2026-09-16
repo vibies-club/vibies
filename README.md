@@ -49,46 +49,11 @@ definition instead of creating a different version of it.
 
 ## Current status
 
-The repository contains the product foundation, a small public demo, private
-sign-in and access, and Personal Projects. The demo still reads one synthetic row
-from Supabase and stays public. GitHub sign-in, approval, revocation, and the
-protected welcome and membership pages are separate from it. See the
-[access setup guide](docs/ACCESS-SETUP.md), [access verification](docs/ACCESS-VERIFICATION.md),
-and [progress](docs/PROGRESS.md).
-
-Issue #17 merged through [PR #18](https://github.com/vibies-club/vibies/pull/18).
-It adds private Personal Project connection, publication, connection checks,
-Community reading, owner Edit/Delete, and Instructor Hide/Restore.
-The [project proof record](docs/PROJECT-VERIFICATION.md) lists local and live
-receipts in the approved stage order, plus the Member review and merge receipt.
-
-Personal Project Roadmaps are defined in the
-[product definition](docs/PRODUCT.md#personal-project-roadmaps). The accepted
-design is in [D-019](docs/DECISIONS.md#d-019-add-optional-personal-project-roadmaps),
-and the [Roadmap verification record](docs/ROADMAP-VERIFICATION.md) holds its 14
-acceptance receipts.
-
-[PR #30](https://github.com/vibies-club/vibies/pull/30) merged after Member
-review. Its [post-merge receipt](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630352747)
-records main at `a5fabc1`, all three migration versions, and removal of its
-ephemeral Preview. The [Production follow-up](https://github.com/vibies-club/vibies/pull/30#issuecomment-5630665472)
-records three App settings moved to Production and a passing Ready redeploy.
-Live Production Member publishing remains pending while Builder is offline. See
-[Database deployment](docs/DATABASE-DEPLOYMENT.md) for the rollout details.
-
-[PR #34](https://github.com/vibies-club/vibies/pull/34) merged the
-[Vercel Preview cleanup](docs/VERCEL-PREVIEW-CLEANUP.md) on 2026-09-12. Its
-first GitHub Actions run with the dedicated project token remains a post-merge
-check. [PR #40](https://github.com/vibies-club/vibies/pull/40) merged on
-2026-09-13 and raised the class to eight Member places under the amended D-003.
-[PR #42](https://github.com/vibies-club/vibies/pull/42) merged the same day and
-records the Instructor-run review agent account in D-017.
-
-[Issue #37](https://github.com/vibies-club/vibies/issues/37) approves one
-reusable Free staging environment and a manual exact-commit selection workflow.
-The [staging guide](docs/DATABASE-DEPLOYMENT.md#reusable-staging) records its
-setup, use, limits, and receipts. The first real Action deployment with the
-deploy key and the live acceptance checks remain post-merge checks.
+The [progress record](docs/PROGRESS.md) is the current snapshot and the
+[roadmap](docs/ROADMAP.md) is the sequence. Contributors and their agents start
+from the [contributing guide](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md). The
+[deployment guide](docs/DATABASE-DEPLOYMENT.md#reusable-staging) owns the
+staging path that hosted proof uses.
 
 ## Run the demo locally
 
@@ -118,7 +83,7 @@ setup message when fixtures are absent. `npm run check:access-web` needs the
 built server and its separate isolated fixtures and also fails when setup is
 missing. Run the exact commands in the
 [project setup guide](docs/PROJECT-SETUP.md#local-and-ci-commands). These tests
-never use the live Preview database.
+never use a hosted database.
 
 The live Supabase check is a separate human-run command because it needs the
 values in `.env.local`:
