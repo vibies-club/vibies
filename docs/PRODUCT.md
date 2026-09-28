@@ -1,5 +1,7 @@
 # Vibies Product
 
+<!-- impeccable:product-schema 1 -->
+
 [Documentation home](../README.md) · [Domain model](DOMAIN.md) ·
 [Workflows](WORKFLOWS.md) · [Community rules](../RULES.md)
 
@@ -13,6 +15,50 @@ product terms are defined once in the [domain model](DOMAIN.md).
 
 This document defines the product experience and its boundaries. It does not
 choose an interface, database, API, or integration design.
+
+## Platform
+
+web
+
+## Users
+
+Beginner Members build and share projects in a private class community. The
+Instructor approves access and moderates the space. The [domain model](DOMAIN.md#people-and-access)
+defines these roles.
+
+## Positioning
+
+Vibies combines instructor-approved membership, selected private GitHub
+repositories, Member-written project details, and progress shared by nickname.
+
+## Operating Context
+
+Members sign in with GitHub, publish a first Personal Project to complete
+onboarding, and use the private Community through the web app. The
+[workflows](WORKFLOWS.md) define each action and its access rules.
+
+## Brand Commitments
+
+The name is Vibies. Member-facing identity uses nicknames. Product copy follows
+the repository's [plain, warm writing rules](../CONTRIBUTING.md#writing-rules).
+
+## Evidence on Hand
+
+The public `/demo` uses synthetic project data. The [progress record](PROGRESS.md)
+tracks implemented product features and proof still pending. It does not provide
+member testimonials or public Member projects for marketing use.
+
+## Product Principles
+
+- Welcome unfinished work and useful questions.
+- Give feedback about the work with a keep point and an improve point.
+- Keep access instructor-approved and member identity private.
+- Share selected repository metadata and Member-written details, not source files.
+
+## Accessibility & Inclusion
+
+Vibies welcomes beginners of different ages. Roadmap controls work with a
+keyboard, and their status remains clear without color alone.
 
 ## Community boundary
 
