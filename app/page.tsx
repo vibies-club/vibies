@@ -24,7 +24,7 @@ function Hex({ className, children }: { className?: string; children: React.Reac
 function Cell({ n, icon, title, note }: { n: number; icon?: StaticImageData; title: string; note?: string }) {
   return <li className={`hive-cell hive-cell-${n}`} style={{ "--i": n } as React.CSSProperties}>
     <Hex>
-      {icon && <Image src={icon} alt="" sizes="96px" className="hive-icon" />}
+      {icon && <Image src={icon} alt="" sizes="96px" className="hive-icon" loading="eager" />}
       <span className="hive-title">{title}</span>
       {note && <span className="hive-note">{note}</span>}
     </Hex>
