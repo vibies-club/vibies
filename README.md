@@ -32,6 +32,7 @@ definition instead of creating a different version of it.
 | [Shared error log](docs/ERROR_LOG.md) | Solved class workflow blockers and how to find or contribute a fix |
 | [Agent instructions](AGENTS.md) | How agents must work in this repository |
 | [Product](docs/PRODUCT.md) | Purpose, scope, roles, permissions, privacy boundaries, and exclusions |
+| [Landing page brief](docs/LANDING-BRIEF.md) | The exact copy and limits of the public home page |
 | [Domain](docs/DOMAIN.md) | Canonical concepts, relationships, constraints, states, and the Mermaid graph |
 | [Demo data model](docs/DATA-MODEL.md) | The synthetic Supabase table used by the public demo |
 | [Workflows](docs/WORKFLOWS.md) | How access, projects, roadmaps, discussion, feedback, moderation, connection, and deletion work |
@@ -65,7 +66,7 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000`. The root path redirects to `/demo`.
+Open `http://localhost:3000` for the public home page. The sample project remains at `/demo`.
 The demo links to `/sign-in` for private Community access.
 
 Run the local checks with:
