@@ -6,6 +6,7 @@ import iconAccess from "../public/home/icon-access.png";
 import iconShare from "../public/home/icon-share.png";
 import iconFeedback from "../public/home/icon-feedback.png";
 import iconCode from "../public/home/icon-code.png";
+import iconClass from "../public/home/icon-class.png";
 import "./home.css";
 
 const display = localFont({ src: "./fonts/bricolage-grotesque.woff2", weight: "200 800", variable: "--font-display", display: "swap" });
@@ -68,7 +69,7 @@ export default function Home() {
           <Cell n={3} icon={iconShare} title="Project sharing" note="Done" />
           <Cell n={4} icon={iconCode} title="Open source" note="On GitHub" />
           <Cell n={5} icon={iconFeedback} title="Feedback" note="Planned" />
-          <Cell n={6} title="Built by" note="the class" />
+          <Cell n={6} icon={iconClass} title="Built by" note="the class" />
         </ul>
         <figcaption id="hive-caption" className="home-label">Real project · Vibies, built by our class</figcaption>
       </figure>
