@@ -151,6 +151,13 @@ html:has(.home) { scroll-behavior: smooth; background: #fdf6dc; }
 .home .home-benefits h3 { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; }
 .home .home-benefits p { margin-top: 6px; font-size: 17px; line-height: 1.45; color: var(--ink-2); }
 
+/* Common errors demo */
+.home .home-errors { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px, 4vw, 56px); padding: clamp(64px, 8vw, 104px) var(--gutter); background: var(--paper); border-block: 1px solid #f3dca6; }
+.home .home-errors h2 { font-size: clamp(38px, 5vw, 72px); line-height: 1; font-weight: 800; letter-spacing: -0.035em; text-wrap: balance; }
+.home .home-errors p { font-size: 19px; line-height: 1.45; color: var(--ink-2); max-width: 40ch; }
+.home .home-errors p + p { margin-top: 14px; font-size: 17px; }
+.home .home-errors a { display: inline-block; margin-top: 22px; font-weight: 700; color: var(--amber-ink); }
+
 /* Coming soon */
 .home .home-coming {
   display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
@@ -197,6 +204,7 @@ html:has(.home) { scroll-behavior: smooth; background: #fdf6dc; }
 }
 
 @media (max-width: 760px) {
+  .home .home-errors { grid-template-columns: 1fr; }
   .home .home-steps li::after { display: none; }
   .home .hive-title { white-space: nowrap; }
   .home .home-roadmap-title { font-size: 13.5px; }
