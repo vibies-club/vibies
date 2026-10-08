@@ -53,3 +53,7 @@ a preinstalled engine with `IMPECCABLE_BIN`, or a writable cache with
 In Codex, type `/hooks`, find the Impeccable hooks, and approve them. Hook approval
 is separate from project trust and must be done in each environment. Start the
 next turn or a new chat to load newly installed skills.
+
+Installed source corrections: grill-me reads its grilling dependency directly
+on Codex runtimes without a Skill tool; three React skill links point to their
+installed rules directory. The lock file retains the upstream source identity.

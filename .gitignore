@@ -14,3 +14,4 @@ supabase/.branches/
 .impeccable/live/
 .playwright-cli/
 .agents/skills/impeccable/scripts/bin/
+.impeccable/config.local.json

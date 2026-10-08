@@ -15,3 +15,14 @@ The first clean-checkout attempt used Node 18 and failed. These results replace
 that attempt after selecting the supported Node 24 runtime.
 
 GitHub CI and required approving review must cover the final PR head before merge.
+
+## PR review corrections
+
+- Both committed Unix hook commands ran from `docs/` and reached engine 0.1.11. The audit log recorded PostToolUse and Stop; both exited 0. Windows commands use the same Git-root resolution, but Windows execution is not verified on this Mac.
+- The grill-me shortcut now reads its installed grilling dependency directly.
+- Fixed three upstream relative links in the React skill package.
+- Expanded Lychee coverage to hidden skill and design folders: 729 total, zero errors.
+- Local Impeccable overrides and hook consent are ignored in fresh clones.
+
+Raw PR review text is preserved byte-for-byte inside a text fence so temporary
+checkout source links are recorded as transcript text rather than durable links.
