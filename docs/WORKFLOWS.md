@@ -1,11 +1,11 @@
 # Vibies Workflows
 
-[Documentation home](../README.md) · [Product definition](PRODUCT.md) ·
+[Documentation home](../README.md) · [Product definition](../PRODUCT.md) ·
 [Domain model](DOMAIN.md) · [Community rules](../RULES.md)
 
 This document describes how people and Projects move through Vibies. Canonical
 terms and state meanings live in the [domain model](DOMAIN.md), while permissions
-and product boundaries live in the [product definition](PRODUCT.md).
+and product boundaries live in the [product definition](../PRODUCT.md).
 
 Personal Project connection, sync, publication, disconnection, and deletion
 workflows apply only to Personal Projects. Issue #6 does not assign the
@@ -431,7 +431,7 @@ Hidden. The protected action carries the Roadmap version that the page displayed
 4. Everyone who can view the Project can view its Roadmap and Blocked notes.
 
 Placement and the exact display strings live in the
-[product definition](PRODUCT.md#personal-project-roadmaps).
+[product definition](../PRODUCT.md#personal-project-roadmaps).
 
 **Outcome: persistence and safety:** Project state changes preserve the Roadmap,
 deleting the Personal Project deletes its Milestones, and a stale write changes

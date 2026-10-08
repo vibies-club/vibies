@@ -57,7 +57,7 @@ rounded:
   button: "12px"
   card: "18px"
 spacing:
-  gutter: "clamp(20px, 5vw, 72px)"
+  gutter: "max(clamp(20px, 5vw, 72px), calc((100% - 1200px) / 2))"
   section: "clamp(64px, 8vw, 104px)"
   stack-sm: "14px"
   stack-md: "22px"
@@ -93,6 +93,8 @@ components:
 # Design System: Vibies
 
 ## Overview
+
+Recorded from `app/page.tsx` and `app/home.css`. This describes the home identity. Other screens must adopt this identity through reviewed UI work; their current differences are not alternative design systems.
 
 **Creative North Star: "The Hive in Daylight"**
 
@@ -164,7 +166,7 @@ A single warm family: cocoa ink on pale honey, with honey, gold, and amber doing
 
 ## Layout
 
-Full-bleed bands with a fluid side gutter (gutter token). The hero is centered: headline, one support line, one button, and below it the hive figure, max 1200px wide, with the bee in the middle and six hexagon cells placed around it in two columns of three. Sections below are left-aligned. The problem section is a two-column split with a vertical comb-line divider. How it works is a row of three hexagons, max 360px each, joined by a horizontal line and small hexagon connectors. Benefits is a three-column list with warm-rule column dividers.
+Full-bleed bands with a fluid side gutter (gutter token), keeping content in a centered 1200px column on wide screens. The hero is centered: headline, one support line, one button, and below it the hive figure, max 1200px wide, with the bee in the middle and six hexagon cells placed around it in two columns of three. The problem section is centered on a paper band, with a small honeycomb ornament below its heading. How it works is a row of three hexagons, max 360px each, joined by a horizontal line and small hexagon connectors. Benefits is a three-column list with warm-rule column dividers.
 
 Vertical rhythm comes from the section token, with Benefits slightly larger (clamp(72px, 9vw, 120px)). Bands alternate: honey ground, paper band, a hexagon chain divider, honey ground, the Coming soon glow band, and a paper footer.
 
@@ -224,7 +226,7 @@ Text links inherit their color, underline at 1.5px with a 0.22em offset, and tak
 Rasters live in public/home/: the bee mascot, four glossy honey icons (access, share, feedback, code), the honeycomb glow behind Coming soon, and the official course logo. Icons are warm, glossy, and honey colored to match the bee. Every shipping raster carries its provenance: each PNG embeds its generation prompt in a tEXt chunk, honeycomb-glow.webp has a .json sidecar with its prompt, and logo.png embeds its origin as the official course logo. The prompt files live in .impeccable/mocks/redesign/assets/. New rasters follow the same practice.
 
 ### Motion
-One ease for everything: cubic-bezier(0.16, 1, 0.3, 1). The hero rises in on load in a short stagger (0.9s, 0.08s steps), the bee lands and then floats 8px on a 6s loop, and the hive cells pop in one by one. Below the hero, each section reveals once on scroll through view timelines, and connector lines draw across. All motion sits behind prefers-reduced-motion: no-preference, and smooth scrolling turns off under reduced motion.
+The existing home implementation uses cubic-bezier(0.16, 1, 0.3, 1). The hero rises in on load in a short stagger (0.9s, 0.08s steps), the bee lands and then floats 8px on a 6s loop, and the hive cells pop in one by one. Below the hero, each section reveals once on scroll through view timelines, and connector lines draw across. Entrance and scroll animations sit behind prefers-reduced-motion: no-preference, and smooth scrolling turns off under reduced motion. Hover transforms remain active in the current CSS. These are observed implementation facts; new motion follows [the craft playbook](docs/CRAFT.md). The longer entrances, repeated reveals, idle float, forced hero line break, and moving reduced-motion hover states need a separate UI correction. They are not rules for new screens.
 
 ## Do's and Don'ts
 
@@ -234,7 +236,7 @@ One ease for everything: cubic-bezier(0.16, 1, 0.3, 1). The hero rises in on loa
 - **Do** use Amber Ink for any accent text below display size; save Honey Accent for display-size headline words.
 - **Do** set headlines in Bricolage Grotesque 800 with negative tracking, and facts and states in JetBrains Mono.
 - **Do** keep one honey primary button per surface, with the 3px Amber Ink focus outline on every interactive element.
-- **Do** run motion on the house ease and gate it behind prefers-reduced-motion.
+- **Do** follow the motion policy in [the craft playbook](docs/CRAFT.md) and ship reduced-motion behavior with each animation change.
 - **Do** embed the generation prompt or origin in every new raster, as the current set does.
 
 ### Don't:

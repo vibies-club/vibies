@@ -1,0 +1,9 @@
+VERDICT: approve with changes
+
+1. **Add the required GitHub approval to the exit conditions.** `notes/plans/55.md:40` checks final-head CI but omits the approving Member or `Trident-app` review required by `CONTRIBUTING.md:11`. A local `ship` verdict could otherwise be reported as ready prematurely. Require approval on the final head and re-request it after every push; leave merging to the Instructor.
+
+2. **Make the exact configuration targets reviewable.** The plan refers to “specified models,” “sandbox boundaries,” and an “approved prompt” without reproducing their expected values. `.codex/agents/worker.toml` currently omits `sandbox_mode`. Add the approved model/reasoning/sandbox matrix, state whether worker inheritance is intentional, and include the authoritative workflow and skill-table text used for equality checks.
+
+3. **Prove the hook works from the committed package.** Excluding the platform binary makes the launcher depend on an installed engine or a network download into a writable cache. TOML/JSON parsing will pass even when that startup fails. Add explicit project-trust, engine-bootstrap, and separate hook-approval instructions, plus a fresh-checkout smoke check that exercises the hook without relying on the implementer’s existing engine installation.
+
+4. **Specify the approved archive manifest and verification order.** `notes/plans/55.md:25` names only a count of eleven files, so a fresh implementer cannot verify the file-by-file approval. List the exact permitted paths, record source hashes before relocation, verify destination hashes before removing source copies, and record the private archive location and restoration procedure outside the PR.

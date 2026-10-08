@@ -1,0 +1,31 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "project_root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0; cd \"$project_root\" && { [ ! -f \".agents/skills/impeccable/scripts/impeccable\" ] || \".agents/skills/impeccable/scripts/impeccable\" hook; }",
+            "commandWindows": "for /f \"delims=\" %R in ('git rev-parse --show-toplevel 2^>nul') do @(cd /d \"%R\" & if exist \".agents\\skills\\impeccable\\scripts\\impeccable.cmd\" call \".agents\\skills\\impeccable\\scripts\\impeccable.cmd\" hook)",
+            "timeout": 5,
+            "statusMessage": "Checking UI changes"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "project_root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0; cd \"$project_root\" && { [ ! -f \".agents/skills/impeccable/scripts/impeccable\" ] || \".agents/skills/impeccable/scripts/impeccable\" hook; }",
+            "commandWindows": "for /f \"delims=\" %R in ('git rev-parse --show-toplevel 2^>nul') do @(cd /d \"%R\" & if exist \".agents\\skills\\impeccable\\scripts\\impeccable.cmd\" call \".agents\\skills\\impeccable\\scripts\\impeccable.cmd\" hook)",
+            "timeout": 30,
+            "statusMessage": "Design deep pass"
+          }
+        ]
+      }
+    ]
+  }
+}

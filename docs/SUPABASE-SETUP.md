@@ -121,8 +121,8 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000`. Confirm that `/` redirects to `/demo` and that the
-page shows the sample row from Supabase. Stop and restart `npm run dev` after a
+Open `http://localhost:3000` for the landing page. Open `/demo` and confirm that
+it shows the sample row from Supabase. Stop and restart `npm run dev` after a
 change to `.env.local` so the application reads the new values.
 
 Run the local checks:

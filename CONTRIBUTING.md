@@ -6,31 +6,13 @@ contributor follows. Agents follow the same rules through
 
 ## The workflow
 
-vague idea → grill → Ready → plan → Skeptic → build → prove → PR → review → staging → merge
-
-1. Open an issue for your idea. Grill it until no branch is unresolved:
-   interview the idea until every open question has an answer.
-2. Make it Ready: write what to build, the numbered acceptance criteria that
-   say when it is done, and a proof plan. The Ready issue template guides you.
-3. Post your plan on the issue and wait for the Instructor's approval before
-   you change code. Then run a Skeptic pass on the approved plan and post it:
-   attack the plan, record what breaks it and the answers.
-4. Branch from current `main` with a `feature/`, `fix/`, `docs/`, or
-   `chore/` prefix. Keep changes small. One issue, one branch, one PR.
-5. Prove your work against the acceptance criteria before you open the PR.
-   Every claim needs a receipt: the command you ran and what it showed, a CI
-   run link, or the staging receipt for a hosted claim.
-6. Open a PR. The template carries the six-check merge gate. Complete it
-   honestly. The three required checks must be green on the head commit.
-7. Every PR needs at least one approving review from a Member or from the
-   Instructor's review agent account `Trident-app` (see
-   [D-017](docs/DECISIONS.md#d-017-review-prs-with-an-instructor-run-agent-account)).
-   The review agent runs the merge gate and approves only after the last
-   commit it checked. After every push, re-request the review.
-8. If a criterion needs a browser or a real sign-in, ask the Instructor in the
-   PR for hosted proof on staging. See [Hosted proof on staging](#hosted-proof-on-staging).
-9. The instructor (`0xinBeta`) is the only person who merges to main. The
-   merge deploys `main` to production and applies its migrations.
+Follow the lanes and steps in [AGENTS.md](AGENTS.md#how-work-flows), the one
+home of the development workflow. The Instructor is the only person who merges.
+Every PR needs an approving review from a Member or the Instructor's review
+agent `Trident-app`, as [D-017](docs/DECISIONS.md#d-017-review-prs-with-an-instructor-run-agent-account)
+defines. An approval covers only the commit it checked; re-request review after
+every push. Both lanes follow the merge gate, required checks, staging rules,
+and post-merge receipts below.
 
 ## The merge gate: six checks
 

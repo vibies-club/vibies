@@ -1,0 +1,7 @@
+TASK: Use your built-in image_gen tool (the $imagegen skill, built-in mode, NOT the CLI) to generate exactly ONE image asset for a website. Do not write code. Then copy the generated file from $CODEX_HOME/generated_images/... to the exact workspace path in OUTPUT, overwriting nothing else, and print the saved path and the exact prompt string you gave image_gen.
+
+REFERENCES (attached): variant-3b-light.png is the approved landing page comp (light pale honey theme, honeycomb hexagons, Vibies bee). bee-mascot.jpg is the official Vibies bee mascot. Match the comp's rendering style: glossy, soft 3D, warm honey gold #f5b73d and amber #d98324 with deep cocoa brown #2a1a08 details, soft warm studio light. No text, no letters, no logos, no watermark. No purple, blue, pink, or neon.
+
+ASSET:
+The Vibies bee mascot, exactly the character in bee-mascot.jpg (gold hard hat with hexagon emblem, big friendly eyes, fuzzy gold and cocoa striped body, translucent honeycomb wings, dark limbs), SITTING cross-legged and typing on a gold laptop with a hexagon emblem, on a thick glossy golden hexagonal platform, as in the center of the comp's hero. Full figure, centered, three-quarter front view, generous margin on all sides. TRANSPARENT background (real alpha, no backdrop, no floor, only a very soft contact shadow under the platform). Square, high resolution.
+OUTPUT: public/home/bee.png

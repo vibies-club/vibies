@@ -1,107 +1,65 @@
-# AGENTS.md: Rules for agents working in this repository
+# Agent rules: Vibies
 
-This is the Vibies platform repository. It is open source and built by the
-Vibies class. You work for one contributor, usually a student. The instructor
-(`0xinBeta`) owns the repository and is the only person who merges to main.
+## Product
 
-## How to talk to your human
+Vibies is a private community where beginners build and share real projects, with one Instructor and eight active Member places. GitHub sign-in and Instructor approval control access; Member-facing identity uses nicknames. Read [PRODUCT.md](PRODUCT.md) for product truth and [DESIGN.md](DESIGN.md) for the visual system.
 
-- Talk to the user with ASD-STE100 (Simplified Technical English).
-- Most contributors are beginners. Explain every step in plain language.
+## Stack and commands
 
-## The workflow
+The app root is the repository root. The stack is Node.js 24, npm, Next.js 16 App Router, React 19, TypeScript, Supabase PostgreSQL, and direct GitHub OAuth.
 
-The class method, applied to every change:
+- Development: `npm run dev`.
+- Build: `npm run build`.
+- Static checks: `npm run typecheck`.
+- Offline tests: `npm test`.
+- Lint: no lint script is configured. Do not report typecheck as a lint result.
 
-vague idea → grill → Ready → plan → Skeptic → build → prove → PR → review → staging → merge
+Use [the database deployment guide](docs/DATABASE-DEPLOYMENT.md) for migration checks and [CONTRIBUTING.md](CONTRIBUTING.md) for the required CI gates.
 
-1. Start from a vague idea or issue. Grill it until no branch is unresolved.
-   The taught way is the `$grill-me` skill; any equivalent interview works.
-2. Write the result as a Ready issue: what to build, plus numbered acceptance
-   criteria that say when it is done, plus a proof plan.
-3. Post your plan on the issue and wait for the Instructor's approval before
-   you change code.
-4. Run a Skeptic pass on the approved plan and post it on the issue: attack
-   it, find what breaks it, record the answers.
-5. Branch from current `main` with a `feature/`, `fix/`, `docs/`, or `chore/`
-   prefix. Small changes. One issue, one branch, one PR.
-6. Prove the work against the acceptance criteria. Every claim needs a
-   receipt. Every loop needs an exit condition.
-7. Open the PR with the six-check gate filled honestly. The three required
-   checks must be green on the head commit.
-8. Get one approving review from a Member or from the Instructor's review
-   agent `Trident-app`, as [CONTRIBUTING step 7](CONTRIBUTING.md#the-workflow)
-   defines. After every push, re-request the review; an approval covers only
-   the commit it checked.
-9. When a criterion needs a browser or a real sign-in, ask the Instructor in
-   the PR for hosted proof on staging. See below for when a PR qualifies.
-10. The Instructor merges. The merge deploys `main` to production and applies
-    its migrations.
+## Design and craft
 
-## The three required checks
+Before every UI change, read [DESIGN.md](DESIGN.md) and [docs/CRAFT.md](docs/CRAFT.md) and follow them. Read the craft playbook for motion, video, 3D, and feature tasks too. Every screen follows DESIGN.md; a screen that does not is a bug. Every UI change aims for a polished, award-level result.
 
-Every PR must pass `app-check`, `migration-check`, and `links` on its head
-commit. Make a red check green before you ask for review. What each check runs
-and which files take the fast migration path are defined in
-[CONTRIBUTING](CONTRIBUTING.md#the-three-required-checks).
+When the user picks a new design direction through a comp, update DESIGN.md in the same PR with `$impeccable document`, then open a follow-up issue to bring every other screen in line.
 
-## Hosted proof on staging
+## How work flows
 
-Vibies has one shared test site whose database follows `main`'s merged schema.
-The Instructor puts one PR on it at a time; contributors never run that
-workflow. Before you ask, merge current `main` into your branch, push, and
-confirm the checks are green. A PR that changes `supabase/` cannot use staging
-before it merges. Sign-in on staging needs the Instructor's approval there,
-separately from production. Quote the workflow's receipt comment in your PR.
-The eligibility rules are in
-[CONTRIBUTING](CONTRIBUTING.md#hosted-proof-on-staging).
+> When I give you a task, you are the orchestrator. Decide the lane first and tell me in one sentence which lane and why.
+>
+> **Small lane** (copy, a style fix, a small bug): branch, change, build, screenshot if visual, pull request.
+>
+> **Feature lane** (anything new, anything with open choices, anything touching data, sign-in, or money):
+> 1. Understand. If you do not fully understand what I want, say "I don't fully understand what you want. Let's run a grill-me session." and run `$grill-me` until nothing is unclear.
+> 2. Technology. If the task needs a technology I have not chosen yet, give me 2 or 3 options in a table with pros, cons, cost, and difficulty, plus your recommendation. Wait for my choice.
+> 3. Issue. Open a GitHub issue with numbered acceptance criteria.
+> 4. Plan. Write the plan to `notes/plans/<issue>.md` and post it on the issue once.
+> 5. Plan review. Spawn `plan_reviewer` fresh, with no conversation history (`fork_turns: "none"`), giving it only the issue, the plan path, and the docs to read. Revise the plan from its findings. Save its raw output verbatim to `notes/reviews/plan-<issue>.md`, never a summary.
+> 6. Build. Create a branch. Use `explorer` to gather context and `worker` agents for bounded parts. For UI work, start comp-first: use `$impeccable` with `imagegen` to make 3 concepts, show them to me, and build the one I pick.
+> 7. Prove. Run the build. For UI, take Playwright screenshots at 390, 768, 1280, and 1440 pixels wide into `notes/shots/<issue>/`, open every screenshot and look at it, fix what is wrong, and run `$impeccable critique` and `$impeccable polish`. On macOS the browser often cannot start inside the Codex sandbox: when that happens, ask me to approve running Playwright outside the sandbox. Never skip the visual check silently, and never say the UI is done without having looked at the screenshots.
+> 8. Pull request. Open it with the issue number, the screenshot paths, and the Vercel preview link (it appears on the pull request a minute after the push; if there is none, say so). Commit only assets the app uses.
+> 9. PR review. Spawn a new `pr_reviewer` for each round, fresh, with no conversation history (`fork_turns: "none"`), giving it only the issue, the plan path, the diff command, and the screenshot paths. Fix every blocker and major finding. At most two rounds. Save each reviewer's raw output verbatim to `notes/reviews/pr-<number>-r<round>.md`, never a summary.
+> 10. Merge. Follow the merge choice recorded in this file: either you merge after a `ship` verdict and tell me, or you tell me the PR is ready with a three-line summary and I merge.
+>
+> Run reviewers in the background while you prepare the next step. Never push to main. After a merge, delete the merged branch. If a turn stops on an error, continue from `notes/plans/` and the git state.
 
-## After merge
+Repository gates still apply to both lanes: use `feature/`, `fix/`, `docs/`, or `chore/` branches from current main, one issue per PR, and an approving Member or `Trident-app` review of the current head. Require green `app-check`, `migration-check`, and `links` checks. Follow [CONTRIBUTING.md](CONTRIBUTING.md) for hosted staging proof and post-merge receipts. Never push to the `staging` ref.
 
-Merging deploys `main` to production and applies its migrations. Keep your
-issue open until every post-merge receipt it asks for is recorded. What else
-happens after a merge is in [CONTRIBUTING](CONTRIBUTING.md#after-merge).
+## Decisions
 
-## Branch rules (hard)
+Settled decisions live in [docs/DECISIONS.md](docs/DECISIONS.md), with one line explaining why. Change an accepted decision through an issue with new evidence.
 
-- Work on feature branches only. Main is protected.
-- All work reaches main through a reviewed PR that the instructor merges.
-  Refuse to push to main, even when your human asks.
-- Never push to the `staging` ref. Only the staging workflow moves it.
+## Skills
 
-## Merge gate: six checks
+When a task matches a row in docs/SKILLS.md, install that skill if it is missing and use it, without asking. Read [the skill catalog](docs/SKILLS.md) for the core and on-demand tables.
 
-Run these yourself before opening a PR. Reviewers run them again. The
-definitions live in [CONTRIBUTING](CONTRIBUTING.md#the-merge-gate-six-checks).
+## Merge choice
 
-1. Expected files only.
-2. Nothing unrelated.
-3. No secrets.
-4. Matches the approved plan.
-5. Build succeeded.
-6. Proof satisfies the acceptance criteria.
+Only the Instructor (`0xinBeta`) merges to main. The user confirmed that the current repository merge rule stays in effect on 2026-10-08. After a `ship` verdict, report that the PR is ready in three lines; leave merging to the Instructor. A local reviewer verdict does not replace the required GitHub approval and CI gates.
 
-## Writing rules
+## Safety and writing
 
-- Every durable artifact is English: docs, code, comments, issues, PRs, and
-  commit messages. Class sessions are spoken in Farsi; the repository stays
-  English.
-- Follow the [writing rules](CONTRIBUTING.md#writing-rules): plain, warm,
-  human sentences, no em dashes or en dashes, no negative parallelisms.
-
-## Safety and privacy (hard)
-
-- Never read or write `.env` files, credentials, or secrets.
-- Nicknames only, as the [safety rules](CONTRIBUTING.md#safety) define. Keep
-  real names, photos, contact details, and all other personal data out of the
-  repository.
-- Community conduct, feedback style, and enforcement live in
-  [RULES.md](RULES.md). Feedback follows its keep-and-improve format.
-
-## Decisions and documentation
-
-- Settled decisions live in [docs/DECISIONS.md](docs/DECISIONS.md) with the
-  reason recorded. To change one, open an issue with new evidence. Silent
-  overrides are never acceptable.
-- Each kind of knowledge has one home; [README.md](README.md) is the index.
-  Link to the authoritative definition instead of copying it.
+- Durable artifacts are English: docs, code, comments, issues, PRs, and commits.
+- Never read or write `.env` files, credentials, or secrets. Keep secret values out of outputs and commits.
+- Nicknames only. Keep real names, photos, contact details, and other personal data out of the repository.
+- Work on feature branches only. Never push to main. All work reaches main through a reviewed PR that the Instructor merges.
+- Follow [CONTRIBUTING.md](CONTRIBUTING.md#writing-rules) for writing and [RULES.md](RULES.md) for conduct and feedback.

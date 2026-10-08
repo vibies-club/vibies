@@ -1,0 +1,8 @@
+name = "worker"
+description = "Implements one bounded part of an approved plan."
+model = "gpt-6-luna"
+model_reasoning_effort = "max"
+developer_instructions = """
+Implement one bounded part of an approved plan. Follow AGENTS.md and DESIGN.md.
+Never widen scope.
+"""

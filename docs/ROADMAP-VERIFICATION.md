@@ -20,7 +20,7 @@ at commit `a0a015b64ec31ccb465f3acd506db31cd42843ab`. It ran
 ownership, order, progress, visibility, limits, and stale writes`, then built
 the application and ran `npm run check:access-web` against synthetic accounts
 and an isolated database. The canonical behavior lives in the
-[domain model](DOMAIN.md), [product definition](PRODUCT.md), and
+[domain model](DOMAIN.md), [product definition](../PRODUCT.md), and
 [workflows](WORKFLOWS.md).
 
 | Receipt | Acceptance criterion | Evidence | Status |

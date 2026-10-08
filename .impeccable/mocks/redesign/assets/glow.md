@@ -1,0 +1,2 @@
+A seamless wide background texture for the "Coming soon" section: a field of softly beveled honeycomb cells in pale honey and warm gold, glowing brightest in the center (#ffd977 to #f5b73d) and fading to pale cream #fff3d6 at the left and right edges, like the bottom section of the comp but WITHOUT any text. Opaque, no objects, no text, calm enough for large dark brown text on top. Wide landscape, the widest size available.
+OUTPUT: public/home/honeycomb-glow.png
