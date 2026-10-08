@@ -183,5 +183,31 @@
       "background": "rgb(246, 245, 239)",
       "signInContent": false
     }
-  }
+  },
+  "retryConfirmation": [
+    {
+      "width": 390,
+      "overflow": false,
+      "headingSize": "44px",
+      "headerTop": 0
+    },
+    {
+      "width": 768,
+      "overflow": false,
+      "headingSize": "44px",
+      "headerTop": 0
+    },
+    {
+      "width": 1280,
+      "overflow": false,
+      "headingSize": "64px",
+      "headerTop": 0
+    },
+    {
+      "width": 1440,
+      "overflow": false,
+      "headingSize": "64px",
+      "headerTop": 0
+    }
+  ]
 }

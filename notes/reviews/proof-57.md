@@ -37,7 +37,7 @@ The only browser console error was the existing missing `/favicon.ico`; no sign-
 
 ## Critique and polish reconciliation
 
-Two independent default agents performed Impeccable Assessment A and B under the allowed agent-type rule. Their raw outputs are saved verbatim in `critique-57-a.md` and `critique-57-b.md`.
+Two independent default agents performed Impeccable Assessment A and B under the allowed agent-type rule. Their raw outputs are saved verbatim in `critique-57-a.txt` and `critique-57-b.txt`.
 
 - A confirmed approved-comp fit, readable layouts and task hierarchy. Its retry-wrap finding was fixed and recaptured. Its suggestion to disable sign-in in the rate-limit state was declined because the user explicitly requires unchanged sign-in behavior; the existing server limit remains authoritative. No new help flow, cancellation, loading logic or retry timer was added.
 - B found the behavior, scope, focus CSS and reduced-motion CSS sound. Live focus and reduced-motion measurements now satisfy its requested proof. Its reported missing headers are contradicted by the root's opened full-page screenshots, which show the brand and account navigation at the top of every required-width capture; the retry confirmation also records header top as zero.
