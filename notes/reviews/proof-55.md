@@ -26,3 +26,10 @@ GitHub CI and required approving review must cover the final PR head before merg
 
 Raw PR review text is preserved byte-for-byte inside a text fence so temporary
 checkout source links are recorded as transcript text rather than durable links.
+
+A fresh explicit `$grill-me` invocation read both installed skill entry points
+and returned the first numbered interview round without changing files.
+The second fresh PR reviewer checked `4ba97d6` and returned `VERDICT: ship`
+with no findings. Raw output is in `pr-56-r2.md`. The subsequent commit contains
+only these reviewer and proof receipts. Required CI and GitHub approval must
+still cover that final head.
