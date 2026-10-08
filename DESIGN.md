@@ -94,7 +94,7 @@ components:
 
 ## Overview
 
-Recorded from `app/page.tsx` and `app/home.css`. This describes the home identity. Other screens must adopt this identity through reviewed UI work; their current differences are not alternative design systems.
+Recorded from `app/page.tsx` and `app/home.css`, with the sign-in extension in `app/sign-in/sign-in-shell.tsx` and `app/sign-in/sign-in.css`. This describes the shared home and sign-in identity. Other screens must adopt this identity through reviewed UI work; their current differences are not alternative design systems.
 
 **Creative North Star: "The Hive in Daylight"**
 
@@ -171,6 +171,10 @@ Full-bleed bands with a fluid side gutter (gutter token), keeping content in a c
 Vertical rhythm comes from the section token, with Benefits slightly larger (clamp(72px, 9vw, 120px)). Bands alternate: honey ground, paper band, a hexagon chain divider, honey ground, the Coming soon glow band, and a paper footer.
 
 Breakpoints: at 900px, benefits stack into one column. At 760px, the hive cells become a two-column grid with the even column offset by half a cell, steps stack vertically on a vertical connector line, and the project card stacks its owner above its main content. At 420px, the primary button goes full width. Navigation links hide progressively below 760px and 420px so the header keeps one row.
+
+### Sign-in layout
+
+Sign-in uses the same daylight identity in a compact task layout: one form column, an offset decorative bee, and an outlined hexagon beside the privacy explanation. A warm-paper footer carries the public demo link. Below 760px the bee follows the form and privacy note; the primary action fills the available column. Keep the existing approval, nickname privacy, status, retry, and native GitHub sign-in behavior. Status messages use a small outlined hexagon and mono text; the whole message stays in a rectangular flow so long messages remain readable. Retry uses the same shell with one honey recovery action. Other access screens retain their existing presentation until separate alignment work.
 
 ## Elevation & Depth
 

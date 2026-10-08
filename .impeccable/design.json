@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-08T11:04:43.524035+00:00",
+  "generatedAt": "2026-10-08T12:14:57.356790+00:00",
   "title": "Design System: Vibies",
   "extensions": {
     "colorMeta": {
@@ -318,6 +318,11 @@
         "name": "reveal",
         "value": "animation-timeline: view(), range entry 5% to entry 55%",
         "purpose": "Observed scroll reveals; entrance animations are gated by reduced motion, while current hover movement is not."
+      },
+      {
+        "name": "sign-in-feedback",
+        "value": "200ms cubic-bezier(0.23, 1, 0.32, 1), translateY(-2px) and trailing arrow translateX(3px)",
+        "purpose": "Pointer feedback only on sign-in; reduced motion removes all movement and transitions. No entrance or idle motion."
       }
     ],
     "breakpoints": [
@@ -332,6 +337,10 @@
       {
         "name": "tablet",
         "value": "900px"
+      },
+      {
+        "name": "sign-in-tablet",
+        "value": "1000px"
       }
     ]
   },
@@ -387,7 +396,7 @@
   ],
   "narrative": {
     "northStar": "The Hive in Daylight",
-    "overview": "Recorded from `app/page.tsx` and `app/home.css`. This describes the home identity. Other screens must adopt this identity through reviewed UI work; their current differences are not alternative design systems.\n\n**Creative North Star: \"The Hive in Daylight\"**\n\nVibies belongs to the course's Honeycomb Terminal family, the slide deck world of dark cocoa, honey, amber, and a hard-hat bee. The home page carries that family into daylight. The ground is pale honey with a faint honeycomb drawn over it, the ink is deep cocoa, and honey and amber carry every accent. The outlined hexagon is the structural shape: facts, steps, badges, and roadmap nodes all sit inside one.\n\nThe mood is warm, bright, and busy in a friendly way, like a hive at work. Headlines are huge and extra bold in Bricolage Grotesque with tight tracking. Small facts and states speak in JetBrains Mono, the terminal half of the family. Depth is soft and warm: amber-tinted drop shadows lift the bee and the cells off the comb, and nothing is harsh or gray.\n\nDensity is generous. Sections breathe with 64px to 120px of vertical padding, and the page alternates between the honey ground and bands of warm paper. Motion is one calm load sequence in the hero, then one reveal per section as it scrolls in, all on a single long ease-out curve.",
+    "overview": "Recorded from `app/page.tsx` and `app/home.css`, with the sign-in extension in `app/sign-in/sign-in-shell.tsx` and `app/sign-in/sign-in.css`. This describes the shared home and sign-in identity. Other screens must adopt this identity through reviewed UI work; their current differences are not alternative design systems.\n\n**Creative North Star: \"The Hive in Daylight\"**\n\nVibies belongs to the course's Honeycomb Terminal family, the slide deck world of dark cocoa, honey, amber, and a hard-hat bee. The home page carries that family into daylight. The ground is pale honey with a faint honeycomb drawn over it, the ink is deep cocoa, and honey and amber carry every accent. The outlined hexagon is the structural shape: facts, steps, badges, and roadmap nodes all sit inside one.\n\nThe mood is warm, bright, and busy in a friendly way, like a hive at work. Headlines are huge and extra bold in Bricolage Grotesque with tight tracking. Small facts and states speak in JetBrains Mono, the terminal half of the family. Depth is soft and warm: amber-tinted drop shadows lift the bee and the cells off the comb, and nothing is harsh or gray.\n\nDensity is generous. Sections breathe with 64px to 120px of vertical padding, and the page alternates between the honey ground and bands of warm paper. Motion is one calm load sequence in the hero, then one reveal per section as it scrolls in, all on a single long ease-out curve.\n\n**Key Characteristics:**\n- Pale honey ground with a faint honeycomb pattern at 16% opacity.\n- Deep cocoa ink; honey and amber as the only accents.\n- The flat-topped outlined hexagon as the shape for every contained fact.\n- Extra-bold Bricolage Grotesque display type with negative tracking.\n- JetBrains Mono for small facts, states, numbers, and navigation.\n- Warm amber drop shadows; no gray shadows.\n- The hard-hat bee mascot as the one character on the page.",
     "keyCharacteristics": [
       "Pale honey ground with a faint honeycomb pattern at 16% opacity.",
       "Deep cocoa ink; honey and amber as the only accents.",

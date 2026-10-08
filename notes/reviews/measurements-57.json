@@ -1,0 +1,187 @@
+{
+  "viewports": [
+    {
+      "width": 390,
+      "state": "normal",
+      "overflow": false,
+      "heading": "A place to build together.",
+      "bodyFont": "display, \"display Fallback\", sans-serif",
+      "bodySize": "19px",
+      "privacySize": "16px",
+      "form": {
+        "method": "post",
+        "action": "/auth/start"
+      }
+    },
+    {
+      "width": 390,
+      "state": "status",
+      "overflow": false,
+      "heading": "A place to build together.",
+      "bodyFont": "display, \"display Fallback\", sans-serif",
+      "bodySize": "19px",
+      "privacySize": "16px",
+      "status": "You have started sign-in 10 times in 10 minutes. Please wait before trying again.",
+      "form": {
+        "method": "post",
+        "action": "/auth/start"
+      }
+    },
+    {
+      "width": 768,
+      "state": "normal",
+      "overflow": false,
+      "heading": "A place to build together.",
+      "bodyFont": "display, \"display Fallback\", sans-serif",
+      "bodySize": "20px",
+      "privacySize": "17px",
+      "form": {
+        "method": "post",
+        "action": "/auth/start"
+      }
+    },
+    {
+      "width": 768,
+      "state": "status",
+      "overflow": false,
+      "heading": "A place to build together.",
+      "bodyFont": "display, \"display Fallback\", sans-serif",
+      "bodySize": "20px",
+      "privacySize": "17px",
+      "status": "You have started sign-in 10 times in 10 minutes. Please wait before trying again.",
+      "form": {
+        "method": "post",
+        "action": "/auth/start"
+      }
+    },
+    {
+      "width": 1280,
+      "state": "normal",
+      "overflow": false,
+      "heading": "A place to build together.",
+      "bodyFont": "display, \"display Fallback\", sans-serif",
+      "bodySize": "22px",
+      "privacySize": "17px",
+      "form": {
+        "method": "post",
+        "action": "/auth/start"
+      }
+    },
+    {
+      "width": 1280,
+      "state": "status",
+      "overflow": false,
+      "heading": "A place to build together.",
+      "bodyFont": "display, \"display Fallback\", sans-serif",
+      "bodySize": "22px",
+      "privacySize": "17px",
+      "status": "You have started sign-in 10 times in 10 minutes. Please wait before trying again.",
+      "form": {
+        "method": "post",
+        "action": "/auth/start"
+      }
+    },
+    {
+      "width": 1440,
+      "state": "normal",
+      "overflow": false,
+      "heading": "A place to build together.",
+      "bodyFont": "display, \"display Fallback\", sans-serif",
+      "bodySize": "22px",
+      "privacySize": "17px",
+      "form": {
+        "method": "post",
+        "action": "/auth/start"
+      }
+    },
+    {
+      "width": 1440,
+      "state": "status",
+      "overflow": false,
+      "heading": "A place to build together.",
+      "bodyFont": "display, \"display Fallback\", sans-serif",
+      "bodySize": "22px",
+      "privacySize": "17px",
+      "status": "You have started sign-in 10 times in 10 minutes. Please wait before trying again.",
+      "form": {
+        "method": "post",
+        "action": "/auth/start"
+      }
+    },
+    {
+      "width": 390,
+      "state": "retry",
+      "overflow": false,
+      "heading": "We could not check your access",
+      "retry": "/sign-in",
+      "signOut": "/auth/sign-out"
+    },
+    {
+      "width": 768,
+      "state": "retry",
+      "overflow": false,
+      "heading": "We could not check your access",
+      "retry": "/sign-in",
+      "signOut": "/auth/sign-out"
+    },
+    {
+      "width": 1280,
+      "state": "retry",
+      "overflow": false,
+      "heading": "We could not check your access",
+      "retry": "/sign-in",
+      "signOut": "/auth/sign-out"
+    },
+    {
+      "width": 1440,
+      "state": "retry",
+      "overflow": false,
+      "heading": "We could not check your access",
+      "retry": "/sign-in",
+      "signOut": "/auth/sign-out"
+    }
+  ],
+  "interactions": {
+    "focus": [
+      {
+        "text": "Vibies home",
+        "tag": "A",
+        "outline": "3px solid rgb(154, 86, 11)",
+        "offset": "4px"
+      },
+      {
+        "text": "Sign in",
+        "tag": "A",
+        "outline": "3px solid rgb(154, 86, 11)",
+        "offset": "4px"
+      },
+      {
+        "text": "Continue with GitHub",
+        "tag": "BUTTON",
+        "outline": "3px solid rgb(154, 86, 11)",
+        "offset": "4px"
+      },
+      {
+        "text": "View the public demo",
+        "tag": "A",
+        "outline": "3px solid rgb(154, 86, 11)",
+        "offset": "4px"
+      }
+    ],
+    "reduced": {
+      "transform": "none",
+      "transition": "0s",
+      "arrowTransform": "none"
+    },
+    "narrow": {
+      "width": 320,
+      "overflow": false
+    },
+    "sibling": {
+      "className": "access",
+      "font": "Arial, Helvetica, sans-serif",
+      "background": "rgb(246, 245, 239)",
+      "signInContent": false
+    }
+  }
+}
