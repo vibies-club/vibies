@@ -44,6 +44,10 @@ Two independent default agents performed Impeccable Assessment A and B under the
 - The hook found no deterministic issues in the changed sign-in page, shell and CSS. Its Arial finding belongs to unchanged global styling and is left standing without suppression. The unrelated orphaned errors brief remains unchanged. The design sidecar was updated narrowly with the documented sign-in extension.
 - The installed Impeccable phase CLI found the previous landing build state and did not create a separate state for the supplied session ID. That unrelated state was preserved. This receipt does not claim its previous landing `ship` verdict as sign-in approval; the independent PR review supplies the sign-in verdict.
 
+## PR review correction
+
+Round 1 requested the documented deeper warm shadow and matching lift/arrow feedback on hover and keyboard focus. The scoped CSS now provides those states and explicitly removes their movement under reduced motion. The final build passed and interaction measurements were repeated; raw review is in `pr-59-r1.md`.
+
 ## Remaining repository gates
 
 Exact-head `app-check`, `migration-check`, `links`, an approving Member or Trident-app review, and Instructor-run hosted staging proof are required before merge. A preview deployment alone is not hosted behavior proof. The Instructor alone merges.

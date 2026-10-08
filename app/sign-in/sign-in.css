@@ -88,6 +88,11 @@
 .sign-in .sign-in-body button svg { flex: none; }
 .sign-in .sign-in-body button svg:last-child { margin-left: auto; transition: transform 200ms cubic-bezier(.23, 1, .32, 1); }
 .sign-in .sign-in-body button span { flex: 1; text-align: center; }
+.sign-in .sign-in-body :is(button, .button):focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 1px 0 rgb(255 255 255 / .7) inset, 0 14px 28px -10px rgb(154 86 11 / .6);
+}
+.sign-in .sign-in-body button:focus-visible svg:last-child { transform: translateX(3px); }
 .sign-in .sign-in-body :is(button, .button):active { transform: translateY(1px); }
 .sign-in .sign-in-privacy { display: flex; align-items: center; gap: 22px; margin-top: 32px; }
 .sign-in .sign-in-privacy .hint { margin: 0; font-size: 17px; line-height: 1.45; color: var(--signin-support); }
@@ -116,7 +121,7 @@
 .sign-in > footer a { display: inline-flex; align-items: center; min-height: 44px; color: var(--signin-accent); }
 
 @media (hover: hover) and (pointer: fine) {
-  .sign-in .sign-in-body :is(button, .button):hover { transform: translateY(-2px); }
+  .sign-in .sign-in-body :is(button, .button):hover { transform: translateY(-2px); box-shadow: 0 1px 0 rgb(255 255 255 / .7) inset, 0 14px 28px -10px rgb(154 86 11 / .6); }
   .sign-in .sign-in-body button:hover svg:last-child { transform: translateX(3px); }
 }
 @media (max-width: 1000px) {
@@ -143,5 +148,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .sign-in .sign-in-body :is(button, .button), .sign-in .sign-in-body button svg:last-child { transition: none; transform: none; }
-  .sign-in .sign-in-body :is(button, .button):is(:hover, :active), .sign-in .sign-in-body button:hover svg:last-child { transform: none; }
+  .sign-in .sign-in-body :is(button, .button):is(:hover, :active, :focus-visible), .sign-in .sign-in-body button:is(:hover, :focus-visible) svg:last-child { transform: none; }
 }

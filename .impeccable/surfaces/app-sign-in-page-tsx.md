@@ -21,6 +21,6 @@ FIRST VIEWPORT: Logo and account navigation above an inset form column; a natura
 
 FORM: User selected concept 1 on 2026-10-08 after viewing all three concepts. Approved comp: `.impeccable/mocks/sign-in-57/concept-1.png`; its prompt sidecar records approval. Surface seed: 47f35a98, dealt composition indices 7, 3 and 4.
 
-MOTION: Pointer-only button and trailing-arrow feedback, 200ms house ease. No entrance or idle animation. Reduced motion removes movement and transitions.
+MOTION: Button and trailing-arrow hover/focus feedback, 200ms house ease. No entrance or idle animation. Reduced motion removes movement and transitions.
 
 PROOF: Normal, longest rate-limit message and retry at 390, 768, 1280 and 1440 pixels. Keyboard, reduced-motion, 320px reflow, isolated HTTP behavior and shared-shell checks are recorded in `notes/reviews/proof-57.md` and `notes/reviews/measurements-57.json`.

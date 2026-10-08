@@ -209,5 +209,27 @@
       "headingSize": "64px",
       "headerTop": 0
     }
-  ]
+  ],
+  "feedback": {
+    "normal": {
+      "transform": "none",
+      "shadow": "rgba(255, 255, 255, 0.7) 0px 1px 0px 0px inset, rgba(154, 86, 11, 0.55) 0px 10px 24px -10px",
+      "arrow": "none"
+    },
+    "hover": {
+      "transform": "matrix(1, 0, 0, 1, 0, -2)",
+      "shadow": "rgba(255, 255, 255, 0.7) 0px 1px 0px 0px inset, rgba(154, 86, 11, 0.6) 0px 14px 28px -10px",
+      "arrow": "matrix(1, 0, 0, 1, 3, 0)"
+    },
+    "focus": {
+      "transform": "matrix(1, 0, 0, 1, 0, -2)",
+      "shadow": "rgba(255, 255, 255, 0.7) 0px 1px 0px 0px inset, rgba(154, 86, 11, 0.6) 0px 14px 28px -10px",
+      "arrow": "matrix(1, 0, 0, 1, 3, 0)"
+    },
+    "reduced": {
+      "transform": "none",
+      "shadow": "rgba(255, 255, 255, 0.7) 0px 1px 0px 0px inset, rgba(154, 86, 11, 0.6) 0px 14px 28px -10px",
+      "arrow": "none"
+    }
+  }
 }

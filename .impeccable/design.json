@@ -322,7 +322,7 @@
       {
         "name": "sign-in-feedback",
         "value": "200ms cubic-bezier(0.23, 1, 0.32, 1), translateY(-2px) and trailing arrow translateX(3px)",
-        "purpose": "Pointer feedback only on sign-in; reduced motion removes all movement and transitions. No entrance or idle motion."
+        "purpose": "Hover and keyboard-focus feedback on sign-in; reduced motion removes all movement and transitions. No entrance or idle motion."
       }
     ],
     "breakpoints": [
