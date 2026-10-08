@@ -1,43 +1,42 @@
 # Vibies
 
-Vibies is a private community where beginners build real products together.
+A private community where beginners build real products together. One
+Instructor approves access to eight active Member places. Members use nicknames.
+Read [PRODUCT.md](PRODUCT.md) for purpose, permissions, and scope.
 
-## What Vibies is
+## Run locally
 
-- Build and share real projects.
-- Learn by making, asking questions, and helping each other.
-- Give useful feedback about the work, never the person.
-- Welcome unfinished work because every builder starts somewhere.
+Use Node.js 24 and npm:
 
-Vibies is built for one instructor and eight active member places. The detailed
-product purpose, access model, permissions, privacy boundaries, and exclusions
-are documented in the [product definition](docs/PRODUCT.md).
+```sh
+npm ci
+npm run dev
+```
 
-## Community principles
+Open `http://localhost:3000` for the home page and `/demo` for the synthetic
+sample. A human configures the demo through [Supabase setup](docs/SUPABASE-SETUP.md).
+Private access needs the separate [access setup](docs/ACCESS-SETUP.md).
 
-Vibies is designed to be safe and encouraging for builders of all ages. Members use nicknames, protect personal information, and celebrate each other's progress.
-
-Everyone in Vibies follows the [community rules](RULES.md).
+Check with `npm run typecheck`, `npm test`, and `npm run build`.
+Database and HTTP proof use the isolated fixtures in
+[Project setup](docs/PROJECT-SETUP.md#local-and-ci-commands).
+There is no configured lint script.
 
 ## Documentation
-
-These linked documents form the agent-facing knowledge foundation for Vibies.
-Each kind of information has one authoritative home so future work can link to a
-definition instead of creating a different version of it.
 
 | Document | What it defines |
 | --- | --- |
 | [Community rules](RULES.md) | Behavior, safety, privacy conduct, feedback conduct, and enforcement |
-| [Contributing guide](CONTRIBUTING.md) | The workflow every contributor follows, and the merge gate |
+| [Contributing guide](CONTRIBUTING.md) | Merge, CI, staging, safety, and contributor gates |
 | [Shared error log](docs/ERROR_LOG.md) | Solved class workflow blockers and how to find or contribute a fix |
 | [Agent instructions](AGENTS.md) | How agents must work in this repository |
-| [Product](docs/PRODUCT.md) | Purpose, scope, roles, permissions, privacy boundaries, and exclusions |
+| [Product](PRODUCT.md) | Purpose, scope, roles, permissions, privacy boundaries, and exclusions |
 | [Landing page brief](docs/LANDING-BRIEF.md) | The exact copy and limits of the public home page |
 | [Domain](docs/DOMAIN.md) | Canonical concepts, relationships, constraints, states, and the Mermaid graph |
 | [Demo data model](docs/DATA-MODEL.md) | The synthetic Supabase table used by the public demo |
 | [Workflows](docs/WORKFLOWS.md) | How access, projects, roadmaps, discussion, feedback, moderation, connection, and deletion work |
 | [Decisions](docs/DECISIONS.md) | Accepted product and documentation decisions with their reasons |
-| [Progress](docs/PROGRESS.md) | The current development snapshot and immediate next step |
+| [Progress](docs/PROGRESS.md) | Dated development snapshot and pending receipts |
 | [Roadmap](docs/ROADMAP.md) | The `Now`, `Next`, and `Later` sequence |
 | [Supabase setup](docs/SUPABASE-SETUP.md) | Human setup, safety checks, local verification, and Vercel deployment |
 | [Database deployment](docs/DATABASE-DEPLOYMENT.md) | Reviewed migrations, required CI, reusable staging setup and use, and rollout receipts |
@@ -47,61 +46,21 @@ definition instead of creating a different version of it.
 | [Personal Project setup](docs/PROJECT-SETUP.md) | Human App/Preview setup and exact isolated proof commands |
 | [Personal Project verification](docs/PROJECT-VERIFICATION.md) | Phase order and receipts for issue #17 |
 | [Personal Project Roadmap verification](docs/ROADMAP-VERIFICATION.md) | Acceptance receipts for issue #20, two browser rows pending |
+| [Design system](DESIGN.md) | Implemented visual identity |
+| [Craft playbook](docs/CRAFT.md) | UI, motion, video, 3D, and feature quality |
+| [Skills](docs/SKILLS.md) | Core skills, on-demand skills, and installation |
 
-## Current status
+Project agent settings live in `.codex/`, with agent definitions in
+`.codex/agents/`. Project skills live in `.agents/skills/`. Plans, raw reviews,
+and UI screenshots live in `notes/plans/`, `notes/reviews/`, and `notes/shots/`.
+Impeccable's configuration, design sidecar, and surface briefs live in
+`.impeccable/`; its work folders remain local.
 
-The [progress record](docs/PROGRESS.md) is the current snapshot and the
-[roadmap](docs/ROADMAP.md) is the sequence. Contributors and their agents start
-from the [contributing guide](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md). The
-[deployment guide](docs/DATABASE-DEPLOYMENT.md#reusable-staging) owns the
-staging path that hosted proof uses.
-
-## Run the demo locally
-
-Use Node.js 24 and npm. A human must first add the two public Supabase values to
-`.env.local` as described in the [Supabase setup guide](docs/SUPABASE-SETUP.md).
-
-```sh
-npm ci
-npm run dev
-```
-
-Open `http://localhost:3000` for the public home page. The sample project remains at `/demo`.
-The demo links to `/sign-in` for private Community access.
-
-Run the local checks with:
-
-```sh
-npm run typecheck
-npm test
-npm run build
-npm start
-```
-
-`npm test` is offline and needs no fixture database. `npm run test:access` and
-`npm run test:projects` are explicit isolated-database checks. Both fail with a
-setup message when fixtures are absent. `npm run check:access-web` needs the
-built server and its separate isolated fixtures and also fails when setup is
-missing. Run the exact commands in the
-[project setup guide](docs/PROJECT-SETUP.md#local-and-ci-commands). These tests
-never use a hosted database.
-
-The live Supabase check is a separate human-run command because it needs the
-values in `.env.local`:
-
-```sh
-npm run check:demo
-```
-
-## How to join
-
-Vibies is invite-only. GitHub authentication proves identity, but a prospective
-member also needs instructor approval. The sole instructor's access is
-pre-established when the private Community is created. Before joining, read the
-[community rules](RULES.md) to learn how we build, share feedback, and keep the
-community safe. The human owner follows the [access setup guide](docs/ACCESS-SETUP.md)
-before opening sign-in.
+The [progress record](docs/PROGRESS.md) is dated history; verify current GitHub
+state before using its next steps. [AGENTS.md](AGENTS.md) owns the workflow.
+[CONTRIBUTING.md](CONTRIBUTING.md) owns repository gates. Only the Instructor
+merges reviewed PRs to main.
 
 ## License
 
-Vibies is open source under the Apache License 2.0. See [LICENSE](LICENSE).
+Apache License 2.0. See [LICENSE](LICENSE).

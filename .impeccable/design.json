@@ -1,0 +1,443 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-08T11:04:43.524035+00:00",
+  "title": "Design System: Vibies",
+  "extensions": {
+    "colorMeta": {
+      "amber-ink": {
+        "role": "primary",
+        "displayName": "Amber Ink",
+        "canonical": "#9a560b",
+        "tonalRamp": [
+          "oklch(15% 0.119 59.8)",
+          "oklch(27% 0.119 59.8)",
+          "oklch(39% 0.119 59.8)",
+          "oklch(51% 0.119 59.8)",
+          "oklch(63% 0.119 59.8)",
+          "oklch(75% 0.119 59.8)",
+          "oklch(85% 0.119 59.8)",
+          "oklch(95% 0.119 59.8)"
+        ]
+      },
+      "honey-accent": {
+        "role": "primary",
+        "displayName": "Honey Accent",
+        "canonical": "#c06a0c",
+        "tonalRamp": [
+          "oklch(15% 0.142 58.6)",
+          "oklch(27% 0.142 58.6)",
+          "oklch(39% 0.142 58.6)",
+          "oklch(51% 0.142 58.6)",
+          "oklch(63% 0.142 58.6)",
+          "oklch(75% 0.142 58.6)",
+          "oklch(85% 0.142 58.6)",
+          "oklch(95% 0.142 58.6)"
+        ]
+      },
+      "honey": {
+        "role": "secondary",
+        "displayName": "Honey",
+        "canonical": "#f5b73d",
+        "tonalRamp": [
+          "oklch(15% 0.149 80.2)",
+          "oklch(27% 0.149 80.2)",
+          "oklch(39% 0.149 80.2)",
+          "oklch(51% 0.149 80.2)",
+          "oklch(63% 0.149 80.2)",
+          "oklch(75% 0.149 80.2)",
+          "oklch(85% 0.149 80.2)",
+          "oklch(95% 0.149 80.2)"
+        ]
+      },
+      "gold-hi": {
+        "role": "secondary",
+        "displayName": "Gold Highlight",
+        "canonical": "#ffd977",
+        "tonalRamp": [
+          "oklch(15% 0.125 88.6)",
+          "oklch(27% 0.125 88.6)",
+          "oklch(39% 0.125 88.6)",
+          "oklch(51% 0.125 88.6)",
+          "oklch(63% 0.125 88.6)",
+          "oklch(75% 0.125 88.6)",
+          "oklch(85% 0.125 88.6)",
+          "oklch(95% 0.125 88.6)"
+        ]
+      },
+      "amber": {
+        "role": "secondary",
+        "displayName": "Amber",
+        "canonical": "#d98324",
+        "tonalRamp": [
+          "oklch(15% 0.146 62.3)",
+          "oklch(27% 0.146 62.3)",
+          "oklch(39% 0.146 62.3)",
+          "oklch(51% 0.146 62.3)",
+          "oklch(63% 0.146 62.3)",
+          "oklch(75% 0.146 62.3)",
+          "oklch(85% 0.146 62.3)",
+          "oklch(95% 0.146 62.3)"
+        ]
+      },
+      "honey-edge": {
+        "role": "secondary",
+        "displayName": "Honey Edge",
+        "canonical": "#d99a2b",
+        "tonalRamp": [
+          "oklch(15% 0.140 76.3)",
+          "oklch(27% 0.140 76.3)",
+          "oklch(39% 0.140 76.3)",
+          "oklch(51% 0.140 76.3)",
+          "oklch(63% 0.140 76.3)",
+          "oklch(75% 0.140 76.3)",
+          "oklch(85% 0.140 76.3)",
+          "oklch(95% 0.140 76.3)"
+        ]
+      },
+      "comb-line": {
+        "role": "secondary",
+        "displayName": "Comb Line",
+        "canonical": "#e7a83c",
+        "tonalRamp": [
+          "oklch(15% 0.140 76.9)",
+          "oklch(27% 0.140 76.9)",
+          "oklch(39% 0.140 76.9)",
+          "oklch(51% 0.140 76.9)",
+          "oklch(63% 0.140 76.9)",
+          "oklch(75% 0.140 76.9)",
+          "oklch(85% 0.140 76.9)",
+          "oklch(95% 0.140 76.9)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Cocoa Ink",
+        "canonical": "#2a1a08",
+        "tonalRamp": [
+          "oklch(15% 0.039 67.2)",
+          "oklch(27% 0.039 67.2)",
+          "oklch(39% 0.039 67.2)",
+          "oklch(51% 0.039 67.2)",
+          "oklch(63% 0.039 67.2)",
+          "oklch(75% 0.039 67.2)",
+          "oklch(85% 0.039 67.2)",
+          "oklch(95% 0.039 67.2)"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Warm Brown",
+        "canonical": "#6b5234",
+        "tonalRamp": [
+          "oklch(15% 0.055 70.8)",
+          "oklch(27% 0.055 70.8)",
+          "oklch(39% 0.055 70.8)",
+          "oklch(51% 0.055 70.8)",
+          "oklch(63% 0.055 70.8)",
+          "oklch(75% 0.055 70.8)",
+          "oklch(85% 0.055 70.8)",
+          "oklch(95% 0.055 70.8)"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Honey Ground",
+        "canonical": "#fdf6dc",
+        "tonalRamp": [
+          "oklch(15% 0.035 94.5)",
+          "oklch(27% 0.035 94.5)",
+          "oklch(39% 0.035 94.5)",
+          "oklch(51% 0.035 94.5)",
+          "oklch(63% 0.035 94.5)",
+          "oklch(75% 0.035 94.5)",
+          "oklch(85% 0.035 94.5)",
+          "oklch(95% 0.035 94.5)"
+        ]
+      },
+      "ground-2": {
+        "role": "neutral",
+        "displayName": "Deep Honey Ground",
+        "canonical": "#ffefc2",
+        "tonalRamp": [
+          "oklch(15% 0.061 90.8)",
+          "oklch(27% 0.061 90.8)",
+          "oklch(39% 0.061 90.8)",
+          "oklch(51% 0.061 90.8)",
+          "oklch(63% 0.061 90.8)",
+          "oklch(75% 0.061 90.8)",
+          "oklch(85% 0.061 90.8)",
+          "oklch(95% 0.061 90.8)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Warm Paper",
+        "canonical": "#fffcf3",
+        "tonalRamp": [
+          "oklch(15% 0.012 91.5)",
+          "oklch(27% 0.012 91.5)",
+          "oklch(39% 0.012 91.5)",
+          "oklch(51% 0.012 91.5)",
+          "oklch(63% 0.012 91.5)",
+          "oklch(75% 0.012 91.5)",
+          "oklch(85% 0.012 91.5)",
+          "oklch(95% 0.012 91.5)"
+        ]
+      },
+      "cell-fill": {
+        "role": "neutral",
+        "displayName": "Cell Fill",
+        "canonical": "#fff1c9",
+        "tonalRamp": [
+          "oklch(15% 0.054 91.0)",
+          "oklch(27% 0.054 91.0)",
+          "oklch(39% 0.054 91.0)",
+          "oklch(51% 0.054 91.0)",
+          "oklch(63% 0.054 91.0)",
+          "oklch(75% 0.054 91.0)",
+          "oklch(85% 0.054 91.0)",
+          "oklch(95% 0.054 91.0)"
+        ]
+      },
+      "rule-warm": {
+        "role": "neutral",
+        "displayName": "Warm Rule",
+        "canonical": "#efcf8a",
+        "tonalRamp": [
+          "oklch(15% 0.094 85.6)",
+          "oklch(27% 0.094 85.6)",
+          "oklch(39% 0.094 85.6)",
+          "oklch(51% 0.094 85.6)",
+          "oklch(63% 0.094 85.6)",
+          "oklch(75% 0.094 85.6)",
+          "oklch(85% 0.094 85.6)",
+          "oklch(95% 0.094 85.6)"
+        ]
+      },
+      "rule-soft": {
+        "role": "neutral",
+        "displayName": "Soft Rule",
+        "canonical": "#f3dca6",
+        "tonalRamp": [
+          "oklch(15% 0.074 87.6)",
+          "oklch(27% 0.074 87.6)",
+          "oklch(39% 0.074 87.6)",
+          "oklch(51% 0.074 87.6)",
+          "oklch(63% 0.074 87.6)",
+          "oklch(75% 0.074 87.6)",
+          "oklch(85% 0.074 87.6)",
+          "oklch(95% 0.074 87.6)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero headline; Coming soon uses clamp(56px, 9vw, 136px) at -0.04em."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headings."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Step titles inside hexagons."
+      },
+      "body-lead": {
+        "displayName": "Body lead",
+        "purpose": "Hero support line and problem statement."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Paragraphs, 20ch to 52ch."
+      },
+      "label": {
+        "displayName": "Mono label",
+        "purpose": "Navigation, facts, states, numbers, addresses."
+      }
+    },
+    "shadows": [
+      {
+        "name": "mascot-lift",
+        "value": "drop-shadow(0 24px 28px rgba(154, 86, 11, 0.22))",
+        "purpose": "The bee only."
+      },
+      {
+        "name": "cell-lift",
+        "value": "drop-shadow(0 8px 14px rgba(154, 86, 11, 0.14))",
+        "purpose": "Hive cells."
+      },
+      {
+        "name": "step-lift",
+        "value": "drop-shadow(0 12px 20px rgba(154, 86, 11, 0.12))",
+        "purpose": "Step hexagons."
+      },
+      {
+        "name": "card-lift",
+        "value": "0 30px 60px -36px rgba(154, 86, 11, 0.45)",
+        "purpose": "Project card."
+      },
+      {
+        "name": "button-glow",
+        "value": "0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 10px 24px -10px rgba(154, 86, 11, 0.55)",
+        "purpose": "Primary button at rest."
+      },
+      {
+        "name": "button-glow-hover",
+        "value": "0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 16px 30px -12px rgba(154, 86, 11, 0.6)",
+        "purpose": "Primary button on hover."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Observed home easing; new motion follows docs/CRAFT.md."
+      },
+      {
+        "name": "rise",
+        "value": "0.9s, translateY(18px) to 0, 0.08s stagger",
+        "purpose": "Hero load and scroll reveals."
+      },
+      {
+        "name": "pop",
+        "value": "0.7s, scale(0.82) translateY(10px) to rest, 0.08s stagger",
+        "purpose": "Hive cells and steps."
+      },
+      {
+        "name": "float",
+        "value": "6s ease-in-out infinite, 8px",
+        "purpose": "Bee idle float."
+      },
+      {
+        "name": "hover-lift",
+        "value": "0.3s to 0.4s, translateY(-2px to -4px)",
+        "purpose": "Button and hive cell hover."
+      },
+      {
+        "name": "reveal",
+        "value": "animation-timeline: view(), range entry 5% to entry 55%",
+        "purpose": "Observed scroll reveals; entrance animations are gated by reduced motion, while current hover movement is not."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "narrow",
+        "value": "420px"
+      },
+      {
+        "name": "phone",
+        "value": "760px"
+      },
+      {
+        "name": "tablet",
+        "value": "900px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one honey call to action per surface.",
+      "html": "<a class=\"ds-btn-primary\" href=\"#\">See what's coming<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\"><path d=\"M5 12h14M13 6l6 6-6 6\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></a>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:12px;padding:16px 28px;border-radius:12px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:18px;font-weight:700;text-decoration:none;color:#2a1a08;background:linear-gradient(180deg,#ffd977,#f5b73d);border:1px solid #d99a2b;box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 10px 24px -10px rgba(154,86,11,.55);transition:transform .3s cubic-bezier(0.16, 1, 0.3, 1),box-shadow .3s cubic-bezier(0.16, 1, 0.3, 1);}.ds-btn-primary svg{transition:transform .3s cubic-bezier(0.16, 1, 0.3, 1);}.ds-btn-primary:hover{transform:translateY(-2px);box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 16px 30px -12px rgba(154,86,11,.6);}.ds-btn-primary:hover svg{transform:translateX(3px);}.ds-btn-primary:focus-visible{outline:3px solid #9a560b;outline-offset:4px;}"
+    },
+    {
+      "name": "Hexagon Cell",
+      "kind": "custom",
+      "refersTo": "hex-cell",
+      "description": "The outlined hexagon that holds one fact with a mono title and note.",
+      "html": "<div class=\"ds-hex\"><svg class=\"ds-hex-shape\" viewBox=\"0 0 100 86.6\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><polygon points=\"25,0.8 75,0.8 99.2,43.3 75,85.8 25,85.8 0.8,43.3\"/></svg><div class=\"ds-hex-body\"><span class=\"ds-hex-title\">GitHub sign-in</span><span class=\"ds-hex-note\">Done</span></div></div>",
+      "css": ".ds-hex{position:relative;display:grid;place-items:center;width:200px;aspect-ratio:100/86.6;transition:transform .4s cubic-bezier(0.16, 1, 0.3, 1);}.ds-hex:hover{transform:translateY(-4px);}.ds-hex-shape{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 8px 14px rgba(154,86,11,.14));}.ds-hex-shape polygon{fill:#fffcf3;stroke:#e7a83c;stroke-width:1.6;vector-effect:non-scaling-stroke;}.ds-hex-body{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 18%;font-family:'JetBrains Mono',ui-monospace,monospace;}.ds-hex-title{font-size:15px;font-weight:600;line-height:1.25;color:#2a1a08;}.ds-hex-note{font-size:13.5px;line-height:1.3;color:#9a560b;}"
+    },
+    {
+      "name": "Step Hexagon",
+      "kind": "card",
+      "refersTo": "hex-cell",
+      "description": "A numbered step inside a hexagon.",
+      "html": "<div class=\"ds-step\"><svg class=\"ds-hex-shape\" viewBox=\"0 0 100 86.6\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><polygon points=\"25,0.8 75,0.8 99.2,43.3 75,85.8 25,85.8 0.8,43.3\"/></svg><div class=\"ds-step-body\"><span class=\"ds-step-n\">01</span><h3>Get access</h3><p>Sign in with GitHub. Your instructor approves you.</p></div></div>",
+      "css": ".ds-step{position:relative;display:grid;place-items:center;width:320px;aspect-ratio:100/86.6;}.ds-step .ds-hex-shape{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 12px 20px rgba(154,86,11,.12));}.ds-step polygon{fill:#fffcf3;stroke:#e7a83c;stroke-width:1.6;vector-effect:non-scaling-stroke;}.ds-step-body{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:0 17%;font-family:'Bricolage Grotesque',system-ui,sans-serif;}.ds-step-n{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:18px;font-weight:600;color:#9a560b;}.ds-step h3{margin:0;font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.05;color:#2a1a08;}.ds-step p{margin:0;font-size:16px;line-height:1.4;color:#6b5234;max-width:20ch;}"
+    },
+    {
+      "name": "Hexagon Badge",
+      "kind": "chip",
+      "refersTo": "hex-badge",
+      "description": "A small amber-stroked hexagon holding a solid icon, with its benefit text.",
+      "html": "<div class=\"ds-benefit\"><div class=\"ds-badge\"><svg class=\"ds-hex-shape\" viewBox=\"0 0 100 86.6\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><polygon points=\"25,0.8 75,0.8 99.2,43.3 75,85.8 25,85.8 0.8,43.3\"/></svg><svg class=\"ds-badge-icon\" viewBox=\"0 0 32 32\" width=\"30\" height=\"30\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M11 14V10a5 5 0 0 1 10 0v4\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.6\"/><rect x=\"6.5\" y=\"14\" width=\"19\" height=\"13\" rx=\"2.5\"/></svg></div><div><h3>Private by design</h3><p>Instructor approval. Nicknames only.</p></div></div>",
+      "css": ".ds-benefit{display:flex;gap:18px;align-items:flex-start;font-family:'Bricolage Grotesque',system-ui,sans-serif;}.ds-badge{position:relative;flex:none;display:grid;place-items:center;width:72px;aspect-ratio:100/86.6;color:#2a1a08;}.ds-badge .ds-hex-shape{position:absolute;inset:0;width:100%;height:100%;}.ds-badge polygon{fill:#fff1c9;stroke:#d98324;stroke-width:3;vector-effect:non-scaling-stroke;}.ds-badge-icon{position:relative;}.ds-benefit h3{margin:0;font-size:21px;font-weight:800;letter-spacing:-.01em;color:#2a1a08;}.ds-benefit p{margin:6px 0 0;font-size:17px;line-height:1.45;color:#6b5234;}"
+    },
+    {
+      "name": "Project Card",
+      "kind": "card",
+      "refersTo": "project-card",
+      "description": "Warm paper card with a window bar, for showing a real project.",
+      "html": "<article class=\"ds-card\"><div class=\"ds-card-bar\"><i></i><i></i><i></i><span>github.com/vibies-club/vibies</span></div><div class=\"ds-card-main\"><h2>Vibies</h2><p>The private home for our class projects. We build it in the open, one pull request at a time.</p><a href=\"#\">See the code on GitHub</a></div></article>",
+      "css": ".ds-card{max-width:640px;background:#fffcf3;border:1px solid #efcf8a;border-radius:18px;box-shadow:0 30px 60px -36px rgba(154,86,11,.45);overflow:hidden;font-family:'Bricolage Grotesque',system-ui,sans-serif;color:#2a1a08;}.ds-card-bar{display:flex;align-items:center;gap:8px;padding:14px 22px;background:#fff1c9;border-bottom:1px solid #efcf8a;}.ds-card-bar i{width:12px;height:12px;border-radius:50%;background:#f5b73d;}.ds-card-bar i:first-child{background:#d98324;}.ds-card-bar i:nth-child(2){background:#eba13a;}.ds-card-bar span{margin-left:12px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;color:#6b5234;}.ds-card-main{padding:40px;}.ds-card-main h2{margin:0;font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1;}.ds-card-main p{margin:14px 0 0;font-size:19px;line-height:1.45;color:#6b5234;max-width:52ch;}.ds-card-main a{display:inline-block;margin-top:14px;font-weight:700;color:#9a560b;text-underline-offset:.22em;text-decoration-thickness:1.5px;}.ds-card-main a:focus-visible{outline:3px solid #9a560b;outline-offset:4px;border-radius:4px;}"
+    },
+    {
+      "name": "Header Navigation",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Wordmark left, mono section links right.",
+      "html": "<header class=\"ds-nav\"><a class=\"ds-brand\" href=\"#\"><svg width=\"32\" height=\"28\" viewBox=\"0 0 100 86.6\" aria-hidden=\"true\"><polygon points=\"25,0.8 75,0.8 99.2,43.3 75,85.8 25,85.8 0.8,43.3\" fill=\"#f5b73d\" stroke=\"#d98324\" stroke-width=\"4\"/></svg>Vibies</a><nav><a href=\"#\">How it works</a><a href=\"#\">Benefits</a><a href=\"#\">Coming soon</a></nav></header>",
+      "css": ".ds-nav{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:22px 40px;background:#fdf6dc;color:#2a1a08;}.ds-brand{display:inline-flex;align-items:center;gap:10px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:26px;font-weight:800;letter-spacing:-.02em;text-decoration:none;color:inherit;}.ds-nav nav{display:flex;gap:28px;}.ds-nav nav a{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:14px;font-weight:500;text-decoration:none;color:inherit;text-underline-offset:.22em;}.ds-nav nav a:hover{text-decoration:underline;}.ds-nav a:focus-visible{outline:3px solid #9a560b;outline-offset:4px;border-radius:4px;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Hive in Daylight",
+    "overview": "Recorded from `app/page.tsx` and `app/home.css`. This describes the home identity. Other screens must adopt this identity through reviewed UI work; their current differences are not alternative design systems.\n\n**Creative North Star: \"The Hive in Daylight\"**\n\nVibies belongs to the course's Honeycomb Terminal family, the slide deck world of dark cocoa, honey, amber, and a hard-hat bee. The home page carries that family into daylight. The ground is pale honey with a faint honeycomb drawn over it, the ink is deep cocoa, and honey and amber carry every accent. The outlined hexagon is the structural shape: facts, steps, badges, and roadmap nodes all sit inside one.\n\nThe mood is warm, bright, and busy in a friendly way, like a hive at work. Headlines are huge and extra bold in Bricolage Grotesque with tight tracking. Small facts and states speak in JetBrains Mono, the terminal half of the family. Depth is soft and warm: amber-tinted drop shadows lift the bee and the cells off the comb, and nothing is harsh or gray.\n\nDensity is generous. Sections breathe with 64px to 120px of vertical padding, and the page alternates between the honey ground and bands of warm paper. Motion is one calm load sequence in the hero, then one reveal per section as it scrolls in, all on a single long ease-out curve.",
+    "keyCharacteristics": [
+      "Pale honey ground with a faint honeycomb pattern at 16% opacity.",
+      "Deep cocoa ink; honey and amber as the only accents.",
+      "The flat-topped outlined hexagon as the shape for every contained fact.",
+      "Extra-bold Bricolage Grotesque display type with negative tracking.",
+      "JetBrains Mono for small facts, states, numbers, and navigation.",
+      "Warm amber drop shadows; no gray shadows.",
+      "The hard-hat bee mascot as the one character on the page."
+    ],
+    "rules": [
+      {
+        "name": "The One Family Rule",
+        "body": "Every color is a honey, amber, or cocoa. Gray, blue, and green do not appear on this surface, and every shadow is tinted with amber ink.",
+        "section": "colors"
+      },
+      {
+        "name": "The Display-Only Accent Rule",
+        "body": "Honey Accent is for display-size headline words only. Any accent text below 24px uses Amber Ink.",
+        "section": "colors"
+      },
+      {
+        "name": "The Heavy Headline Rule",
+        "body": "Headlines are weight 800 with tracking between -0.02em and -0.04em. The larger the size, the tighter the tracking.",
+        "section": "typography"
+      },
+      {
+        "name": "The Facts Speak Mono Rule",
+        "body": "States, numbers, addresses, and short facts are set in JetBrains Mono. Sentences stay in Bricolage Grotesque.",
+        "section": "typography"
+      },
+      {
+        "name": "The Warm Shadow Rule",
+        "body": "Every shadow uses Amber Ink at 12% to 60% alpha. Hexagons take drop-shadow filters so the shadow follows the six sides.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "set every contained fact, step, badge, or status inside the outlined hexagon.",
+      "keep all color inside the honey, amber, and cocoa family, and tint every shadow with Amber Ink.",
+      "use Amber Ink for any accent text below display size; save Honey Accent for display-size headline words.",
+      "set headlines in Bricolage Grotesque 800 with negative tracking, and facts and states in JetBrains Mono.",
+      "keep one honey primary button per surface, with the 3px Amber Ink focus outline on every interactive element.",
+      "follow the motion policy in [the craft playbook](docs/CRAFT.md) and ship reduced-motion behavior with each animation change.",
+      "embed the generation prompt or origin in every new raster, as the current set does."
+    ],
+    "donts": [
+      "use gray or cool shadows, or any color outside the honey family.",
+      "use Honey Accent for small text; it only passes contrast at display size.",
+      "place a mono uppercase tracked label above a heading; that style is a figure caption only.",
+      "swap the self-hosted fonts for system display faces."
+    ]
+  }
+}

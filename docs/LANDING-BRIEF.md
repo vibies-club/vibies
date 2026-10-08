@@ -1,6 +1,6 @@
 # Landing page brief
 
-[Documentation home](../README.md) · [Product](PRODUCT.md) ·
+[Documentation home](../README.md) · [Product](../PRODUCT.md) ·
 [Issue #51](https://github.com/vibies-club/vibies/issues/51)
 
 The public home page at `/` introduces Vibies to beginners in the class. Keep

@@ -1,0 +1,7 @@
+TASK: Use your built-in image_gen tool (the $imagegen skill, built-in mode, NOT the CLI) to generate exactly ONE image asset for a website. Do not write code. Then copy the generated file from $CODEX_HOME/generated_images/... to the exact workspace path in OUTPUT, overwriting nothing else, and print the saved path and the exact prompt string you gave image_gen.
+
+REFERENCES (attached): variant-3b-light.png is the approved landing page comp (light pale honey theme, honeycomb hexagons, Vibies bee). bee-mascot.jpg is the official Vibies bee mascot. Match the comp's rendering style: glossy, soft 3D, warm honey gold #f5b73d and amber #d98324 with deep cocoa brown #2a1a08 details, soft warm studio light. No text, no letters, no logos, no watermark. No purple, blue, pink, or neon.
+
+ASSET:
+A seamless wide background texture for the "Coming soon" section: a field of softly beveled honeycomb cells in pale honey and warm gold, glowing brightest in the center (#ffd977 to #f5b73d) and fading to pale cream #fff3d6 at the left and right edges, like the bottom section of the comp but WITHOUT any text. Opaque, no objects, no text, calm enough for large dark brown text on top. Wide landscape, the widest size available.
+OUTPUT: public/home/honeycomb-glow.png

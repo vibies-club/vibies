@@ -8,3 +8,9 @@ node_modules/
 graphify-out/
 supabase/.temp/
 supabase/.branches/
+.impeccable/build/
+.impeccable/critique/
+.impeccable/review/
+.impeccable/live/
+.playwright-cli/
+.agents/skills/impeccable/scripts/bin/

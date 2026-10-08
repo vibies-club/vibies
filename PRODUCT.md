@@ -2,8 +2,8 @@
 
 <!-- impeccable:product-schema 1 -->
 
-[Documentation home](../README.md) · [Domain model](DOMAIN.md) ·
-[Workflows](WORKFLOWS.md) · [Community rules](../RULES.md)
+[Documentation home](README.md) · [Domain model](docs/DOMAIN.md) ·
+[Workflows](docs/WORKFLOWS.md) · [Community rules](RULES.md)
 
 ## Purpose
 
@@ -11,7 +11,7 @@ Vibies is a private community where beginners build, publish, discuss, and
 improve real projects together. It is built for exactly one **Instructor** and
 eight active **Member** places. A place may be temporarily vacant after access is
 revoked and before a replacement is approved. These and other capitalized
-product terms are defined once in the [domain model](DOMAIN.md).
+product terms are defined once in the [domain model](docs/DOMAIN.md).
 
 This document defines the product experience and its boundaries. It does not
 choose an interface, database, API, or integration design.
@@ -23,7 +23,7 @@ web
 ## Users
 
 Beginner Members build and share projects in a private class community. The
-Instructor approves access and moderates the space. The [domain model](DOMAIN.md#people-and-access)
+Instructor approves access and moderates the space. The [domain model](docs/DOMAIN.md#people-and-access)
 defines these roles.
 
 ## Positioning
@@ -35,16 +35,16 @@ repositories, Member-written project details, and progress shared by nickname.
 
 Members sign in with GitHub, publish a first Personal Project to complete
 onboarding, and use the private Community through the web app. The
-[workflows](WORKFLOWS.md) define each action and its access rules.
+[workflows](docs/WORKFLOWS.md) define each action and its access rules.
 
 ## Brand Commitments
 
 The name is Vibies. Member-facing identity uses nicknames. Product copy follows
-the repository's [plain, warm writing rules](../CONTRIBUTING.md#writing-rules).
+the repository's [plain, warm writing rules](CONTRIBUTING.md#writing-rules).
 
 ## Evidence on Hand
 
-The public `/demo` uses synthetic project data. The [progress record](PROGRESS.md)
+The public `/demo` uses synthetic project data. The [progress record](docs/PROGRESS.md)
 tracks implemented product features and proof still pending. It does not provide
 member testimonials or public Member projects for marketing use.
 
@@ -77,10 +77,10 @@ approve themselves and does not occupy one of the eight Member places. The
 deployment owner designates this account before sign-in opens. The first visitor
 cannot become Instructor.
 
-The Instructor may revoke Membership under the [community rules](../RULES.md).
+The Instructor may revoke Membership under the [community rules](RULES.md).
 The person then becomes a Former Member: they lose access and their Member
 place, and keep the Role and records the
-[domain model](DOMAIN.md#people-and-access) lists. Revocation does not itself
+[domain model](docs/DOMAIN.md#people-and-access) lists. Revocation does not itself
 delete, rewrite, or change the states of the Former Member's Projects, Comments,
 or Feedback. Those remain subject to the separate moderation and deletion rules.
 Reapproval fills an available Member place and restores access to the retained
@@ -114,7 +114,7 @@ Every signed-in page provides sign-out.
 
 Sessions expire absolutely 24 hours after sign-in and each browser may start
 sign-in 10 times in 10 minutes, as the
-[domain model](DOMAIN.md#people-and-access) defines. Sign-out ends the current
+[domain model](docs/DOMAIN.md#people-and-access) defines. Sign-out ends the current
 browser session without changing Membership, and revocation takes effect on the
 next protected request or action. A cancelled sign-in returns to sign-in.
 Authentication and membership lookup failures deny access and show a safe retry
@@ -131,7 +131,7 @@ the Member repeat onboarding.
 
 Until onboarding is complete, a Member cannot post a Comment or Feedback. After
 completion, the Member can participate according to the permissions below and
-the [community rules](../RULES.md).
+the [community rules](RULES.md).
 
 Each Member must publish one Personal Project to complete onboarding. A Member
 may have at most three non-deleted Personal Projects at once. Every non-deleted
@@ -148,7 +148,7 @@ It does not import source files or README contents.
 Shared details are a Member-written title, short summary, and optional HTTPS
 demo link. The owner can edit these fields before or after publication in every
 retained state. Community pages show the details and owner Nickname. Canonical
-field limits live in the [domain model](DOMAIN.md#projects-and-repositories).
+field limits live in the [domain model](docs/DOMAIN.md#projects-and-repositories).
 
 The protected `/projects` page has My projects and Community projects sections.
 Owners connect a repository at `/projects/connect`, review the Draft, and choose
@@ -161,7 +161,7 @@ the same private personal repository. It must stay private. The owner can
 explicitly Check connection to detect lost access or restore it. The page shows
 the last successful check time. Connection is last known status; there are no
 background checks. Unknown provider failures change nothing. Manual Sync is
-outside this feature. See [D-015](DECISIONS.md#d-015-share-member-written-personal-projects-with-checked-repository-access).
+outside this feature. See [D-015](docs/DECISIONS.md#d-015-share-member-written-personal-projects-with-checked-repository-access).
 
 The Instructor and all Members collaborate on the separate, organization-owned
 Class Project. It is not owned by an individual Member. Issue #6 defines this
@@ -172,15 +172,15 @@ a future accepted decision before implementation.
 
 ### Personal Project roadmaps
 
-Issue #20 adds an optional [Roadmap](DOMAIN.md#projects-and-repositories) to a
+Issue #20 adds an optional [Roadmap](docs/DOMAIN.md#projects-and-repositories) to a
 Personal Project. The accepted design is recorded in
-[D-019](DECISIONS.md#d-019-add-optional-personal-project-roadmaps). A current
+[D-019](docs/DECISIONS.md#d-019-add-optional-personal-project-roadmaps). A current
 approved owner can manage the Roadmap in every retained Project state. The
 Roadmap never blocks the existing Publish action.
 
 Each Roadmap holds ordered Milestones, with the limit, order, status, and
 Blocked note rules defined in the
-[domain model](DOMAIN.md#projects-and-repositories). The owner adds one at a
+[domain model](docs/DOMAIN.md#projects-and-repositories). The owner adds one at a
 time, edits one at a time with Save or Cancel, reorders with Move up or Move
 down, deletes after a confirmation that identifies the Milestone, and completes
 or reopens with one Complete checkbox.
@@ -198,14 +198,14 @@ person who can view a Project can view its Roadmap and Blocked notes. Only the
 current approved owner can change them. The Instructor can use existing Project
 moderation and cannot edit Milestone content. Retention across state changes,
 deletion with the Project, and stale-write protection follow the
-[domain model](DOMAIN.md#projects-and-repositories); a stale owner action asks
+[domain model](docs/DOMAIN.md#projects-and-repositories); a stale owner action asks
 the owner to reload. Roadmap controls work with a keyboard, and status remains
 clear without color alone.
 
 ## Project availability
 
 The three project state groups are independent and are defined in the
-[domain model](DOMAIN.md):
+[domain model](docs/DOMAIN.md):
 
 - publication: `Draft`, `Published`, or `Archived`;
 - GitHub connection: `Connected` or `Disconnected`;
@@ -252,7 +252,7 @@ Personal Project.
 Feedback is different from a Comment. It is a structured evaluation containing
 both a `keep` part and an `improve` part. A user cannot submit Feedback on a
 Personal Project they own. Conduct requirements for both formats live in the
-[community rules](../RULES.md).
+[community rules](RULES.md).
 
 ## Moderation, disconnection, and deletion
 
@@ -280,7 +280,7 @@ deleted Project no longer counts toward the owner's limit.
 - Application-supplied shared content does not show GitHub account details.
   Members may choose any valid HTTPS demo host, including GitHub Pages; the
   chosen destination can contain a GitHub username. This explicit exception is
-  recorded in [D-015](DECISIONS.md#d-015-share-member-written-personal-projects-with-checked-repository-access).
+  recorded in [D-015](docs/DECISIONS.md#d-015-share-member-written-personal-projects-with-checked-repository-access).
 - Profile names, avatars, email addresses, and biographies are not imported or
   stored. Authentication responses are discarded after the stable identifier and
   current GitHub username are projected for access management.
@@ -291,11 +291,11 @@ deleted Project no longer counts toward the owner's limit.
 
 The Instructor checks an agreed Nickname for real names or contact information
 before approval. Automatic validation follows the canonical
-[Nickname rules](DOMAIN.md#people-and-access) and cannot identify every real
+[Nickname rules](docs/DOMAIN.md#people-and-access) and cannot identify every real
 name.
 
 Behavioral rules about personal information and credentials are defined in the
-[community rules](../RULES.md).
+[community rules](RULES.md).
 
 ## Out of scope
 
@@ -305,7 +305,7 @@ source-code or README import, automatic sync, webhooks, notifications,
 repository transfer, and GitHub repository modification. Membership requests,
 Nickname editing, account transfer, and stronger sign-in abuse protection also
 remain separate work. App registration and private server configuration require
-human setup. The [progress record](PROGRESS.md) distinguishes implemented work
+human setup. The [progress record](docs/PROGRESS.md) distinguishes implemented work
 from pending proof and later delivery stages.
 
 The Class Project lifecycle authority and individual Comment or Feedback edit

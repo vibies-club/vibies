@@ -1,6 +1,6 @@
 # Accepted Decisions
 
-[Documentation home](../README.md) · [Product definition](PRODUCT.md) ·
+[Documentation home](../README.md) · [Product definition](../PRODUCT.md) ·
 [Domain model](DOMAIN.md) · [Workflows](WORKFLOWS.md)
 
 This log records why the Vibies knowledge foundation has its current shape. The
@@ -20,7 +20,7 @@ work begin from the same understanding instead of conflicting assumptions.
 records, authentication, synchronization, or GitHub configuration. Feature
 planning begins only after this foundation is reviewed.
 
-**Related documents:** [Product definition](PRODUCT.md),
+**Related documents:** [Product definition](../PRODUCT.md),
 [progress](PROGRESS.md), and [roadmap](ROADMAP.md).
 
 ## D-002: Give each kind of knowledge one home
@@ -63,7 +63,7 @@ a Former Member and temporary vacancy without deleting or rewriting content;
 Role, ownership, authorship, and onboarding completion are retained for possible
 reapproval.
 
-**Related documents:** [Product community boundary](PRODUCT.md) and
+**Related documents:** [Product community boundary](../PRODUCT.md) and
 [domain people and access](DOMAIN.md).
 
 ## D-004: Display nicknames and minimize private data
@@ -83,7 +83,7 @@ personal information.
 **Consequence:** Documentation and future features must use privacy-safe examples
 and must not expose GitHub profile identity.
 
-**Related documents:** [Product privacy boundaries](PRODUCT.md) and
+**Related documents:** [Product privacy boundaries](../PRODUCT.md) and
 [community rules](../RULES.md).
 
 ## D-005: Center onboarding on a Personal Project
@@ -104,7 +104,7 @@ Member's personal capacity.
 and Hidden Personal Projects all count while non-deleted. Later changes to the
 first published project do not reset onboarding.
 
-**Related documents:** [Product member journey](PRODUCT.md) and
+**Related documents:** [Product member journey](../PRODUCT.md) and
 [domain constraints](DOMAIN.md).
 
 ## D-006: Keep GitHub access selected, minimal, and manual
@@ -126,7 +126,7 @@ keeps the first product predictable and avoids background integration complexity
 **Consequence:** Automatic sync, webhooks, GitHub App setup, and synchronization
 implementation are outside this foundation.
 
-**Related documents:** [Product projects and GitHub](PRODUCT.md) and
+**Related documents:** [Product projects and GitHub](../PRODUCT.md) and
 [sync workflow](WORKFLOWS.md).
 
 ## D-007: Separate discussion from structured Feedback
@@ -165,7 +165,7 @@ different events and must not silently overwrite one another.
 `Archived` or `Disconnected`.
 
 **Related documents:** [Domain project state groups](DOMAIN.md) and
-[project availability](PRODUCT.md).
+[project availability](../PRODUCT.md).
 
 ## D-009: Distinguish disconnection, moderation, and deletion
 
@@ -188,7 +188,7 @@ confused with deliberate removal, while authorship must remain intact.
 The Instructor cannot use moderation to rewrite member content, and reconnection
 does not clear a moderation decision.
 
-**Related documents:** [Product moderation, disconnection, and deletion](PRODUCT.md)
+**Related documents:** [Product moderation, disconnection, and deletion](../PRODUCT.md)
 and [corresponding workflows](WORKFLOWS.md).
 
 ## D-010: Do not invent unassigned lifecycle authority
@@ -207,7 +207,7 @@ would turn documentation into an accidental feature specification.
 before implementing them. Until then, no agent should infer them from general
 words such as “collaborate” or “manage.”
 
-**Related documents:** [Product boundaries](PRODUCT.md),
+**Related documents:** [Product boundaries](../PRODUCT.md),
 [domain concepts](DOMAIN.md), and [workflow scope](WORKFLOWS.md).
 
 ## D-011: Open the repository under vibies-club
@@ -290,7 +290,7 @@ without exposing GitHub identity to Members or retaining unrelated profile data.
 requests by any non-Instructor must not reveal account details. Receipts use
 synthetic identifiers and Nicknames.
 
-**Related documents:** [Product privacy boundaries](PRODUCT.md#privacy-boundaries),
+**Related documents:** [Product privacy boundaries](../PRODUCT.md#privacy-boundaries),
 [domain people and access](DOMAIN.md#people-and-access), and
 [access verification](ACCESS-VERIFICATION.md).
 
@@ -389,7 +389,7 @@ fresh GitHub verification is the server route's responsibility. Source import,
 automatic sync, webhooks, Comments, Feedback, Class Project lifecycle, repository
 transfer, and GitHub repository modification remain outside this issue.
 
-**Related documents:** [Product](PRODUCT.md), [domain](DOMAIN.md), and
+**Related documents:** [Product](../PRODUCT.md), [domain](DOMAIN.md), and
 [workflows](WORKFLOWS.md).
 
 **Owner clarifications on 2026-09-10:** The [implementation review answers](https://github.com/vibies-club/vibies/issues/17#issuecomment-5623179154)
@@ -545,7 +545,7 @@ Roadmap visibility follows Project visibility, and only the current approved
 owner can change it. The owner can manage a Roadmap in every retained Project
 state. A stale write stops without replacing newer data and asks the owner to
 reload. The experience is defined in
-[PRODUCT](PRODUCT.md#personal-project-roadmaps) and the invariants in
+[PRODUCT](../PRODUCT.md#personal-project-roadmaps) and the invariants in
 [DOMAIN](DOMAIN.md#projects-and-repositories).
 
 Project state changes preserve Roadmap data, and deleting a Personal Project
@@ -560,12 +560,30 @@ keep the first version small and easy to understand. Current Roadmap display
 keeps the page useful without introducing public history.
 
 **Consequence:** [DOMAIN](DOMAIN.md) owns Roadmap terms and invariants,
-[PRODUCT](PRODUCT.md) owns the experience and boundaries, and
+[PRODUCT](../PRODUCT.md) owns the experience and boundaries, and
 [WORKFLOWS](WORKFLOWS.md) owns the owner and viewer flows. The implementation
 must preserve existing Personal Project ownership, availability, moderation,
 privacy, and deletion rules. [Roadmap verification](ROADMAP-VERIFICATION.md)
 tracks the 14 acceptance receipts.
 
 **Related documents:** [Issue #20](https://github.com/vibies-club/vibies/issues/20),
-[domain model](DOMAIN.md), [product definition](PRODUCT.md),
+[domain model](DOMAIN.md), [product definition](../PRODUCT.md),
 [workflows](WORKFLOWS.md), and [roadmap verification](ROADMAP-VERIFICATION.md).
+
+## D-020: Configure a project agent workflow and craft policy
+
+**Status:** Accepted by the owner's master setup prompt on 2026-10-08.
+
+**Decision:** Keep one root [PRODUCT.md](../PRODUCT.md) and one root
+[DESIGN.md](../DESIGN.md). [AGENTS.md](../AGENTS.md) owns the agent workflow,
+[CRAFT.md](CRAFT.md) owns craft policy, and [SKILLS.md](SKILLS.md) owns skill
+routing. Project Codex settings and agent definitions live in `.codex/`;
+project skills live in `.agents/skills/`.
+
+**Why:** Shared project instructions make the required process and design
+quality reproducible across contributors and future agent sessions.
+
+**Merge boundary:** The owner explicitly retained the current merge rule:
+only the Instructor merges. Required GitHub approval, the three head checks,
+staging eligibility, and post-merge receipts remain in force. The local
+`pr_reviewer` verdict supplements these gates.

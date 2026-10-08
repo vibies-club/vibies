@@ -1,6 +1,6 @@
 # Vibies Domain Model
 
-[Documentation home](../README.md) · [Product definition](PRODUCT.md) ·
+[Documentation home](../README.md) · [Product definition](../PRODUCT.md) ·
 [Workflows](WORKFLOWS.md) · [Decisions](DECISIONS.md)
 
 This document is the authoritative source for Vibies concepts, relationships,
@@ -206,6 +206,6 @@ flowchart LR
     Project -->|has independently| Moderation["Moderation: Visible, Hidden"]
 ```
 
-The [product definition](PRODUCT.md) explains permissions and boundaries. The
+The [product definition](../PRODUCT.md) explains permissions and boundaries. The
 [workflows](WORKFLOWS.md) explain how actors use these concepts, and the
 [community rules](../RULES.md) define conduct.

@@ -1,0 +1,8 @@
+name = "explorer"
+description = "Finds files and traces how the code works, with path citations."
+model = "gpt-6-luna"
+model_reasoning_effort = "max"
+sandbox_mode = "read-only"
+developer_instructions = """
+Find files, trace how the code works, and cite paths. Never edit files.
+"""

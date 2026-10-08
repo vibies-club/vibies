@@ -36,13 +36,13 @@ These rules keep it safe and useful for everyone, including our youngest members
 
 The instructor is the product's only moderator. The instructor may hide or
 restore content but does not rewrite member content. See the
-[product definition](docs/PRODUCT.md) for permissions and the
+[product definition](PRODUCT.md) for permissions and the
 [workflows](docs/WORKFLOWS.md) for moderation behavior.
 
 ## Related documentation
 
 - [Documentation home](README.md)
-- [Product roles, permissions, and privacy boundaries](docs/PRODUCT.md)
+- [Product roles, permissions, and privacy boundaries](PRODUCT.md)
 - [Canonical product terminology](docs/DOMAIN.md)
 
 ---
