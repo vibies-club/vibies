@@ -1,3 +1,4 @@
+import { AccountLinks } from "./access-shell";
 import Image, { type StaticImageData } from "next/image";
 import localFont from "next/font/local";
 import bee from "../public/home/bee.png";
@@ -53,7 +54,7 @@ export default function Home() {
   return <main className={`home ${display.variable} ${mono.variable}`}>
     <header className="home-header">
       <a className="home-brand" href="#top"><Image src={logo} alt="" width={40} height={40} priority /><span>Vibies</span></a>
-      <nav aria-label="Page sections"><a href="#how-it-works">How it works</a><a href="#benefits">Benefits</a><a href="#coming-soon">Coming soon</a></nav>
+      <nav className="account-controls" aria-label="Site navigation"><a href="#how-it-works">How it works</a><a href="#benefits">Benefits</a><a href="#coming-soon">Coming soon</a><AccountLinks /></nav>
     </header>
 
     <section className="home-hero" id="top" aria-labelledby="home-title">

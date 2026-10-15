@@ -11,14 +11,25 @@ permissions:
 jobs:
   app-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:17-alpine
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
           POSTGRES_DB: vibies_access_test
-        ports: [5432:5432]
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      postgres-migration:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: vibies_access_test
+        ports: ["60584:5432"]
         options: >-
           --health-cmd "pg_isready -U postgres"
           --health-interval 5s
@@ -33,12 +44,28 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - name: Check D1 schema and security suites
+        run: npm run test:d1
+      - name: Check static Worker HTTP boundary
+        run: npm run test:worker
+      - name: Rehearse synthetic D1 migration
+        run: npm run test:migration
+      - name: Rehearse encrypted PostgreSQL export into D1
+        run: node --test tests/migration-encryption-postgres.test.mjs
+        env:
+          VIBIES_MIGRATION_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:60584/vibies_access_test
       - run: npm run test:access
         env:
           VIBIES_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/vibies_access_test
       - run: npm run test:projects
         env:
           VIBIES_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/vibies_access_test
+      - name: Compare D1 project behavior with PostgreSQL
+        run: node --test tests/d1-projects-postgres.test.ts
+        env:
+          VIBIES_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/vibies_access_test
+      - name: Build Cloudflare Worker
+        run: npm run build:cloudflare
       - run: npm run build
       - name: Check access through the built server
         env:

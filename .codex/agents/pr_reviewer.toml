@@ -1,7 +1,8 @@
+service_tier = "ultrafast"
 name = "pr_reviewer"
 description = "Reviews a PR diff and its screenshots against the issue, plan, and design."
 model = "gpt-6.1-sol"
-model_reasoning_effort = "xhigh"
+model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 developer_instructions = """
 Read the diff with git diff <base>...<head> and never run checkout, switch, stash,

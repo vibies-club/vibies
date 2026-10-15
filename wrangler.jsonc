@@ -1,0 +1,98 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vibies-compatibility",
+  "compatibility_date": "2026-10-15",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "main": "worker/index.ts",
+  "assets": {
+    "directory": "dist/client",
+    "html_handling": "none",
+    "not_found_handling": "none",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*",
+      "/auth/*",
+      "/projects/action",
+      "/admin/members/action",
+      "/staging.json"
+    ]
+  },
+  "workers_dev": true,
+  "preview_urls": false,
+  "env": {
+    "staging": {
+      "name": "vibies-staging",
+      "workers_dev": false,
+      "preview_urls": false,
+      "vars": {
+        "VIBIES_DATABASE_BACKEND": "d1",
+        "VIBIES_ENVIRONMENT": "staging"
+      },
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "GOOGLE_COORDINATOR",
+            "class_name": "GoogleCoordinator"
+          }
+        ]
+      }
+    },
+    "production": {
+      "name": "vibies-production",
+      "workers_dev": true,
+      "preview_urls": false,
+      "vars": {
+        "VIBIES_DATABASE_BACKEND": "d1",
+        "VIBIES_ENVIRONMENT": "production",
+        "VIBIES_APP_ORIGIN": "https://vibies-production.xterminbeta-2b6.workers.dev"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "vibies-production",
+          "database_id": "95c5abba-7b57-4190-8bc7-98a222522c30",
+          "migrations_dir": "d1/migrations"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "GOOGLE_COORDINATOR",
+            "class_name": "GoogleCoordinator"
+          }
+        ]
+      }
+    }
+  },
+  "vars": {
+    "VIBIES_DATABASE_BACKEND": "d1",
+    "VIBIES_ENVIRONMENT": "compatibility",
+    "VIBIES_APP_ORIGIN": "https://vibies-compatibility.xterminbeta-2b6.workers.dev"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "vibies-compatibility",
+      "database_id": "ebfff95d-ec8a-4670-a9fc-a72647e144d2",
+      "migrations_dir": "d1/migrations"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "GOOGLE_COORDINATOR",
+        "class_name": "GoogleCoordinator"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1-google-coordinator",
+      "new_sqlite_classes": [
+        "GoogleCoordinator"
+      ]
+    }
+  ]
+}

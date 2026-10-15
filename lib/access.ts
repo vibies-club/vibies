@@ -1,20 +1,9 @@
 import "server-only";
-import postgres from "postgres";
 import { cookies } from "next/headers";
-import { appOrigin, databaseSSL, digest, readAccess, validToken, type Access } from "./access-core";
+import { domainOperation } from "./domain";
+import { appOrigin, digest, readAccess, validToken, type Access } from "./access-core";
 
-let sql: ReturnType<typeof postgres> | undefined;
-export function database() {
-  if (sql) return sql;
-  const address = process.env.VIBIES_DATABASE_URL;
-  if (!address) throw new Error("Access unavailable");
-  const url = new URL(address);
-  if (!["postgres:", "postgresql:"].includes(url.protocol)) throw new Error("Access unavailable");
-  sql = postgres(address, { max: 3, prepare: false,
-    ssl: databaseSSL(url.hostname, process.env.VIBIES_DATABASE_CA),
-    connect_timeout: 10, idle_timeout: 20, connection: { statement_timeout: 10000 }, onnotice: () => {} });
-  return sql;
-}
+export { postgresDatabase as database } from "./postgres";
 
 export const origin = () => appOrigin(process.env.VIBIES_APP_ORIGIN);
 export function githubConfig() {
@@ -39,8 +28,7 @@ export async function accessState(): Promise<Access> {
   const hash = await sessionHash();
   if (!hash) return { kind: "signed_out" };
   try {
-    const [row] = await database()`select vibies_private.access_state(${hash}) as result`;
-    return readAccess(row?.result);
+    return readAccess(await domainOperation("access_state", hash));
   } catch { return { kind: "error" }; }
 }
 
@@ -49,8 +37,7 @@ export async function members(): Promise<{kind: "ok"; activeCount: number; accou
   const hash = await sessionHash();
   if (!hash) return { kind: "forbidden" };
   try {
-    const [row] = await database()`select vibies_private.members(${hash}) as result`;
-    const result = row?.result;
+    const result = await domainOperation("members", hash);
     if (result?.kind === "forbidden") return { kind: "forbidden" };
     if (result?.kind !== "ok" || !Number.isInteger(result.activeCount) ||
         result.activeCount < 0 || result.activeCount > 8 || !Array.isArray(result.accounts) ||

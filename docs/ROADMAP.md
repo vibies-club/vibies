@@ -8,6 +8,24 @@ chosen.
 
 ## Now
 
+- Complete [issue #61](https://github.com/vibies-club/vibies/issues/61): migrate
+  hosting and all application data to Cloudflare Workers/D1 on the Free plan,
+  preserve GitHub approval and private access, and add explicitly linked Google
+  sign-in. PR #62 implements the approved static React/Vite frontend and small
+  authenticated, fetch-native Worker APIs after live vinext SSR exceeded the
+  Free 10 ms CPU allowance and an isolated OpenNext comparison was slower.
+  Preserve D1, the restricted Better Auth integration, and existing access rules.
+  Verify the public home prerender and empty private shell, authenticated API
+  and OAuth CPU suitability, browser parity, automatic preview/staging receipts,
+  and current-head CI and review. Complete production data reconciliation and
+  cutover only after the release gates and Instructor merge. Static page and
+  private API browser proof passed, but Google authentication still exceeds the
+  nominal Free CPU allowance after schema and initialization optimizations.
+  The owner approved a per-browser SQLite Durable Object OAuth coordinator.
+  Its lifecycle and isolated-preview tests pass; live CPU and authentication
+  proof remain before release. Keep Vercel and Supabase available until their
+  retirement is authorized.
+
 - Record the P8 and P13 browser receipts for issue #20 on staging in
   [Roadmap verification](ROADMAP-VERIFICATION.md).
 - Approve the eighth student through the normal flow when they sign in.
