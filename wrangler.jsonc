@@ -29,6 +29,14 @@
       "vars": {
         "VIBIES_DATABASE_BACKEND": "d1",
         "VIBIES_ENVIRONMENT": "staging"
+      },
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "GOOGLE_COORDINATOR",
+            "class_name": "GoogleCoordinator"
+          }
+        ]
       }
     },
     "production": {
@@ -47,7 +55,15 @@
           "database_id": "95c5abba-7b57-4190-8bc7-98a222522c30",
           "migrations_dir": "d1/migrations"
         }
-      ]
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "GOOGLE_COORDINATOR",
+            "class_name": "GoogleCoordinator"
+          }
+        ]
+      }
     }
   },
   "vars": {
@@ -61,6 +77,22 @@
       "database_name": "vibies-compatibility",
       "database_id": "ebfff95d-ec8a-4670-a9fc-a72647e144d2",
       "migrations_dir": "d1/migrations"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "GOOGLE_COORDINATOR",
+        "class_name": "GoogleCoordinator"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1-google-coordinator",
+      "new_sqlite_classes": [
+        "GoogleCoordinator"
+      ]
     }
   ]
 }
