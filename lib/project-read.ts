@@ -80,4 +80,3 @@ export function readProject(value: any): Project {
   }
   return result;
 }
-

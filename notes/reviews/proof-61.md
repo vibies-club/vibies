@@ -68,3 +68,15 @@ The first static version had a 1.982 ms median and 75.429 ms P99 across 16 reque
 Current compatibility version: `ff748da6-30b0-428f-ab39-0cbe8797cbe3`. Workers Builds production command was updated to `CLOUDFLARE_ENV=production npm run build:cloudflare`; saving the setting completed. No production build or activation was triggered.
 
 The remote D1 read-only query of the synthetic project returned milestone `Verify Cloudflare save and refresh` with `completed = 1`; two rows read, zero rows written. Twenty consecutive authenticated project reloads also succeeded on the optimized static version. All 20 final viewport screenshots were opened and inspected at 390/768/1280/1440px, with zero horizontal overflow. Independent Impeccable design and detector assessments found no major defect; see `static-craft-61.md`.
+
+## Static review and hosted checks
+
+The final fresh review returned `ship` for 3146183..ed50cc2. Its raw output is saved in pr-62-r2.md. It found no blocker or major finding, inspected all 20 screenshots, and independently passed 29 targeted tests. Its two sandbox-blocked workerd checks do not replace the root's successful local workerd evidence. The required app-check, migration-check and links checks all passed for ed50cc2010ff4f5fd9dea9a5813a3ebd2f05a372.
+
+Manual PR preview version e7788d78-a769-492e-a3ef-bd2501355cfb deployed the same frozen head to https://vibies-pr-62.xterminbeta-2b6.workers.dev with separate empty synthetic D1. Home and header Sign in navigation were verified in the browser. No OAuth secrets are bound to that preview. Automatic trusted preview/staging and Instructor gates remain pending.
+
+The optimized static version's 67-request window at 12:21:30–12:24:30 UTC recorded zero errors, CPU P50 1.805 ms and P99 74.858 ms. The 48-request warm window at 12:23:16–12:24:00 UTC recorded zero errors, P50 1.809 ms and P99 17.973 ms. These aggregates do not attribute outliers to a route.
+
+To obtain route-specific evidence, compatibility-only version e06d354c-ff71-4e9d-b31b-56c90f179fbb enabled invocation logs with query-string redaction; no production setting changed. The first 13 invocations showed all outcomes ok: authenticated /api/page reads at 9, 6, 4, 3 and 3 ms; static shell requests at 0–1 ms. Logs were queried using the exact Worker filter, and only sanitized route, CPU, outcome and version fields were returned. Broader OAuth/mutation evidence remains a release gate.
+
+Cloudflare's CPU documentation permits infrequent per-isolate overruns but terminates consistent overruns. Typical timing and zero-error samples do not establish an all-request guarantee. Free remains the only permitted plan.
