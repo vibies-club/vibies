@@ -673,3 +673,11 @@ readiness; each deployment still needs capacity and provider proof.
 **Decision:** Workers Builds deploys only reviewed `main` to `vibies-production`. A separate trusted-main GitHub workflow builds PR code without provider credentials, then validates and deploys an inert artifact to its own synthetic Worker and D1 database. Preview deployment serializes allocation, refuses insufficient Free capacity, verifies source and resource identity, and posts the resulting URL.
 
 **Why:** Worker Preview runtime isolation does not isolate a build token from arbitrary branch scripts. Separate build and deployment jobs preserve the existing private data boundary. Use `CLOUDFLARE_ENV=production` at Vite build time to flatten the reviewed production configuration. See [preview operations](CLOUDFLARE-PR-PREVIEWS.md).
+
+## D-027: Validate the pinned Google schema outside individual OAuth requests
+
+**Date:** 2026-10-15
+
+**Decision:** Disable Better Auth runtime schema introspection for the request-local Google subsystem. Keep explicit schema validation and missing-schema failure tests in the required D1 suite, alongside deployment migration checks.
+
+**Why:** Better Auth 1.7.9 caches schema validation per adapter instance, while request-local initialization preserves link-grant and environment isolation. Repeating D1 metadata scans for each OAuth operation wastes the Free-plan CPU budget. SQL errors still fail the affected sign-in operation; database constraints, authorization hooks, and deployment activation checks remain enforced.

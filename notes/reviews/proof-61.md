@@ -80,3 +80,11 @@ The optimized static version's 67-request window at 12:21:30–12:24:30 UTC reco
 To obtain route-specific evidence, compatibility-only version e06d354c-ff71-4e9d-b31b-56c90f179fbb enabled invocation logs with query-string redaction; no production setting changed. The first 13 invocations showed all outcomes ok: authenticated /api/page reads at 9, 6, 4, 3 and 3 ms; static shell requests at 0–1 ms. Logs were queried using the exact Worker filter, and only sanitized route, CPU, outcome and version fields were returned. Broader OAuth/mutation evidence remains a release gate.
 
 Cloudflare's CPU documentation permits infrequent per-isolate overruns but terminates consistent overruns. Typical timing and zero-error samples do not establish an all-request guarantee. Free remains the only permitted plan.
+
+## Request-local Google schema preflight optimization
+
+Route-specific logs on compatibility version e06d354c-ff71-4e9d-b31b-56c90f179fbb identified successful but over-budget auth requests: sign-out 35 ms, Google initiation 34 ms and callback 70 ms. The application API requests in the same window were 1–4 ms.
+
+Better Auth 1.7.9 performs schema introspection per adapter instance. Since this application intentionally constructs its auth configuration per request to isolate link grants and environments, each OAuth operation repeated SQLite metadata scans. D-027 uses the documented advanced.database.validateSchema=false option and validates the pinned schema explicitly in the required suite. A missing verification table is proven to reject initiation without issuing a session. Authorization hooks, D1 constraints, activation checks and request-local provider configuration remain unchanged.
+
+Validation after the change: 58 D1/Google tests, 9 Worker boundary tests, typecheck and the static Cloudflare build passed. A focused independent safety check found no blocker; raw output is in schema-preflight-61.md. Only the isolated compatibility Worker was deployed (version 1ed68bc2-fce5-4c9f-834b-47e889c69b0c); live CPU results remain to be recorded.

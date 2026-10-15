@@ -32,8 +32,9 @@ function fixture() {
     INSERT INTO accounts(internal_id,github_id,github_username,nickname,nickname_key,status) VALUES('member','2','builder','Builder','builder','approved');`);
   for (const [n, id, provider] of [[1,"1","github"],[2,"2","github"],[3,"2","google"],[4,"2","legacy"]])
     sqlite.prepare("INSERT INTO sessions(session_hash,github_id,auth_provider) VALUES(?,?,?)").run(hash(n as number), id as string, provider as string);
+  const queries: string[] = [];
   const db = {
-    prepare: (sql: string) => new Statement(sqlite, sql),
+    prepare: (sql: string) => { queries.push(sql); return new Statement(sqlite, sql); },
     async exec(sql: string) { sqlite.exec(sql); },
     async batch<T>(statements: D1Statement[]) {
       sqlite.exec("BEGIN IMMEDIATE");
@@ -44,7 +45,7 @@ function fixture() {
   const auth = (link?: { grantHash: string; sessionHash: string }) => createGoogleAuth({ database: db, store: db,
     origin: "https://vibies.test", secret: "synthetic-test-secret-with-at-least-32-characters", clientId: "synthetic-client",
     clientSecret: "synthetic-secret", link });
-  return { db, sqlite, auth };
+  return { db, sqlite, auth, queries };
 }
 
 test("Google link grants require recent GitHub approval and serialize competing starts", async () => {
@@ -315,4 +316,42 @@ test('Unlinked Google HTTP callback explains linking without creating an account
     assert.equal(result.headers.get('location'),'/sign-in?message=googlelink');
     for(const table of ['google_users','google_accounts','google_sessions']) assert.equal(sqlite.prepare(`SELECT count(*) n FROM ${table}`).get()!.n,0);
   } finally {globalThis.fetch=originalFetch;sqlite.close();}
+});
+
+test('pinned Google schema passes explicit validation and detects a missing table', async () => {
+  const { sqlite, auth } = fixture();
+  try {
+    const context = await auth().$context;
+    assert.equal(typeof context.explicitSchemaCheck, 'function');
+    await context.explicitSchemaCheck!();
+    sqlite.exec('ALTER TABLE google_verifications RENAME TO missing_google_verifications');
+    // Use a fresh check so the earlier successful result cannot mask schema drift.
+    const broken = await auth().$context;
+    await assert.rejects(async () => { await broken.explicitSchemaCheck!(); }, /google_verifications/);
+  } finally { sqlite.close(); }
+});
+
+test('request-local Google auth skips schema metadata queries across repeated operations', async () => {
+  const { sqlite, routes, post, queries } = httpFixture();
+  try {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const started = await routes.start(post('start'));
+      assert.equal(new URL(started.headers.get('location')!).origin, 'https://accounts.google.com');
+      await routes.signOut(new Request('https://vibies.test/auth/sign-out'), new Response());
+    }
+    assert.ok(queries.some(sql => /google_verifications/i.test(sql)));
+    assert.deepEqual(queries.filter(sql => /sqlite_(?:master|schema)|pragma/i.test(sql)), []);
+  } finally { sqlite.close(); }
+});
+
+test('Google initiation fails closed when its verification schema is missing', async () => {
+  const { sqlite, routes, post } = httpFixture();
+  try {
+    sqlite.exec('ALTER TABLE google_verifications RENAME TO missing_google_verifications');
+    const response = await routes.start(post('start'));
+    assert.equal(response.headers.get('location'), '/sign-in?message=failed');
+    assert.equal(sqlite.prepare('SELECT count(*) n FROM google_sessions').get()!.n, 0);
+    assert.equal(sqlite.prepare('SELECT count(*) n FROM sessions').get()!.n, 4);
+    assert.ok(!response.headers.getSetCookie().some(value => /^vibies-session=[^;]/.test(value)));
+  } finally { sqlite.close(); }
 });

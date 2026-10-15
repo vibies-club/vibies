@@ -48,7 +48,9 @@ export function createGoogleAuth(config: GoogleAuthConfig) {
       // Subject identity is resolved independently by Better Auth. None of the provider profile is persisted.
       mapProfileToUser: () => ({ name: "Member", email: "unlinked@vibies.invalid", image: undefined }),
     } },
-    advanced: { cookiePrefix: "vibies-google", useSecureCookies: origin.startsWith("https:"),
+    // Deployment migrations and explicit schema tests validate this pinned schema.
+    // Per-request introspection would scan D1 tables on every OAuth operation.
+    advanced: { database: { validateSchema: false }, cookiePrefix: "vibies-google", useSecureCookies: origin.startsWith("https:"),
       ipAddress: { disableIpTracking: true },
       defaultCookieAttributes: { httpOnly: true, secure: origin.startsWith("https:"), sameSite: "lax", path: "/" } },
     databaseHooks: {
