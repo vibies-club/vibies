@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { runStaging } from "../scripts/staging.mjs";
+import { runStaging, prepareStaging } from "../scripts/staging.mjs";
 
 const REPOSITORY = "vibies-club/vibies";
 const PR = 37;
@@ -18,7 +19,9 @@ const MIGRATION_TWO = "9".repeat(40);
 const TOKEN = "github-token-canary";
 const BODY_CANARY = "provider-body-canary";
 const ORIGIN = "https://staging.example.test";
-const PROJECT = "prj_synthetic";
+const VERSION = "11111111-1111-4111-8111-111111111111";
+const DATABASE = "22222222-2222-4222-8222-222222222222";
+const ARTIFACT = "a".repeat(64);
 const CHECKS = ["app-check", "migration-check", "links"];
 
 function pull(state) {
@@ -38,7 +41,7 @@ function pull(state) {
 }
 
 function response(data, status = 200) {
-  return Response.json(data, { status });
+  return Response.json(data, { status, headers: { "cache-control": "no-store" } });
 }
 
 function syntheticApi(changes = {}) {
@@ -59,8 +62,8 @@ function syntheticApi(changes = {}) {
     suiteChanges: {},
     actionChanges: {},
     migrationRows: [
-      { path: "migrations/20260910065142_remote_schema.sql", mode: "100644", type: "blob", sha: MIGRATION_ONE },
-      { path: "migrations/20260910220000_demo_projects.sql", mode: "100644", type: "blob", sha: MIGRATION_TWO },
+      { path: "d1/migrations/0001_application.sql", mode: "100644", type: "blob", sha: MIGRATION_ONE },
+      { path: "d1/migrations/0002_activation.sql", mode: "100644", type: "blob", sha: MIGRATION_TWO },
     ],
     markerSteps: [],
     requests: [],
@@ -87,6 +90,11 @@ function syntheticApi(changes = {}) {
       assert.equal(headers.get("x-github-api-version"), "2022-11-28");
       const root = `/repos/${REPOSITORY}`;
 
+      if (method === "GET" && url.pathname === `${root}/actions/artifacts/123`) {
+        return response({ id: 123, expired: false, name: "staging-build-42-1", digest: `sha256:${ARTIFACT}`,
+          workflow_run: { id: 42, head_sha: MAIN, head_branch: "main", repository_id: 1234, head_repository_id: 1234 },
+          ...state.artifactChanges });
+      }
       if (method === "GET" && url.pathname === `${root}/git/ref/heads/main`) {
         state.mainReads += 1;
         state.onMainRead?.(state);
@@ -120,11 +128,11 @@ function syntheticApi(changes = {}) {
         const sha = tree[1];
         if (sha === MAIN_ROOT) return response({
           sha, truncated: false,
-          tree: [{ path: "supabase", mode: "040000", type: "tree", sha: state.mainSupabase }],
+          tree: state.migrationRows,
         });
         if (sha === HEAD_ROOT) return response({
           sha, truncated: false,
-          tree: [{ path: "supabase", mode: "040000", type: "tree", sha: state.headSupabase }],
+          tree: state.candidateMigrationRows ?? state.migrationRows,
         });
         if (sha === SUPABASE && url.searchParams.get("recursive") === "1") {
           return response({ sha, truncated: false, tree: state.migrationRows });
@@ -229,387 +237,261 @@ function syntheticApi(changes = {}) {
     const step = state.markerSteps[state.markerReads++];
     if (step instanceof Error) throw step;
     if (typeof step === "function") return step({ nonce, state });
-    return response(step ?? { projectId: PROJECT, sha: state.staging, nonce, ref: "staging" });
+    return response(step ?? { sha: state.staging, worker: "vibies-staging", versionId: VERSION,
+      databaseId: DATABASE, schemaHash: state.schemaHash, migrationHash: state.schemaHash, artifactHash: ARTIFACT, environment: "staging", nonce });
   };
   return state;
 }
 
 function options(state, changes = {}) {
-  let clock = 0;
-  let nonceNumber = 0;
+  let clock = 0, nonceNumber = 0;
   const summaries = [];
+  const operation = changes.operation ?? "Preview PR";
+  const migrations = (state.candidateMigrationRows ?? state.migrationRows).map(row => ({path: row.path, blob: row.sha}));
+  const schemaHash = createHash("sha256").update(JSON.stringify(migrations)).digest("hex");
+  state.schemaHash = schemaHash;
   return {
     values: {
-      repository: REPOSITORY,
-      workflowSha: MAIN,
-      operation: "Preview PR",
-      prNumber: PR,
-      origin: ORIGIN,
-      projectId: PROJECT,
-      baselineTree: SUPABASE,
-      githubToken: TOKEN,
-      fetchImpl: state.fetch,
-      pushRef: async (sha, previous) => {
-        assert.equal(previous, state.staging);
-        state.pushes.push(sha);
-        state.staging = sha;
+      repository: REPOSITORY, actor: "0xinBeta", workflowSha: MAIN, operation,
+      prNumber: operation === "Preview PR" ? PR : undefined, origin: ORIGIN, githubToken: TOKEN,
+      artifactId: "123", artifactDigest: ARTIFACT, runId: "42", runAttempt: "1",
+      plan: { format: 1, operation, prNumber: operation === "Preview PR" ? PR : null, main: MAIN,
+        head: operation === "Preview PR" ? HEAD : MAIN, merge: operation === "Preview PR" ? MERGE : null, migrations, schemaHash },
+      fetchImpl: state.fetch, inspect: () => ({ artifactHash: ARTIFACT }),
+      deploy: async ({plan}) => {
+        state.deployed = true; state.staging = plan.head;
+        state.onDeploy?.(state);
+        return { worker: "vibies-staging", versionId: VERSION, databaseId: DATABASE, schemaHash: plan.schemaHash, migrationHash: plan.schemaHash, artifactHash: ARTIFACT,
+          verify: async () => { state.verified = true; }, cleanup: async () => { state.cleaned = true; } };
       },
-      now: () => clock,
-      sleep: async (milliseconds) => { clock += milliseconds; },
-      nonce: () => `nonce-${++nonceNumber}`,
-      timeoutMs: 10_000,
-      writeSummary: (markdown) => summaries.push(markdown),
-      ...changes,
-    },
-    summaries,
+      now: () => clock, sleep: async ms => { clock += ms; },
+      nonce: () => (++nonceNumber).toString(16).padStart(32, "0"), timeoutMs: 10_000,
+      writeSummary: text => summaries.push(text), ...changes,
+    }, summaries,
   };
 }
 
-function mutations(state) {
-  return [...state.pushes, ...state.requests.filter(({ init }) => init.method !== "GET")];
-}
-
-test("Preview PR updates only the existing staging ref and writes exact receipts", async () => {
-  const state = syntheticApi();
-  const call = options(state);
-
+test("Preview PR verifies immutable artifact and Cloudflare identity before writing a receipt", async () => {
+  const state = syntheticApi(); const call = options(state);
   const result = await runStaging(call.values);
-
-  assert.equal(result.main, MAIN);
   assert.equal(result.head, HEAD);
-  assert.equal(result.merge, MERGE);
-  assert.deepEqual(result.versions, ["20260910065142", "20260910220000"]);
-  assert.deepEqual(state.pushes, [HEAD]);
-  assert.equal(mutations(state).length, 2);
-  assert.equal(state.requests.some(({ url }) => url.pathname.includes("/git/refs/")), false);
-  assert.equal(state.comments.length, 1);
-  assert.equal(call.summaries.length, 1);
-  for (const receipt of [state.comments[0], call.summaries[0]]) {
-    assert.match(receipt, /Result: success/);
-    assert.ok(receipt.includes(`Main: \`${MAIN}\``));
-    assert.ok(receipt.includes(`Head: \`${HEAD}\``));
-    assert.ok(receipt.includes(`Supabase tree: \`${SUPABASE}\``));
-    assert.match(receipt, /Migration versions: `20260910065142`, `20260910220000`/);
-    assert.match(receipt, /Vercel project: `prj_synthetic`/);
-    assert.match(receipt, /one point in time/);
-  }
+  assert.equal(result.versionId, VERSION);
+  assert.equal(state.verified, true); assert.equal(state.cleaned, true);
+  assert.equal(state.comments.length, 1); assert.equal(call.summaries.length, 1);
+  assert.match(call.summaries[0], /Worker version:/); assert.match(call.summaries[0], /Synthetic D1:/);
+  assert.match(call.summaries[0], /Artifact SHA-256:/);
+  assert.equal(state.pushes.length, 0);
+  assert.equal(state.requests.some(request => request.url.pathname.endsWith("/git/ref/heads/staging")), false);
 });
 
-test("Clear verifies main CI and baseline, then returns staging to main without a PR comment", async () => {
-  const state = syntheticApi();
-  const call = options(state, { operation: "Clear", prNumber: undefined });
-
+test("Clear builds current main and resets synthetic staging without posting a PR comment", async () => {
+  const state = syntheticApi(); const call = options(state, { operation: "Clear" });
   const result = await runStaging(call.values);
-
-  assert.equal(result.head, MAIN);
-  assert.equal(state.staging, MAIN);
-  assert.equal(state.comments.length, 0);
-  assert.equal(call.summaries.length, 1);
-  assert.match(call.summaries[0], /Operation: Clear/);
-  assert.match(call.summaries[0], /PR: none/);
-  const checkedShas = state.requests
-    .filter(({ url }) => url.pathname.endsWith("/check-runs"))
-    .map(({ url }) => /\/commits\/([0-9a-f]{40})/.exec(url.pathname)[1]);
-  assert.ok(checkedShas.length >= 2);
-  assert.ok(checkedShas.every((sha) => sha === MAIN));
+  assert.equal(result.head, MAIN); assert.equal(state.staging, MAIN);
+  assert.equal(state.comments.length, 0); assert.match(call.summaries[0], /PR: none/);
+  assert(state.requests.filter(r => r.url.pathname.endsWith("/check-runs")).every(r => r.url.pathname.includes(MAIN)));
 });
 
-test("Clear accepts only required checks from main push workflow runs", async () => {
-  const state = syntheticApi({ actionChanges: { event: "pull_request" } });
-  await assert.rejects(
-    runStaging(options(state, { operation: "Clear", prNumber: undefined }).values),
-    /not a main push run/
-  );
-  assert.equal(mutations(state).length, 0);
-});
-
-test("repository, SHA, public metadata, and operation guards fail before API access", async (t) => {
-  const cases = [
-    ["repository", { repository: "other/repository" }],
-    ["workflow SHA", { workflowSha: "abc" }],
-    ["operation", { operation: "Deploy" }],
-    ["PR number", { prNumber: 0 }],
-    ["origin path", { origin: `${ORIGIN}/path` }],
-    ["origin credentials", { origin: "https://user@example.test" }],
-    ["origin query", { origin: `${ORIGIN}?x=1` }],
-    ["origin protocol", { origin: "http://staging.example.test" }],
-    ["project", { projectId: "project" }],
-    ["baseline", { baselineTree: "123" }],
-    ["timeout", { timeoutMs: 570_001 }],
-  ];
-  for (const [name, changes] of cases) {
-    await t.test(name, async () => {
-      const state = syntheticApi();
-      await assert.rejects(runStaging(options(state, changes).values));
-      assert.equal(state.requests.length, 0);
+test("Instructor, repository, immutable workflow and input guards reject before deployment", async (t) => {
+  for (const changes of [{actor:"someone"},{repository:"someone/fork"},{workflowSha:"bad"},
+    {operation:"Other"},{prNumber:0},{origin:"http://unsafe.test"},{origin:`${ORIGIN}/path`},
+    {artifactDigest:"bad"},{artifactId:"bad"},{timeoutMs:570001}]) {
+    await t.test(JSON.stringify(changes), async () => {
+      const state=syntheticApi(); const call=options(state,changes);
+      await assert.rejects(runStaging(call.values)); assert.equal(state.deployed,undefined);
+      assert.equal(state.comments.length,0); assert.equal(call.summaries.length,0);
     });
   }
 });
 
-test("PR source and ancestry guards reject closed, draft, fork, stale, and divergent PRs", async (t) => {
-  const cases = [
-    ["closed", { pullChanges: { state: "closed" } }],
-    ["draft", { pullChanges: { draft: true } }],
-    ["fork", { pullChanges: { head: { ref: "feature/x", sha: HEAD,
-      repo: { full_name: "someone/fork" } } } }],
-    ["other base", { pullChanges: { base: { ref: "develop", sha: MAIN,
-      repo: { full_name: REPOSITORY } } } }],
-    ["staging head", { pullChanges: { head: { ref: "staging", sha: HEAD,
-      repo: { full_name: REPOSITORY } } } }],
-    ["divergent", { compareChanges: { status: "diverged", merge_base_commit: { sha: "a".repeat(40) } } }],
-  ];
-  for (const [name, changes] of cases) {
-    await t.test(name, async () => {
-      const state = syntheticApi(changes);
-      const call = options(state);
-      await assert.rejects(runStaging(call.values));
-      assert.equal(mutations(state).length, 0);
-      assert.deepEqual(call.summaries, []);
-    });
-  }
-});
-
-test("synthetic merge must have exact main and head parents and the head tree", async (t) => {
+test("closed, draft, fork, divergent and changed-base PRs cannot deploy", async (t) => {
   for (const changes of [
-    { mergeParents: [HEAD, MAIN] },
-    { mergeParents: [MAIN] },
-    { mergeTree: "a".repeat(40) },
-  ]) {
-    await t.test("invalid merge", async () => {
-      const state = syntheticApi(changes);
-      await assert.rejects(runStaging(options(state).values), /merge commit does not exactly combine/);
-      assert.equal(mutations(state).length, 0);
+    {pullChanges:{state:"closed"}}, {pullChanges:{draft:true}},
+    {pullChanges:{head:{ref:"feature/x",sha:HEAD,repo:{full_name:"someone/fork"}}}},
+    {pullChanges:{base:{ref:"main",sha:"f".repeat(40),repo:{full_name:REPOSITORY}}}},
+    {compareChanges:{status:"diverged"}}, {mergeParents:[HEAD,MAIN]}, {mergeTree:MAIN_ROOT},
+  ]) await t.test(JSON.stringify(changes),async()=>{
+    const state=syntheticApi(changes); await assert.rejects(runStaging(options(state).values));
+    assert.equal(state.deployed,undefined); assert.equal(state.comments.length,0);
+  });
+});
+
+test("D1 migrations permit only an unchanged main prefix followed by new versions", async (t) => {
+  const append = {path:"d1/migrations/0003_extra.sql",mode:"100644",type:"blob",sha:"a".repeat(40)};
+  const state=syntheticApi(); state.candidateMigrationRows=[...state.migrationRows,append];
+  await runStaging(options(state).values); assert.equal(state.deployed,true);
+  for (const candidate of [state.migrationRows.slice(1), [...state.migrationRows].reverse(),
+    [{...state.migrationRows[0],sha:"a".repeat(40)},state.migrationRows[1]],
+    [...state.migrationRows,{...append,path:"d1/migrations/0002_other.sql"}]]) {
+    await t.test("invalid prefix or duplicate",async()=>{
+      const bad=syntheticApi({candidateMigrationRows:candidate});
+      await assert.rejects(runStaging(options(bad).values)); assert.equal(bad.deployed,undefined);
     });
   }
 });
 
-test("main, candidate, and owner-attested Supabase trees must match", async (t) => {
-  const other = "a".repeat(40);
-  for (const [name, changes, optionChanges] of [
-    ["main baseline", { mainSupabase: other }, {}],
-    ["candidate", { headSupabase: other }, {}],
-    ["owner baseline", {}, { baselineTree: other }],
-  ]) {
-    await t.test(name, async () => {
-      const state = syntheticApi(changes);
-      await assert.rejects(runStaging(options(state, optionChanges).values), /Supabase|supabase/);
-      assert.equal(mutations(state).length, 0);
+test("failed, forged and unrelated required checks never deploy", async (t) => {
+  for(const changes of [
+    {checkChanges:{conclusion:"failure"}}, {omitCheck:"links"}, {checkChanges:{app:{id:8,slug:"other"}}},
+    {suiteChanges:{pull_requests:[]}}, {actionChanges:{path:".github/workflows/other.yml"}},
+  ]) await t.test(JSON.stringify(changes),async()=>{
+    const state=syntheticApi(changes); await assert.rejects(runStaging(options(state).values));
+    assert.equal(state.deployed,undefined);
+  });
+});
+
+test("artifact provenance and local integrity failures never reach deployment", async (t) => {
+  for(const artifactChanges of [{expired:true},{digest:`sha256:${"b".repeat(64)}`},{name:"other"},
+    {workflow_run:{id:99,head_sha:MAIN,head_branch:"main",repository_id:1234,head_repository_id:1234}}]) {
+    await t.test(JSON.stringify(artifactChanges),async()=>{
+      const state=syntheticApi({artifactChanges}); await assert.rejects(runStaging(options(state).values),/artifact/);
+      assert.equal(state.deployed,undefined);
     });
+  }
+  const state=syntheticApi(); const call=options(state,{inspect:()=>{throw new Error("integrity");}});
+  await assert.rejects(runStaging(call.values),/integrity/); assert.equal(state.deployed,undefined);
+});
+
+test("changes after build or deployment block success receipts", async (t) => {
+  await t.test("build selection",async()=>{
+    const state=syntheticApi(); const call=options(state); call.values.plan.head="b".repeat(40);
+    await assert.rejects(runStaging(call.values),/selection changed/); assert.equal(state.deployed,undefined);
+  });
+  await t.test("post deployment",async()=>{
+    const state=syntheticApi({onDeploy(s){s.main="a".repeat(40);}}); const call=options(state);
+    await assert.rejects(runStaging(call.values)); assert.equal(state.comments.length,0); assert.deepEqual(call.summaries,[]);
+  });
+});
+
+test("provider, marker mismatch, cacheability and timeout never produce success receipts", async (t) => {
+  for(const changes of [
+    {deploy:async()=>{throw new Error("provider failed");}},
+    {timeoutMs:0},
+  ]) await t.test("provider or timeout",async()=>{
+    const state=syntheticApi({markerSteps:[()=>response({},503)]}); const call=options(state,changes);
+    await assert.rejects(runStaging(call.values)); assert.equal(state.comments.length,0); assert.deepEqual(call.summaries,[]);
+  });
+  for(const marker of [()=>response({sha:HEAD}),()=>Response.json({}, {headers:{"cache-control":"public"}})]) {
+    const state=syntheticApi({markerSteps:[marker]}); const call=options(state);
+    await assert.rejects(runStaging(call.values),/identity|cacheable/); assert.equal(state.comments.length,0);
   }
 });
 
-test("migration receipt rejects truncated, malformed, and duplicate tree metadata", async (t) => {
-  const badRows = [
-    [{ path: "migrations/wrong.sql", mode: "100644", type: "blob", sha: MIGRATION_ONE }],
-    [
-      { path: "migrations/20260910065142_one.sql", mode: "100644", type: "blob", sha: MIGRATION_ONE },
-      { path: "migrations/20260910065142_two.sql", mode: "100644", type: "blob", sha: MIGRATION_TWO },
-    ],
-    [{ path: "migrations/20260910065142_one.sql", mode: "100755", type: "blob", sha: MIGRATION_ONE }],
-  ];
-  for (const rows of badRows) {
-    await t.test("invalid migration tree", async () => {
-      const state = syntheticApi({ migrationRows: rows });
-      await assert.rejects(runStaging(options(state).values), /migration metadata/);
-      assert.equal(mutations(state).length, 0);
-    });
-  }
+test("workflow isolates exact-SHA build from protected trusted-main deployment credentials",()=>{
+  const workflow=readFileSync(new URL("../.github/workflows/staging.yml",import.meta.url),"utf8");
+  assert.match(workflow,/workflow_dispatch:/); assert.match(workflow,/group: reusable-staging\n\s+cancel-in-progress: false/);
+  assert.match(workflow,/github.actor == '0xinBeta'/); assert.match(workflow,/environment: staging/);
+  const build=workflow.split("  build:")[1].split("  deploy:")[0];
+  assert.doesNotMatch(build,/\$\{\{ secrets\.|^\s+environment:/m); assert.match(build,/needs.select.outputs.head/);
+  const deploy=workflow.split("  deploy:")[1];
+  assert.match(deploy,/ref: \$\{\{ github.sha \}\}/); assert.match(deploy,/npm ci --ignore-scripts/);
+  assert.deepEqual([...workflow.matchAll(/secrets\.(\w+)/g)].map(match=>match[1]),["CLOUDFLARE_STAGING_API_TOKEN"]);
+  assert.doesNotMatch(workflow,/STAGING_DEPLOY_KEY|STAGING_SUPABASE_TREE|git push|refs\/heads\/staging/);
 });
 
-test("required checks reject failure, missing checks, forged runs, forged suites, and unrelated suites", async (t) => {
-  const cases = [
-    ["failed", { checkChanges: { conclusion: "failure" } }, /did not complete successfully/],
-    ["missing", { omitCheck: "links" }, /required check links is missing/],
-    ["forged run", { checkChanges: { app: { id: 88, slug: "other-app" } } }, /did not complete successfully/],
-    ["forged suite", { suiteChanges: { app: { id: 88, slug: "other-app" } } }, /invalid check-suite origin/],
-    ["unrelated suite", { suiteChanges: { pull_requests: [] } }, /not for the selected pull request/],
-    ["wrong workflow", { actionChanges: { path: ".github/workflows/other.yml" } }, /invalid workflow-run metadata/],
-    ["wrong PR base", { actionChanges: { pull_requests: [{
-      number: PR,
-      base: { ref: "main", sha: "a".repeat(40), repo: {
-        id: 1329797618, name: "vibies", url: `https://api.github.com/repos/${REPOSITORY}`,
-      } },
-      head: { ref: "feature/reusable-staging", sha: HEAD, repo: {
-        id: 1329797618, name: "vibies", url: `https://api.github.com/repos/${REPOSITORY}`,
-      } },
-    }] } }, /not for the selected pull request/],
-  ];
-  for (const [name, changes, pattern] of cases) {
-    await t.test(name, async () => {
-      const state = syntheticApi(changes);
-      await assert.rejects(runStaging(options(state).values), pattern);
-      assert.equal(mutations(state).length, 0);
-    });
-  }
-});
-
-test("provider failures do not expose response bodies or create success receipts", async () => {
-  const state = syntheticApi({ checkHttpStatus: 503 });
-  const call = options(state);
-  let failure;
+test("artifact validation rejects modified migrations, files and symlinks", async () => {
+  const { mkdtempSync,mkdirSync,writeFileSync,rmSync,symlinkSync }=await import("node:fs");
+  const { tmpdir }=await import("node:os"); const { join }=await import("node:path");
+  const { artifactFiles,inspectArtifact }=await import("../scripts/staging-cloudflare.mjs");
+  const root=mkdtempSync(join(tmpdir(),"staging-artifact-test-"));
   try {
-    await runStaging(call.values);
-  } catch (error) {
-    failure = error;
-  }
-  assert.match(failure?.message ?? "", /HTTP 503/);
-  assert.doesNotMatch(failure?.message ?? "", new RegExp(BODY_CANARY));
-  assert.equal(state.comments.length, 0);
-  assert.deepEqual(call.summaries, []);
-  assert.equal(mutations(state).length, 0);
+    for(const path of ["server","client","migrations"]) mkdirSync(join(root,path));
+    writeFileSync(join(root,"server/index.js"),"export default {fetch(){return new Response('synthetic')}}");
+    const sql="CREATE TABLE synthetic(id INTEGER);";
+    writeFileSync(join(root,"migrations/0001_application.sql"),sql);
+    const blob=createHash("sha1").update(`blob ${Buffer.byteLength(sql)}\0${sql}`).digest("hex");
+    const plan={head:HEAD,migrations:[{path:"d1/migrations/0001_application.sql",blob}]};
+    const files=artifactFiles(root),artifactHash=createHash("sha256").update(JSON.stringify(files)).digest("hex");
+    writeFileSync(join(root,"manifest.json"),JSON.stringify({format:1,sha:HEAD,files,artifactHash}));
+    assert.equal(inspectArtifact(root,plan).artifactHash,artifactHash);
+    assert.throws(()=>inspectArtifact(root,{...plan,head:MAIN}),/integrity/);
+    assert.throws(()=>inspectArtifact(root,{...plan,migrations:[{...plan.migrations[0],blob:MAIN}]}),/migration bytes/);
+    symlinkSync(join(root,"server/index.js"),join(root,"server/link.js"));
+    assert.throws(()=>inspectArtifact(root,plan),/symlinks/);
+    rmSync(join(root,"server/link.js"));
+    writeFileSync(join(root,"server/index.js"),"tampered");
+    assert.throws(()=>inspectArtifact(root,plan),/integrity/);
+  } finally {rmSync(root,{recursive:true,force:true});}
 });
 
-test("a changed PR head or merge SHA blocks mutation and blocks the success receipt", async (t) => {
-  await t.test("before ref update", async () => {
-    const state = syntheticApi({
-      onPullRead(value) {
-        if (value.pullReads === 2) value.head = "a".repeat(40);
-      },
-    });
-    await assert.rejects(runStaging(options(state).values), /head or merge commit changed/);
-    assert.equal(mutations(state).length, 0);
-  });
-
-  await t.test("after deployment", async () => {
-    const state = syntheticApi({
-      onPullRead(value) {
-        if (value.pullReads === 3) value.merge = "b".repeat(40);
-      },
-    });
-    const call = options(state);
-    await assert.rejects(runStaging(call.values), /head or merge commit changed/);
-    assert.equal(state.staging, HEAD);
-    assert.equal(state.comments.length, 0);
-    assert.deepEqual(call.summaries, []);
-  });
-});
-
-test("a changed main blocks mutation and blocks the success receipt", async (t) => {
-  await t.test("before ref update", async () => {
-    const state = syntheticApi({
-      onMainRead(value) {
-        if (value.mainReads === 2) value.main = "a".repeat(40);
-      },
-    });
-    await assert.rejects(runStaging(options(state).values), /main changed/);
-    assert.equal(mutations(state).length, 0);
-  });
-
-  await t.test("after deployment", async () => {
-    const state = syntheticApi({
-      onMainRead(value) {
-        if (value.mainReads === 3) value.main = "a".repeat(40);
-      },
-    });
-    const call = options(state);
-    await assert.rejects(runStaging(call.values), /main changed/);
-    assert.equal(state.comments.length, 0);
-    assert.deepEqual(call.summaries, []);
-  });
-});
-
-test("a rejected or ineffective push cannot create a success receipt", async (t) => {
-  for (const [name, pushRef, pattern] of [
-    ["rejected push", async () => { throw new Error("remote: GH013 body canary"); }, /push did not complete/],
-    ["silent push", async () => {}, /did not confirm/],
-  ]) {
-    await t.test(name, async () => {
-      const state = syntheticApi();
-      const call = options(state, { pushRef });
-      let failure;
-      try {
-        await runStaging(call.values);
-      } catch (error) {
-        failure = error;
-      }
-      assert.match(failure?.message ?? "", pattern);
-      assert.doesNotMatch(failure?.message ?? "", /canary/);
-      assert.equal(state.staging, OLD_STAGING);
-      assert.equal(state.comments.length, 0);
-      assert.deepEqual(call.summaries, []);
-    });
+test("Cloudflare deploy refuses inherited secrets and exhausted free database capacity", async () => {
+  const {deployStagingArtifact}=await import("../scripts/staging-cloudflare.mjs");
+  for(const mode of ["secret","capacity"]) {
+    const calls=[];
+    const cf=async (url,init)=>{
+      calls.push({url,method:init.method});
+      if(url.endsWith("/settings")) return response({success:true,result:{bindings:mode==="secret"?[{type:"secret_text",name:"PRIVATE"}]:[]}});
+      if(url.includes("/d1/database?")) return response({success:true,result:Array.from({length:10},(_,n)=>({uuid:String(n)}))});
+      throw new Error("unexpected mutation");
+    };
+    await assert.rejects(deployStagingArtifact({accountId:"a".repeat(32),cloudflareToken:"synthetic",runId:"42",runAttempt:"1",cloudflareFetch:cf}),/secret|capacity/);
+    assert(calls.every(call=>call.method==="GET"));
   }
 });
 
-test("polling tolerates request failure and stale alias, and uses a new nonce each time", async () => {
-  const state = syntheticApi({ markerSteps: [
-    new Error("network body canary"),
-    ({ nonce }) => response({ projectId: PROJECT, sha: OLD_STAGING, nonce, ref: "staging" }),
-  ] });
-  await runStaging(options(state).values);
-
-  const polls = state.requests.filter(({ url }) => url.origin === ORIGIN);
-  assert.equal(polls.length, 3);
-  assert.deepEqual(polls.map(({ url }) => url.searchParams.get("nonce")),
-    ["nonce-1", "nonce-2", "nonce-3"]);
-  assert.equal(new Set(polls.map(({ url }) => url.href)).size, 3);
-});
-
-test("marker schema, project, ref, and nonce mismatches cannot create success receipts", async (t) => {
-  const cases = [
-    ["schema", ({ nonce }) => response({ projectId: PROJECT, sha: HEAD, nonce })],
-    ["project", ({ nonce }) => response({ projectId: "prj_other", sha: HEAD, nonce, ref: "staging" })],
-    ["ref", ({ nonce }) => response({ projectId: PROJECT, sha: HEAD, nonce, ref: "feature/x" })],
-    ["nonce", () => response({ projectId: PROJECT, sha: HEAD, nonce: "old", ref: "staging" })],
-  ];
-  for (const [name, marker] of cases) {
-    await t.test(name, async () => {
-      const state = syntheticApi({ markerSteps: [marker] });
-      const call = options(state);
-      await assert.rejects(runStaging(call.values), /marker/);
-      assert.equal(state.staging, HEAD);
-      assert.equal(state.comments.length, 0);
-      assert.deepEqual(call.summaries, []);
+test("trusted Cloudflare deployment uploads only the artifact and freshly isolated DB", async () => {
+  const {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync}=await import("node:fs");
+  const {tmpdir}=await import("node:os"); const {join}=await import("node:path");
+  const {deployStagingArtifact}=await import("../scripts/staging-cloudflare.mjs");
+  const root=mkdtempSync(join(tmpdir(),"staging-provider-test-"));
+  const calls=[]; let uploaded=false, executed=false, wrapper;
+  const schemaRows=[{type:"table",name:"synthetic",tbl_name:"synthetic",sql:"CREATE TABLE synthetic(id INTEGER)"}];
+  const schemaHash=createHash("sha256").update(JSON.stringify(schemaRows)).digest("hex");
+  const migrationHash="d".repeat(64);
+  try {
+    for(const name of ["server","client","migrations"]) mkdirSync(join(root,name));
+    writeFileSync(join(root,"server/index.js"),"export default {fetch(){return new Response('synthetic')}}");
+    writeFileSync(join(root,"client/index.html"),"synthetic");
+    writeFileSync(join(root,"migrations/0001_application.sql"),"CREATE TABLE synthetic(id INTEGER);");
+    const cloudflareFetch=async(url,init)=>{
+      calls.push({url,init});
+      const body=init.body?JSON.parse(init.body):null;
+      let result;
+      if(url.endsWith("/settings")) result={bindings:uploaded?[
+        {type:"d1",name:"DB",id:DATABASE},{type:"plain_text",name:"VIBIES_STAGING_SHA",text:HEAD},
+        {type:"plain_text",name:"VIBIES_STAGING_ARTIFACT_HASH",text:ARTIFACT}]:[]};
+      else if(url.includes("/d1/database?")) result=[];
+      else if(url.endsWith("/d1/database")&&init.method==="POST") result={uuid:DATABASE,name:body.name};
+      else if(url.endsWith("/query")) {
+        let results=[];
+        if(body.sql.startsWith("SELECT type,name")) results=schemaRows;
+        if(body.sql.startsWith("SELECT schema_hash")) results=[{schema_hash:schemaHash,migration_hash:migrationHash,source_sha:HEAD}];
+        result=[{success:true,results}];
+      } else if(url.endsWith("/deployments")) result={deployments:[{versions:[{version_id:VERSION,percentage:100}]}]};
+      else throw new Error("unexpected provider call");
+      return response({success:true,result});
+    };
+    const deployed=await deployStagingArtifact({accountId:"a".repeat(32),cloudflareToken:"synthetic-secret",
+      runId:"42",runAttempt:"1",origin:ORIGIN,plan:{head:HEAD,schemaHash:migrationHash,migrations:[{path:"d1/migrations/0001_application.sql"}]},
+      artifact:{root,artifactHash:ARTIFACT},cloudflareFetch,
+      execute(_node,args,opts){
+        executed=true;
+        const config=JSON.parse(readFileSync(args[args.indexOf("--config")+1],"utf8"));
+        assert.equal(config.no_bundle,true); assert.equal(config.name,"vibies-staging");
+        assert.deepEqual(config.d1_databases.map(binding=>binding.database_id),[DATABASE]);
+        assert.equal(config.vars.VIBIES_ENVIRONMENT,"staging");
+        assert.deepEqual(Object.keys(opts.env).sort(),["CI","CLOUDFLARE_ACCOUNT_ID","CLOUDFLARE_API_TOKEN","HOME","PATH","WRANGLER_LOG_PATH","WRANGLER_SEND_METRICS"]);
+        assert.doesNotMatch(JSON.stringify(config),/synthetic-secret/);
+        wrapper=readFileSync(join(opts.cwd,"staging-entry.js"),"utf8");
+        assert.match(wrapper,/env.STAGING_VERSION.id/);
+        uploaded=true;
+      },
     });
-  }
-});
-
-test("deployment timeout and a changed staging ref cannot create success receipts", async (t) => {
-  await t.test("timeout", async () => {
-    const unavailable = () => response({ error: BODY_CANARY }, 503);
-    const state = syntheticApi({ markerSteps: [unavailable, unavailable] });
-    const call = options(state, { timeoutMs: 1 });
-    let failure;
+    assert.equal(executed,true); assert.equal(deployed.schemaHash,schemaHash); assert.equal(deployed.migrationHash,migrationHash);
+    await deployed.verify(); await deployed.cleanup();
+    const {Miniflare}=await import("miniflare");
+    const mf=new Miniflare({compatibilityDate:"2026-08-06",modulesRoot:root,modules:[
+      {type:"ESModule",path:join(root,"staging-entry.js"),contents:wrapper},
+      {type:"ESModule",path:join(root,"server/index.js"),contents:readFileSync(join(root,"server/index.js"),"utf8")},
+    ],bindings:{STAGING_VERSION:{id:VERSION}}});
     try {
-      await runStaging(call.values);
-    } catch (error) {
-      failure = error;
-    }
-    assert.match(failure?.message ?? "", /timed out.*HTTP 503/);
-    assert.doesNotMatch(failure?.message ?? "", new RegExp(BODY_CANARY));
-    assert.equal(state.comments.length, 0);
-    assert.deepEqual(call.summaries, []);
-  });
-
-  await t.test("ref race", async () => {
-    const state = syntheticApi({ markerSteps: [({ nonce, state: value }) => {
-      value.staging = "a".repeat(40);
-      return response({ projectId: PROJECT, sha: HEAD, nonce, ref: "staging" });
-    }] });
-    const call = options(state);
-    await assert.rejects(runStaging(call.values), /staging ref changed/);
-    assert.equal(state.comments.length, 0);
-    assert.deepEqual(call.summaries, []);
-  });
-});
-
-test("workflow is manual, main-only, serialized, protected, and checks out its pinned trusted SHA", () => {
-  const root = fileURLToPath(new URL("..", import.meta.url));
-  const workflow = readFileSync(`${root}/.github/workflows/staging.yml`, "utf8");
-  assert.match(workflow, /^name: staging$/m);
-  assert.match(workflow, /^on:\n  workflow_dispatch:/m);
-  assert.doesNotMatch(workflow, /pull_request:|pull_request_target:|\n  push:/);
-  assert.match(workflow, /options:\n\s+- Preview PR\n\s+- Clear/);
-  assert.match(workflow, /contents: read\n\s+pull-requests: write\n\s+checks: read\n\s+actions: read/);
-  assert.match(workflow, /group: reusable-staging\n\s+cancel-in-progress: false/);
-  assert.match(workflow, /environment: staging/);
-  assert.match(workflow, /github\.repository == 'vibies-club\/vibies'.*github\.ref == 'refs\/heads\/main'/);
-  assert.match(workflow, /repository: vibies-club\/vibies\n\s+ref: \$\{\{ github\.sha \}\}\n\s+persist-credentials: false/);
-  assert.match(workflow, /node-version: 24/);
-  assert.match(workflow, /STAGING_WORKFLOW_SHA: \$\{\{ github\.sha \}\}/);
-  assert.match(workflow, /STAGING_ORIGIN: \$\{\{ vars\.STAGING_ORIGIN \}\}/);
-  assert.deepEqual([...workflow.matchAll(/secrets\.(\w+)/g)].map((match) => match[1]), ["STAGING_DEPLOY_KEY"]);
-  assert.match(workflow, /StrictHostKeyChecking=yes/);
-  assert.match(workflow, /github\.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl\\n/);
-  assert.doesNotMatch(workflow, /VERCEL_TOKEN|SUPABASE_ACCESS_TOKEN/);
+      const identity=await mf.dispatchFetch(`https://staging.test/staging.json?nonce=${"a".repeat(32)}`);
+      assert.equal(identity.headers.get("cache-control"),"no-store");
+      assert.deepEqual(await identity.json(),{sha:HEAD,worker:"vibies-staging",databaseId:DATABASE,schemaHash,
+        migrationHash,artifactHash:ARTIFACT,versionId:VERSION,environment:"staging",nonce:"a".repeat(32)});
+      assert.equal((await mf.dispatchFetch("https://staging.test/staging.json")).status,400);
+      assert.equal(await (await mf.dispatchFetch("https://staging.test/demo")).text(),"synthetic");
+    } finally {await mf.dispose();}
+    assert(calls.filter(call=>call.url.endsWith("/query")).every(call=>call.url.includes(DATABASE)));
+  } finally {rmSync(root,{recursive:true,force:true});}
 });

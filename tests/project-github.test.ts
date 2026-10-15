@@ -40,7 +40,7 @@ function provider(options: {
     options.calls?.push(`${init?.method ?? "GET"} ${url.pathname}${url.search}`);
     assert.equal(url.origin, "https://api.github.com");
     assert.equal(init?.cache, "no-store");
-    assert.equal(init?.redirect, "error");
+    assert.equal(init?.redirect, "manual");
     assert.ok(init?.signal);
     assert.equal(new Headers(init?.headers).get("X-GitHub-Api-Version"), "2026-03-10");
     if (url.pathname === `/users/${member.username}/installation`) {

@@ -1,5 +1,6 @@
+import { domainOperation } from "./domain";
 import "server-only";
-import { database, sessionHash } from "./access";
+import { sessionHash } from "./access";
 import { nickname } from "./access-core";
 import {
   milestoneDetails,
@@ -96,7 +97,7 @@ export async function projects(): Promise<{kind:"ok"; mine:Project[]; community:
   const hash = await sessionHash();
   if (!hash) return {kind:"forbidden"};
   try {
-    const [row] = await database()`select vibies_private.projects(${hash}) as result`;
+    const row = { result: await domainOperation("projects", hash) };
     if (row.result?.kind === "forbidden") return {kind:"forbidden"};
     if (row.result?.kind !== "ok" || !Array.isArray(row.result.mine) || !Array.isArray(row.result.community)) return {kind:"error"};
     return {kind:"ok", mine:row.result.mine.map(readProject), community:row.result.community.map(readProject)};
@@ -108,7 +109,7 @@ export async function project(id: string): Promise<{kind:"ok"; project:Project} 
   if (!hash) return {kind:"forbidden"};
   if (!projectId(id)) return {kind:"missing"};
   try {
-    const [row] = await database()`select vibies_private.project(${hash}, ${id}::uuid) as result`;
+    const row = { result: await domainOperation("project", hash, id) };
     if (row.result?.kind === "forbidden" || row.result?.kind === "missing") return {kind:row.result.kind};
     return row.result?.kind === "ok" ? {kind:"ok", project:readProject(row.result.project)} : {kind:"error"};
   } catch { return {kind:"error"}; }
@@ -117,10 +118,10 @@ export async function project(id: string): Promise<{kind:"ok"; project:Project} 
 type Actor = {githubId:string; username:string};
 export type ProjectContext = Actor & {repositoryId:string; version:string; publication:string; connection:string};
 export async function projectActor(hash: string, id?: string): Promise<Actor | ProjectContext | null> {
-  const [row] = id
-    ? await database()`select vibies_private.project_operation_context(${hash}, ${id}::uuid) as result`
-    : await database()`select vibies_private.project_actor(${hash}) as result`;
-  const value = row.result;
+  const result = id
+    ? await domainOperation("project_operation_context", hash, id)
+    : await domainOperation("project_actor", hash);
+  const value = result;
   if (value?.kind === "forbidden") return null;
   if (value?.kind !== "ok" || !repositoryId(value.githubId) || typeof value.username !== "string" ||
       !/^[A-Za-z0-9]([A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(value.username)) throw new Error("Project unavailable");

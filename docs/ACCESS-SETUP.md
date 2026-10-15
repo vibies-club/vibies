@@ -153,6 +153,26 @@ remain separate and continue to control only `/demo`.
 
 ## 6. Designate the first Instructor
 
+### Cloudflare D1
+
+For D1 deployments, the operator-only `designateInstructor` function lives in
+`scripts/operators/designate-instructor.ts`. Invoke it from trusted operator
+tooling with the explicitly verified destination D1 binding, stable GitHub ID,
+agreed nickname, and private reason. It is deliberately absent from HTTP routes
+and the application's domain dispatcher. Never commit the invocation or reason.
+
+The function atomically checks Member and nickname conflicts, appends the audit,
+revokes both affected identities' application and Google sessions and pending
+link grants, removes an unapproved target entry, and updates the Instructor.
+Existing provider links remain attached to their original identities; recovery
+does not transfer Google ownership. Verify the resulting Instructor identity and
+audit privately before reopening access. Run `npm run test:d1` to check recovery
+rollback and concurrency behavior against local workerd.
+
+### Retained PostgreSQL deployment
+
+The following SQL procedure applies to the retained Supabase deployment only.
+
 Before sign-in opens, verify the Instructor account through the class's existing
 trusted channel. Obtain its stable numeric GitHub account identifier without
 recording account details in the repository. Agree a privacy-safe Nickname and

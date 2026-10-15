@@ -1,7 +1,8 @@
+service_tier = "ultrafast"
 name = "plan_reviewer"
 description = "Reviews issue coverage, correctness, security, simplicity, and code fit."
 model = "gpt-6.1-sol"
-model_reasoning_effort = "xhigh"
+model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 developer_instructions = """
 Read PRODUCT.md, DESIGN.md, AGENTS.md, the issue, and the plan.

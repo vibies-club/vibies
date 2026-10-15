@@ -10,27 +10,52 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit",
-    "test": "node --test tests/demo.test.ts tests/access-core.test.ts tests/project-core.test.ts tests/project-github.test.ts tests/vercel-preview-cleanup.test.mjs tests/staging-identity.test.ts tests/staging.test.mjs tests/migration-scope.test.mjs",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "node --test tests/demo.test.ts tests/access-core.test.ts tests/project-core.test.ts tests/project-github.test.ts tests/vercel-preview-cleanup.test.mjs tests/staging-identity.test.ts tests/staging.test.mjs tests/migration-scope.test.mjs tests/read-only.test.ts tests/preview-cloudflare.test.mjs",
     "test:access": "node --test tests/access-database.test.ts",
     "test:projects": "node --test tests/project-core.test.ts tests/project-github.test.ts tests/projects-database.test.ts",
     "check:access-web": "node scripts/check-access-web.mjs",
     "check:migrations": "node scripts/check-migrations.mjs",
     "check:database-migrations": "node scripts/check-database-migrations.mjs",
-    "check:demo": "node --env-file=.env.local scripts/check-demo.mjs"
+    "check:demo": "node --env-file=.env.local scripts/check-demo.mjs",
+    "dev:vinext": "vite dev --port 3001",
+    "build:vinext": "vite build",
+    "start:vinext": "wrangler dev --config dist/server/wrangler.json",
+    "deploy:vinext": "vinext-cloudflare deploy --config dist/server/wrangler.json",
+    "cf:typegen": "wrangler types",
+    "test:d1": "node --test tests/d1-access-workerd.test.ts tests/d1-access.test.ts tests/d1-projects-workerd.test.ts tests/d1-projects.test.ts tests/d1-schema.test.mjs tests/google-auth.test.ts tests/d1-instructor-workerd.test.ts",
+    "test:migration": "node --test tests/migration-rehearsal.test.mjs tests/migration-remote.test.mjs",
+    "build:cloudflare:production": "CLOUDFLARE_ENV=production vite build"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.115.0",
-    "next": "16.3.4",
+    "@vinext/cloudflare": "1.1.1",
+    "better-auth": "1.7.9",
+    "next": "16.3.8",
     "postgres": "3.4.9",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "server-only": "0.0.1"
+    "react-server-dom-webpack": "19.2.8",
+    "server-only": "0.0.1",
+    "vinext": "1.2.0"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "1.64.0",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "typescript": "^5.9.0"
+    "@vitejs/plugin-react": "6.1.2",
+    "@vitejs/plugin-rsc": "0.5.38",
+    "miniflare": "4.20260730.0",
+    "typescript": "^5.9.0",
+    "vite": "8.3.4",
+    "wrangler": "4.151.0"
+  },
+  "overrides": {
+    "fflate": "0.8.3",
+    "miniflare": {
+      "sharp": "0.35.5",
+      "undici": "7.30.0"
+    }
   }
 }

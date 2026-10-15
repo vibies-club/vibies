@@ -64,7 +64,7 @@ test("OAuth exchanges PKCE and imports only ID/login, without profile or token p
   const fetcher: typeof fetch = async (input, init) => {
     requests++;
     assert.equal(init?.cache, "no-store");
-    assert.equal(init?.redirect, "error");
+    assert.equal(init?.redirect, "manual");
     assert.ok(init?.signal);
     if (requests === 1) {
       assert.equal(String(input), "https://github.com/login/oauth/access_token");
@@ -74,6 +74,7 @@ test("OAuth exchanges PKCE and imports only ID/login, without profile or token p
       return Response.json({ access_token: "synthetic-token", token_type: "bearer", scope: "" });
     }
     assert.equal(String(input), "https://api.github.com/user");
+    assert.equal(new Headers(init?.headers).get("User-Agent"), "Vibies");
     return Response.json({ id: 42, login: "builder", name: "discard", email: "discard", avatar_url: "discard" });
   };
   assert.deepEqual(await exchangeGitHub(config, "code", "verifier", fetcher), { githubId: "42", username: "builder" });
@@ -88,4 +89,18 @@ test("GitHub HTTP-200 errors, invalid tokens, extra scopes and network failure g
   }
   await assert.rejects(exchangeGitHub(config, "code", "verifier", async () => { throw new Error("private network detail"); }));
   await assert.rejects(exchangeGitHub(config, "code", "verifier", async () => new Response("", {status:500})));
+});
+
+
+test("OAuth refuses token and identity redirects without forwarding credentials", async () => {
+  for (const redirectAt of [1, 2]) {
+    let requests = 0;
+    await assert.rejects(exchangeGitHub(config, "code", "verifier", async (_input, init) => {
+      assert.equal(init?.redirect, "manual");
+      requests++;
+      if (requests === redirectAt) return new Response(null, {status:302,headers:{Location:"https://other.test"}});
+      return Response.json({access_token:"synthetic-token",token_type:"bearer",scope:""});
+    }));
+    assert.equal(requests, redirectAt);
+  }
 });

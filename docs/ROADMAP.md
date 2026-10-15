@@ -8,6 +8,13 @@ chosen.
 
 ## Now
 
+- Complete [issue #61](https://github.com/vibies-club/vibies/issues/61): migrate
+  hosting and all application data to Cloudflare Workers/D1 on the Free plan,
+  preserve GitHub approval and private access, and add explicitly linked Google
+  sign-in. The implementation and synthetic checks are in progress; live data
+  reconciliation, OAuth proof, isolated previews, and Instructor review remain
+  required before cutover. Keep Vercel and Supabase available until verified.
+
 - Record the P8 and P13 browser receipts for issue #20 on staging in
   [Roadmap verification](ROADMAP-VERIFICATION.md).
 - Approve the eighth student through the normal flow when they sign in.

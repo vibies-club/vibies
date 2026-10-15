@@ -1,9 +1,12 @@
+import { isReadOnly, readOnlyResponse } from "../../../lib/read-only";
+import { domainOperation } from "../../../lib/domain";
 import { cookies } from "next/headers";
-import { cookieName, cookieOptions, database, githubConfig, sessionHash } from "../../../lib/access";
+import { cookieName, cookieOptions, githubConfig, sessionHash } from "../../../lib/access";
 import { digest, exchangeGitHub, token, validToken } from "../../../lib/access-core";
 import { go } from "../../../lib/access-http";
 
 export async function GET(request: Request) {
+  if (isReadOnly()) return readOnlyResponse();
   const jar = await cookies();
   const params = new URL(request.url).searchParams;
   const state = params.get("state");
@@ -17,7 +20,7 @@ export async function GET(request: Request) {
   if (!validToken(state) || !validToken(browser) || oauth?.length !== 2 ||
       oauth[0] !== state || !validToken(oauth[1])) return done("/sign-in?message=failed");
   try {
-    const [flow] = await database()`select vibies_private.consume_sign_in(${digest(browser)}, ${digest(state)}) as result`;
+    const flow = { result: await domainOperation("consume_sign_in", digest(browser), digest(state)) };
     if (!flow.result) return done("/sign-in?message=failed");
     if (params.get("error") === "access_denied") return done("/sign-in");
     const code = params.get("code");
@@ -25,7 +28,7 @@ export async function GET(request: Request) {
     const account = await exchangeGitHub(githubConfig(), code, oauth[1]);
     const session = token();
     const previous = await sessionHash();
-    await database()`select vibies_private.finish_sign_in(${account.githubId}, ${account.username}, ${digest(session)}, ${previous})`;
+    await domainOperation("finish_sign_in", account.githubId, account.username, digest(session), previous);
     const response = done("/welcome");
     response.cookies.set(cookieName("session"), session, { ...cookieOptions(), maxAge: 86400 });
     return response;

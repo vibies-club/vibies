@@ -227,3 +227,6 @@ html:has(.home) { scroll-behavior: smooth; background: #fdf6dc; }
   .home .home-header nav a[href="#how-it-works"] { display: none; }
   .home .home-cta { width: 100%; justify-content: center; }
 }
+
+.home .account-controls button { color: var(--ink); background: var(--paper); border-color: var(--line); font-family: var(--font-mono), monospace; white-space: nowrap; padding: 8px 12px; }
+@media (max-width: 760px) { .home .home-header nav > a[href^="#"] { display: none; } }

@@ -1,7 +1,8 @@
+service_tier = "ultrafast"
 name = "worker"
 description = "Implements one bounded part of an approved plan."
-model = "gpt-6-luna"
-model_reasoning_effort = "max"
+model = "gpt-6.1-sol"
+model_reasoning_effort = "medium"
 developer_instructions = """
 Implement one bounded part of an approved plan. Follow AGENTS.md and DESIGN.md.
 Never widen scope.

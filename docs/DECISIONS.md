@@ -49,7 +49,8 @@ The class now has eight students, so Vibies provides eight active Member places.
 The pre-established Instructor remains separate and does not occupy a Member place.
 
 **Decision:** Vibies is private, with one pre-established Instructor place and
-eight active Member places. Every User authenticates with GitHub. Instructor-
+eight active Member places. GitHub establishes each User identity. D-022 adds
+optional Google sign-in only after explicit linking to that identity. Instructor-
 approved Membership grants Member access; the sole Instructor does not occupy a
 Member place or self-approve.
 
@@ -492,40 +493,35 @@ The account holds no product secret and no Member identity.
 ## D-018: Reuse one free staging environment for app reviews
 
 **Status:** Accepted in [issue #37](https://github.com/vibies-club/vibies/issues/37)
-on 2026-09-13. Live since [PR #38](https://github.com/vibies-club/vibies/pull/38)
-merged on 2026-09-14. Two Clear runs passed, on 2026-09-14 and 2026-09-15. The
-first Preview PR selection is pending. Automatic Supabase Preview branching has
-been off since 2026-09-16, recorded as the owner action in
-[D-016](#d-016-deploy-reviewed-schema-changes-through-native-migrations).
+on 2026-09-13. The former Supabase/Vercel implementation went live after PR #38
+on 2026-09-14, with two recorded Clear runs and its first Preview PR selection
+pending. Its historical receipts remain in the deployment guide and Git history.
 
-**Decision:** Use one standalone Supabase Free project that follows reviewed
-`main` migrations and one separate Vercel project with the fixed `staging` ref
-as its Production Branch. A maintainer runs the manual **staging** workflow from
-trusted `main` to preview an eligible PR or restore current `main`. The operation
-accepts only an open non-draft same-repository PR into `main`, a current head
-containing current `main`, passing head checks whose pull-request runs tested an
-equivalent tree, and a `supabase` tree equal to the owner-verified staging
-baseline. It updates only the fixed ref and verifies the stable URL, exact
-commit, project, ref, environment, and nonce before it records success. A
-repository ruleset lets only the workflow's deploy key move `staging`.
+**2026-10-15 amendment, issue #61:** Implement a Cloudflare replacement using
+one fixed `vibies-staging` Worker and a new isolated synthetic D1 database per
+operation. Instructor merge and hosted Preview PR/Clear proof remain pending;
+this amendment does not claim a live switch or retire the source deployment.
 
-The required `migration-check` always runs its snapshot, history, and
-classification guards, and runs the full disposable Supabase proof for every
-change outside the fast list that the
-[deployment guide](DATABASE-DEPLOYMENT.md#local-and-ci-checks) owns. The
-existing `app-check` and `links` checks remain required.
+**Decision:** The Instructor runs the manual workflow from trusted current
+main. It validates the exact eligible PR head and required checks, builds that
+head without deployment credentials, and deploys the verified artifact through
+trusted main scripts in the protected staging job. Main's D1 migration prefix
+is immutable; new migrations may be appended for isolated schema review.
+Clear repeats the same process for current main. The workflow never pushes the
+`staging` ref.
 
-**Why:** One stable test site reuses its database, OAuth settings, GitHub App,
-reviewer accounts, and URL. This removes repeated hosted setup and routine paid
-database branches while keeping exact revision and schema proof.
+**Why:** One stable review URL and disposable synthetic databases provide exact
+revision and schema evidence without exposing source data or provider secrets
+to candidate code. Separate build and deployment jobs preserve the trusted
+credential boundary.
 
-**Consequence:** Shared staging never receives an unmerged migration. A
-database-changing PR uses local and CI proof, plus a separately approved hosted
-environment with a cost cap only when its acceptance criteria require one. The
-Free project can pause; the owner resumes it and rechecks migration versions,
-the baseline, and sign-in. No keep-alive job or fallback provider token is added.
-The [deployment guide](DATABASE-DEPLOYMENT.md#reusable-staging) owns setup,
-operation, limits, and rollout receipts.
+**Consequence:** Receipts require matching artifact, schema, migration, version,
+database, SHA, provider bindings, and a fresh no-store identity response. This
+secret-free staging environment cannot prove authenticated Member flows on its
+own. Existing required CI checks remain. Free-plan limits fail closed; no paid
+upgrade or automatic purchase is authorized. The
+[deployment guide](DATABASE-DEPLOYMENT.md#reusable-staging) owns setup, operation,
+limits, pending hosted gates, and source rollback history.
 
 ## D-019: Add optional Personal Project roadmaps
 
@@ -587,3 +583,77 @@ quality reproducible across contributors and future agent sessions.
 only the Instructor merges. Required GitHub approval, the three head checks,
 staging eligibility, and post-merge receipts remain in force. The local
 `pr_reviewer` verdict supplements these gates.
+
+## D-021: Build the Workers application with vinext
+
+**Date and status:** 2026-10-15, selected for issue #61 and implemented locally;
+Instructor merge and hosted compatibility proof pending.
+
+**Decision:** Keep the Next.js App Router source and use `vinext` 1.2.0,
+`@vinext/cloudflare` 1.1.1, Vite 8.3.4, and `@cloudflare/vite-plugin` 1.64.0 for
+the Workers build. Wrangler 4.151.0 supplies deployment tooling. The separate
+`build:vinext` command preserves the existing Next build as source-stack proof.
+
+**Why:** This provides a Workers runtime path while retaining the current app
+structure. Local build success is not proof of hosted route or browser parity.
+
+## D-022: Add optional linked Google sign-in through Better Auth
+
+**Date and status:** 2026-10-15, selected for issue #61 and implemented locally;
+provider setup and hosted authentication proof pending.
+
+**Decision:** Pin Better Auth 1.7.9 for the D1-backed Google subsystem. GitHub
+remains the first account identity and approval path. An approved Member may
+link Google only with a fresh GitHub-authenticated session and a one-use grant.
+Google sign-in requires that existing link; email matching, public signup, and
+password sign-in are disabled. Provider profile and token retention are blocked.
+
+**Why:** Optional Google access must preserve the existing Member identity,
+Instructor approval, and nickname-only privacy rules. Configuration gates the
+feature; synthetic OAuth tests do not prove live Google authorization.
+
+## D-023: Preserve stable identity when moving domain storage to D1
+
+**Date and status:** 2026-10-15, selected for issue #61 and implemented locally;
+source reconciliation and production activation pending.
+
+**Decision:** Use Cloudflare D1 through binding `DB`, preserving existing account
+UUIDs, GitHub identifiers, nicknames, approvals, project ownership, and domain
+relationships. Atomic guarded writes and database constraints retain capacity,
+one-use authorization, and stale-write rules. Production starts disabled and
+requires a reconciled source snapshot before explicit activation.
+
+**Why:** Changing storage must not create new Members or alter ownership.
+Synthetic fixtures and local parity tests cannot substitute for source-data
+reconciliation or production cutover receipts. Retain Supabase migration history
+and the source deployment for rollback until retirement is authorized.
+
+## D-024: Keep the Cloudflare migration within the Free-plan boundary
+
+**Date and status:** 2026-10-15, selected for issue #61; account Free plan verified,
+full authenticated-flow capacity verification pending.
+
+**Decision:** Target Cloudflare Workers and D1 on the Free plan. Do not enable
+paid upgrades, subscriptions, or capacity purchases automatically. Staging uses
+synthetic data and refuses a run when its database capacity guard is reached.
+
+**Why:** The hosting change must respect the agreed cost boundary. A local
+configuration does not establish account entitlement, remaining quota, or live
+readiness; each deployment still needs capacity and provider proof.
+
+
+## D-025: Stream migration data through an isolated Wrangler process
+
+**Date and status:** 2026-10-15, selected for issue #61; synthetic remote proof passed, private-data use and cutover remain gated.
+
+**Decision:** Keep encrypted backups outside the repository. Decrypt in memory and pass migration statements through an isolated process using Wrangler 4.151.0's pinned command handler. Capture and suppress all provider output. Check immutable destination identity and disabled/empty state again inside the same atomic batch, then reconcile every table and sequence.
+
+**Why:** Wrangler's file import rereads its input and cannot consume a non-rewindable stdin pipe safely. Remote bindings stalled in this environment. The HTTPS command-handler path passed a real D1 late-constraint rollback and ten-table reconciliation without putting private SQL in command arguments or files. This version-sensitive path must be revalidated whenever Wrangler changes.
+
+## D-026: Keep preview deployment authority outside candidate code
+
+**Date:** 2026-10-15
+
+**Decision:** Workers Builds deploys only reviewed `main` to `vibies-production`. A separate trusted-main GitHub workflow builds PR code without provider credentials, then validates and deploys an inert artifact to its own synthetic Worker and D1 database. Preview deployment serializes allocation, refuses insufficient Free capacity, verifies source and resource identity, and posts the resulting URL.
+
+**Why:** Worker Preview runtime isolation does not isolate a build token from arbitrary branch scripts. Separate build and deployment jobs preserve the existing private data boundary. Use `CLOUDFLARE_ENV=production` at Vite build time to flatten the reviewed production configuration. See [preview operations](CLOUDFLARE-PR-PREVIEWS.md).

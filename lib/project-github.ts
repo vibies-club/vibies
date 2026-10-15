@@ -61,13 +61,14 @@ function api(fetcher: typeof fetch, started: number, path: string, authorization
   return fetcher(`${API}${path}`, {
     ...init,
     headers: {
+      "User-Agent": "Vibies",
       Accept: "application/vnd.github+json",
       Authorization: `Bearer ${authorization}`,
       "X-GitHub-Api-Version": "2026-03-10",
       ...init.headers,
     },
     cache: "no-store",
-    redirect: "error",
+    redirect: "manual",
     signal: AbortSignal.timeout(Math.min(REQUEST_TIMEOUT, remaining)),
   });
 }
