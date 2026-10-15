@@ -689,3 +689,11 @@ readiness; each deployment still needs capacity and provider proof.
 **Decision:** Import Better Auth 1.7.9 from `better-auth/minimal` and pin `@better-auth/kysely-adapter` at the same version. Cache only stock connection/dialect preparation by database identity; construct each auth instance's adapter with its own options and hooks. Use Vite's server `build.minify` setting to reduce deployed code without changing the supported Cloudflare bundle flow.
 
 **Why:** Avoid unused full-entry setup while retaining stock SQL behavior and D1 transaction semantics. Link-bearing auth instances remain isolated, and failed initialization clears only matching cache entries. Minification reduces server JavaScript from approximately 1.60 MB to 0.76 MB; code size and passing tests alone do not prove Free-plan CPU suitability.
+
+## D-029: Prepare grant-free auth metadata during Worker startup
+
+**Date:** 2026-10-15
+
+**Decision:** Prepare only Better Auth’s grant-free adapter/context from imported Cloudflare bindings during module initialization. Pin the directly imported `@better-auth/core` to 1.7.9 for its public environment parser. Disable auth telemetry, and skip priming if an environment override could enable it. Missing configuration or initialization errors retain the normal request-time fallback.
+
+**Why:** Cloudflare supports binding-based client initialization at module scope. This moves pure metadata setup outside the first request without issuing SQL or network calls. Tests trap both kinds of I/O and verify telemetry/missing-configuration skip paths. Request-time activation, authorization and exact configuration comparisons remain mandatory; this does not establish Free-plan CPU suitability.

@@ -31,6 +31,7 @@
     "test:worker": "node --test worker/boundary.test.mjs"
   },
   "dependencies": {
+    "@better-auth/core": "1.7.9",
     "@better-auth/kysely-adapter": "1.7.9",
     "@supabase/supabase-js": "2.115.0",
     "@vinext/cloudflare": "1.1.1",

@@ -1,8 +1,13 @@
+import { env as startupEnv } from 'cloudflare:workers';
+import { primeGoogleAuth } from './auth-initialization';
 import { createServices, privatePath, safeError, type Env } from './services';
 import { page } from './page';
 import { auth } from './auth';
 import { projectAction } from './project-action';
 import { memberAction } from './member-action';
+// Prepare pure auth metadata once; request-time activation remains in createServices.
+await primeGoogleAuth(startupEnv);
+
 export type WorkerEnv=Env & {ASSETS?:{fetch(request:Request):Promise<Response>}};
 const methods:Record<string,string>={'/api/page':'GET','/auth/browser':'GET','/auth/start':'POST','/auth/callback':'GET','/auth/sign-out':'POST','/auth/google/start':'POST','/auth/google/link':'POST','/auth/google/provider/callback/google':'GET','/projects/action':'POST','/admin/members/action':'POST'};
 async function handle(request:Request,env:WorkerEnv):Promise<Response>{

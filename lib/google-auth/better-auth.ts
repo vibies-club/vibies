@@ -55,6 +55,7 @@ export async function createGoogleAuth(config: GoogleAuthConfig) {
     // preparation disables transactions and retains its native SQL behavior.
     database: kyselyAdapter(prepared.kysely, { type: prepared.databaseType, transaction: prepared.transaction }),
     logger: { disabled: true },
+    telemetry: { enabled: false },
     trustedOrigins: [origin],
     emailAndPassword: { enabled: false },
     user: { modelName: "google_users", changeEmail: { enabled: false }, deleteUser: { enabled: false } },

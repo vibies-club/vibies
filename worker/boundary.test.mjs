@@ -9,7 +9,7 @@ const origin='https://worker.test';
 const token=n=>n.toString(16).padStart(64,'0');
 const hash=n=>createHash('sha256').update(token(n)).digest('hex');
 test('Worker HTTP boundary uses local D1 authorization and native routes',async t=>{
- const output=await build({entryPoints:[new URL('./index.ts',import.meta.url).pathname],bundle:true,write:false,format:'esm',platform:'neutral',target:'es2022',external:['node:*'],conditions:['workerd','worker','browser'],logLevel:'silent'});
+ const output=await build({entryPoints:[new URL('./index.ts',import.meta.url).pathname],bundle:true,write:false,format:'esm',platform:'neutral',target:'es2022',external:['node:*','cloudflare:*'],conditions:['workerd','worker','browser'],logLevel:'silent'});
  const options={modules:[{type:'ESModule',path:'worker.js',contents:output.outputFiles[0].text}],compatibilityDate:'2026-08-06',compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'worker-boundary'},bindings:{VIBIES_APP_ORIGIN:origin,VIBIES_ENVIRONMENT:'test'}};
  const mf=new Miniflare(options);
  try{
@@ -95,4 +95,39 @@ test('Worker HTTP boundary uses local D1 authorization and native routes',async 
    const result=await mf.dispatchFetch(origin+'/auth/sign-out',{redirect:'manual',method:'POST',headers:{origin,'content-type':'application/x-www-form-urlencoded',cookie:`__Host-vibies-session=${token(2)}`},body:''});assert.equal(result.status,303);assert.match(result.headers.get('set-cookie'),/__Host-vibies-session=;.*Max-Age=0/);
   });
  }finally{await mf.dispose();}
+});
+
+test('Google auth startup prepares metadata without I/O and skips telemetry overrides', async () => {
+ const source=`
+ import { env } from 'cloudflare:workers';
+ import { primeGoogleAuth } from './worker/auth-initialization';
+ import { googleAuthForRequest } from './lib/google-auth/better-auth';
+ let databaseCalls=0, networkCalls=0;
+ const database={prepare(){databaseCalls++;throw new Error('Startup SQL forbidden');},
+   batch(){databaseCalls++;throw new Error('Startup SQL forbidden');},
+   exec(){databaseCalls++;throw new Error('Startup SQL forbidden');}};
+ const nativeFetch=globalThis.fetch;
+ globalThis.fetch=()=>{networkCalls++;throw new Error('Startup network forbidden');};
+ const bindings={...env,DB:database};
+ const primed=await primeGoogleAuth(bindings);
+ const cached=primed ? googleAuthForRequest({database,store:database,origin:env.VIBIES_APP_ORIGIN,
+   secret:env.VIBIES_GOOGLE_AUTH_SECRET,clientId:env.VIBIES_GOOGLE_CLIENT_ID,clientSecret:env.VIBIES_GOOGLE_CLIENT_SECRET}) : null;
+ const initialized=primed && !!(await (await cached).$context);
+ const identical=primed && cached===googleAuthForRequest({database,store:database,origin:env.VIBIES_APP_ORIGIN,
+   secret:env.VIBIES_GOOGLE_AUTH_SECRET,clientId:env.VIBIES_GOOGLE_CLIENT_ID,clientSecret:env.VIBIES_GOOGLE_CLIENT_SECRET});
+ globalThis.fetch=nativeFetch;
+ export default {fetch(){return Response.json({primed,initialized,identical,databaseCalls,networkCalls});}};`;
+ const output=await build({stdin:{contents:source,resolveDir:new URL('..',import.meta.url).pathname,sourcefile:'startup-proof.ts'},bundle:true,write:false,format:'esm',platform:'neutral',target:'es2022',external:['node:*','cloudflare:*'],conditions:['workerd','worker','browser'],logLevel:'silent'});
+ const base={modules:[{type:'ESModule',path:'worker.js',contents:output.outputFiles[0].text}],compatibilityDate:'2026-08-06',compatibilityFlags:['nodejs_compat'],bindings:{
+  VIBIES_APP_ORIGIN:origin,VIBIES_ENVIRONMENT:'test',VIBIES_GOOGLE_CLIENT_ID:'synthetic-client',
+  VIBIES_GOOGLE_CLIENT_SECRET:'synthetic-secret',VIBIES_GOOGLE_AUTH_SECRET:'synthetic-test-secret-with-at-least-32-characters',
+  BETTER_AUTH_TELEMETRY_ENDPOINT:'https://telemetry.invalid/forbidden'}};
+ const mf=new Miniflare(base);
+ try {
+  assert.deepEqual(await(await mf.dispatchFetch(origin)).json(),{primed:true,initialized:true,identical:true,databaseCalls:0,networkCalls:0});
+  await mf.setOptions({...base,bindings:{...base.bindings,BETTER_AUTH_TELEMETRY:'true'}});
+  assert.deepEqual(await(await mf.dispatchFetch(origin)).json(),{primed:false,initialized:false,identical:false,databaseCalls:0,networkCalls:0});
+  await mf.setOptions({...base,bindings:{...base.bindings,VIBIES_GOOGLE_AUTH_SECRET:''}});
+  assert.deepEqual(await(await mf.dispatchFetch(origin)).json(),{primed:false,initialized:false,identical:false,databaseCalls:0,networkCalls:0});
+ } finally {await mf.dispose();}
 });
