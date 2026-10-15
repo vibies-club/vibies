@@ -3,7 +3,7 @@ import { digest } from "../lib/access-core.ts";
 import { readFileSync } from "node:fs";
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 import { test } from "node:test";
-import { createGoogleAuth, googleCallbackHandler, GOOGLE_AUTH_PATH } from "../lib/google-auth/better-auth.ts";
+import { createGoogleAuth, googleAuthForRequest, googleCallbackHandler, GOOGLE_AUTH_PATH } from "../lib/google-auth/better-auth.ts";
 import { createGoogleRoutes, grantCookie } from "../lib/google-auth/http.ts";
 import { beginGoogleLink, googleLinkGrant, finishGoogleSignIn } from "../lib/google-auth/store.ts";
 import type { AccessDatabase, D1Statement, D1Result } from "../lib/d1/access.ts";
@@ -354,4 +354,66 @@ test('Google initiation fails closed when its verification schema is missing', a
     assert.equal(sqlite.prepare('SELECT count(*) n FROM sessions').get()!.n, 4);
     assert.ok(!response.headers.getSetCookie().some(value => /^vibies-session=[^;]/.test(value)));
   } finally { sqlite.close(); }
+});
+
+test('grant-free auth cache matches every configuration field and never caches grants', async () => {
+  const first = fixture(); const second = fixture();
+  const config = { database: first.db, store: first.db, origin: 'https://vibies.test',
+    secret: 'synthetic-test-secret-with-at-least-32-characters', clientId: 'synthetic-client', clientSecret: 'synthetic-secret' };
+  try {
+    for (const changed of [
+      { database: second.db }, { store: second.db }, { origin: 'https://other.test' },
+      { secret: 'different-synthetic-secret-with-at-least-32-characters' },
+      { clientId: 'different-client' }, { clientSecret: 'different-secret' },
+    ]) {
+      const original = googleAuthForRequest(config);
+      assert.equal(googleAuthForRequest({ ...config }), original);
+      const different = googleAuthForRequest({ ...config, ...changed });
+      assert.notEqual(different, original);
+      await different.$context;
+    }
+    const original = googleAuthForRequest(config);
+    const linked = { ...config, link: { grantHash: hash(20), sessionHash: hash(2) } };
+    const a = googleAuthForRequest(linked); const b = googleAuthForRequest(linked);
+    assert.notEqual(a, b);
+    assert.notEqual(a, original);
+    assert.equal(googleAuthForRequest(config), original);
+    // A caller changing its object later cannot turn a cached instance into a grant-bearing one.
+    const mutable: typeof linked | typeof config = { ...config };
+    const snapshotted = googleAuthForRequest(mutable);
+    Object.assign(mutable, { link: linked.link, origin: 'https://changed.test' });
+    await assert.rejects(() => snapshotted.api.githubBridge({ method: 'POST', headers: new Headers() }));
+    assert.equal((await snapshotted.$context).baseURL, 'https://vibies.test/auth/google/provider');
+    await Promise.all([a.$context, b.$context]);
+  } finally { first.sqlite.close(); second.sqlite.close(); }
+});
+
+test('shared grant-free auth isolates concurrent cookies, databases and link authorization', async () => {
+  const first = fixture(); const second = fixture();
+  const config = { database: first.db, store: first.db, origin: 'https://vibies.test',
+    secret: 'synthetic-test-secret-with-at-least-32-characters', clientId: 'synthetic-client', clientSecret: 'synthetic-secret' };
+  try {
+    const ownerA = await beginGoogleLink(first.db, hash(1), hash(20));
+    const ownerB = await beginGoogleLink(first.db, hash(2), hash(21));
+    const bridge = async (grantHash: string, sessionHash: string) => googleAuthForRequest({ ...config,
+      link: { grantHash, sessionHash } }).api.githubBridge({ method: 'POST', headers: new Headers(), asResponse: true });
+    const [bridgeA, bridgeB] = await Promise.all([bridge(hash(20), hash(1)), bridge(hash(21), hash(2))]);
+    const headersA = new Headers({ cookie: mergeCookies('', bridgeA) });
+    const headersB = new Headers({ cookie: mergeCookies('', bridgeB) });
+    const shared = googleAuthForRequest(config);
+    const other = googleAuthForRequest({ ...config, database: second.db, store: second.db });
+    const [sessionA, sessionB, anonymous, otherEnvironment] = await Promise.all([
+      shared.api.getSession({ headers: headersA }), shared.api.getSession({ headers: headersB }),
+      shared.api.getSession({ headers: new Headers() }), other.api.getSession({ headers: headersA }),
+    ]);
+    assert.equal(sessionA?.user.id, ownerA);
+    assert.equal(sessionB?.user.id, ownerB);
+    assert.notEqual(sessionA?.session.token, sessionB?.session.token);
+    assert.equal(anonymous, null); assert.equal(otherEnvironment, null);
+    await Promise.all([headersA, headersB].map(headers => assert.rejects(() =>
+      shared.api.githubBridge({ method: 'POST', headers }))));
+    assert.equal((await shared.$context).session, null);
+    assert.equal((await shared.$context).newSession, null);
+    assert.equal(second.sqlite.prepare('SELECT count(*) n FROM google_sessions').get()!.n, 0);
+  } finally { first.sqlite.close(); second.sqlite.close(); }
 });

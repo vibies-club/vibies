@@ -83,6 +83,26 @@ export function createGoogleAuth(config: GoogleAuthConfig) {
   });
 }
 
+type SharedGoogleConfig = Omit<GoogleAuthConfig, "link">;
+let sharedAuth: { config: SharedGoogleConfig; auth: ReturnType<typeof createGoogleAuth> } | undefined;
+
+/** Reuse only grant-free configuration; request authorization stays in the routes. */
+export function googleAuthForRequest(config: GoogleAuthConfig) {
+  if (config.link !== undefined) return createGoogleAuth(config);
+  const cached = sharedAuth;
+  if (cached && cached.config.database === config.database && cached.config.store === config.store &&
+      cached.config.origin === config.origin && cached.config.secret === config.secret &&
+      cached.config.clientId === config.clientId && cached.config.clientSecret === config.clientSecret)
+    return cached.auth;
+  // Copy only auth configuration, never cookies, destinations, or read-only state.
+  const snapshot: SharedGoogleConfig = { database: config.database, store: config.store, origin: config.origin,
+    secret: config.secret, clientId: config.clientId, clientSecret: config.clientSecret };
+  const auth = createGoogleAuth(snapshot);
+  sharedAuth = { config: snapshot, auth };
+  void auth.$context.catch(() => { if (sharedAuth?.auth === auth) sharedAuth = undefined; });
+  return auth;
+}
+
 /** Only the OAuth callback is public. Initiation, bridge and session APIs are server-side only. */
 export async function googleCallbackHandler(auth: ReturnType<typeof createGoogleAuth>, request: Request) {
   const url = new URL(request.url);

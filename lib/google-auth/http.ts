@@ -1,7 +1,7 @@
 import { isReadOnly, readOnlyResponse } from "../read-only.ts";
 import { appOrigin, digest, sameOriginPost, token, validToken } from "../access-core.ts";
 import { begin_sign_in, consume_sign_in, end_session, type AccessDatabase } from "../d1/access.ts";
-import { createGoogleAuth, googleCallbackHandler, type GoogleAuthConfig } from "./better-auth.ts";
+import { googleAuthForRequest, googleCallbackHandler, type GoogleAuthConfig } from "./better-auth.ts";
 import { beginGoogleLink, cancelGoogleLink, finishGoogleSignIn } from "./store.ts";
 import { clearGoogleCookies, cookie, grantCookie, readCookies } from "./cookies.ts";
 export { clearGoogleCookies, grantCookie } from "./cookies.ts";
@@ -31,7 +31,7 @@ export function createGoogleRoutes(config: GoogleRoutesConfig) {
   const origin = appOrigin(config.origin); const secure = origin.startsWith('https:');
   const authFor = (request: Request) => {
     const jar = readCookies(request); const grant = jar.get(grantCookie(secure)); const session = jar.get(config.sessionCookie);
-    return createGoogleAuth({...config,link:validToken(grant) && validToken(session)
+    return googleAuthForRequest({...config,link:validToken(grant) && validToken(session)
       ? {grantHash:digest(grant),sessionHash:digest(session)}:undefined});
   };
   async function start(request: Request, linking: boolean) {
@@ -49,7 +49,7 @@ export function createGoogleRoutes(config: GoogleRoutesConfig) {
       grant = linking ? token() : undefined;
       if (linking && (!validToken(session) || !await beginGoogleLink(config.store,digest(session),digest(grant!))))
         return redirect('/welcome?google=reauth');
-      const auth = createGoogleAuth({...config,link:grant ? {grantHash:digest(grant),sessionHash:digest(session!)}:undefined});
+      const auth = googleAuthForRequest({...config,link:grant ? {grantHash:digest(grant),sessionHash:digest(session!)}:undefined});
       let headers = new Headers({origin});
       let bridge: Response | undefined;
       if (linking) {

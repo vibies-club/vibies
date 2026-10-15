@@ -678,6 +678,6 @@ readiness; each deployment still needs capacity and provider proof.
 
 **Date:** 2026-10-15
 
-**Decision:** Disable Better Auth runtime schema introspection for the request-local Google subsystem. Keep explicit schema validation and missing-schema failure tests in the required D1 suite, alongside deployment migration checks.
+**Decision:** Disable Better Auth runtime schema introspection. Reuse one grant-free Google auth instance only when the database and store objects, origin, client credentials, and auth secret match exactly; copy only those fields into the cache. Grant-bearing instances always remain fresh. Keep explicit schema validation and missing-schema failure tests in the required D1 suite, alongside deployment migration checks.
 
-**Why:** Better Auth 1.7.9 caches schema validation per adapter instance, while request-local initialization preserves link-grant and environment isolation. Repeating D1 metadata scans for each OAuth operation wastes the Free-plan CPU budget. SQL errors still fail the affected sign-in operation; database constraints, authorization hooks, and deployment activation checks remain enforced.
+**Why:** Better Auth 1.7.9 caches schema validation per adapter instance, while request-local initialization preserves link-grant and environment isolation. Repeating D1 metadata scans and endpoint initialization for each OAuth operation wastes the Free-plan CPU budget. A bounded grant-free cache avoids retaining request cookies, destinations, or authorization grants; activation checks still run before the auth subsystem is reached. SQL errors still fail the affected sign-in operation; database constraints, authorization hooks, and deployment activation checks remain enforced.
