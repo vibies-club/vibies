@@ -3,7 +3,7 @@ import 'server-only';
 import { cookieName, origin, sessionHash } from '../access';
 import { allowedPost, go, safeError } from '../access-http';
 import { cloudflareDatabase, usesD1 } from '../domain';
-import { createGoogleRoutes, clearGoogleCookies } from './http';
+import { clearGoogleCookies } from './cookies';
 import type { GoogleAuthConfig } from './better-auth';
 
 export function googleEnabled() {
@@ -12,6 +12,7 @@ export function googleEnabled() {
 async function routes() {
   if (!googleEnabled()) throw new Error('Google sign-in unavailable');
   const db = await cloudflareDatabase();
+  const { createGoogleRoutes } = await import('./http');
   return createGoogleRoutes({store:db,database:db as unknown as GoogleAuthConfig['database'],origin:origin(),
     clientId:process.env.VIBIES_GOOGLE_CLIENT_ID!,clientSecret:process.env.VIBIES_GOOGLE_CLIENT_SECRET!,
     secret:process.env.VIBIES_GOOGLE_AUTH_SECRET!,sessionCookie:cookieName('session'),browserCookie:cookieName('browser')});

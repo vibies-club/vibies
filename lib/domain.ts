@@ -48,10 +48,10 @@ export async function domainOperation<K extends keyof Arguments>(name: K, ...arg
   assertOperationWritable(name);
   if (usesD1()) {
     const db = await cloudflareDatabase();
-    const access = await import("./d1/access");
-    const projects = await import("./d1/projects");
-    const operations = { ...access, ...projects };
-    const operation = operations[name] as (db: AccessDatabase, ...values: unknown[]) => Promise<unknown>;
+    const accessOperation = name === "access_state" || name === "members" || name === "change_member" ||
+      name === "begin_sign_in" || name === "consume_sign_in" || name === "finish_sign_in" || name === "end_session";
+    const operations = accessOperation ? await import("./d1/access") : await import("./d1/projects");
+    const operation = (operations as Record<string, unknown>)[name] as (db: AccessDatabase, ...values: unknown[]) => Promise<unknown>;
     if (typeof operation !== "function") throw new Error("Access unavailable");
     return operation(db, ...args);
   }

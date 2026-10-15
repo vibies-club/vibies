@@ -3,25 +3,15 @@ import { appOrigin, digest, sameOriginPost, token, validToken } from "../access-
 import { begin_sign_in, consume_sign_in, end_session, type AccessDatabase } from "../d1/access.ts";
 import { createGoogleAuth, googleCallbackHandler, type GoogleAuthConfig } from "./better-auth.ts";
 import { beginGoogleLink, cancelGoogleLink, finishGoogleSignIn } from "./store.ts";
+import { clearGoogleCookies, cookie, grantCookie, readCookies } from "./cookies.ts";
+export { clearGoogleCookies, grantCookie } from "./cookies.ts";
 
 export type GoogleRoutesConfig = Omit<GoogleAuthConfig, 'link' | 'store'> & {
   store: AccessDatabase; sessionCookie: string; browserCookie: string;
 };
-export const grantCookie = (secure: boolean) => `${secure ? '__Host-' : ''}vibies-google-grant`;
 const fixedDestination = '/auth/google/callback';
-function readCookies(request: Request) {
-  const result = new Map<string,string>();
-  for (const item of (request.headers.get('cookie') ?? '').split(';')) {
-    const index = item.indexOf('=');
-    if (index > 0) result.set(item.slice(0,index).trim(), item.slice(index+1).trim());
-  }
-  return result;
-}
 function redirect(path: string) {
   return new Response(null,{status:303,headers:{Location:path,'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}});
-}
-function cookie(name: string, value: string, secure: boolean, maxAge: number) {
-  return `${name}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? '; Secure' : ''}`;
 }
 function carryCookies(target: Headers, source: Headers) {
   for (const value of source.getSetCookie()) target.append('Set-Cookie', value);
@@ -35,15 +25,6 @@ function requestWithCookies(request: Request, headers: Headers) {
   const next = new Headers(request.headers);
   next.set('cookie',[...jar].map(([key,value])=>`${key}=${value}`).join('; '));
   return next;
-}
-export function clearGoogleCookies(request: Request, response: Response, secure: boolean) {
-  const names = new Set([grantCookie(secure), 'vibies-google.session_token', '__Secure-vibies-google.session_token',
-    'vibies-google.oauth_state', '__Secure-vibies-google.oauth_state',
-    'vibies-google.session_data', '__Secure-vibies-google.session_data',
-    'vibies-google.account_data', '__Secure-vibies-google.account_data']);
-  for (const name of readCookies(request).keys())
-    if (name.startsWith('vibies-google.') || name.startsWith('__Secure-vibies-google.')) names.add(name);
-  for (const name of names) response.headers.append('Set-Cookie',cookie(name,'',secure,0));
 }
 
 export function createGoogleRoutes(config: GoogleRoutesConfig) {

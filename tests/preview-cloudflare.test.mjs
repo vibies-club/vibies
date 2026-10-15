@@ -65,6 +65,12 @@ test('fixed deployment binds only fresh synthetic DB and preserves ambiguous upl
       const promise=deployPreviewArtifact({...opts,origin:'https://vibies-pr-61.example.workers.dev',plan:{head:HEAD,schemaHash:HASH,migrations:[{path:'d1/migrations/0001_app.sql'}]},artifact:{root,artifactHash:HASH},cloudflareFetch:cf,execute(_node,args,options){
         const config=JSON.parse(readFileSync(args[args.indexOf('--config')+1],'utf8'));
         assert.equal(config.name,'vibies-pr-61');assert.equal(config.no_bundle,true);
+        assert.deepEqual(config.assets.run_worker_first,["/*","!/_next/static/*","!/*/_next/static/*"]);
+        const workerFirst = path => config.assets.run_worker_first.some(pattern => !pattern.startsWith("!") && new RegExp(`^${pattern.replaceAll("*", ".*")}$`).test(path)) &&
+          !config.assets.run_worker_first.some(pattern => pattern.startsWith("!") && new RegExp(`^${pattern.slice(1).replaceAll("*", ".*")}$`).test(path));
+        for (const path of ["/_next/static/chunks/app.js","/_next/static/css/app.css","/base/_next/static/media/logo.png"]) assert.equal(workerFirst(path),false,path);
+        for (const path of ["/staging.json","/staging.json?nonce=abc","/demo"]) assert.equal(workerFirst(path),true,path);
+
         assert.deepEqual(config.d1_databases.map(binding=>binding.database_id),[DB]);
         assert.doesNotMatch(JSON.stringify(config),/secret-canary|vibies-production/);
         assert.equal(options.env.NODE_OPTIONS,undefined);assert(!args.includes('npm'));

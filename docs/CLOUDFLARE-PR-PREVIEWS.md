@@ -4,7 +4,7 @@ The automatic preview workflow uses one ordinary Worker per PR (`vibies-pr-N`), 
 
 ## Bootstrap and configuration
 
-This workflow and its trusted scripts must first reach `main` through the normal Instructor merge. GitHub runs `pull_request_target` from the trusted base commit; the current migration PR cannot bootstrap its own trusted deployment code. Before that merge, use the existing Instructor-controlled manual staging process for this issue's preview. Do not run candidate scripts with provider credentials to bypass bootstrap.
+This workflow and its trusted scripts must first reach `main` through the normal Instructor merge. GitHub runs `pull_request_target` from the trusted base commit; the current migration PR cannot bootstrap its own trusted deployment code. Before that merge, the migration preview is a manually prepared deployment from the reviewed, frozen artifact using the fixed trusted deployment configuration. This proves its isolated Worker and database, but does not prove the automatic workflow or the required Instructor-controlled Preview PR/Clear receipts. Do not execute unreviewed candidate scripts with provider credentials to bypass bootstrap.
 
 Create a GitHub environment named `preview`. Set its deployment branch rule to trusted `main`, not arbitrary feature branches. Store `CLOUDFLARE_PREVIEW_API_TOKEN` as an environment secret, with Workers Scripts edit and D1 edit permission in the intended Cloudflare account. These permissions are powerful; only the trusted deploy job receives the token. Set environment variables:
 

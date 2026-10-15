@@ -21,6 +21,11 @@ test('real pgcrypto OpenPGP ciphertext decrypts in memory and reconciles all ten
   await admin.unsafe(`CREATE DATABASE ${name}`);created=true;
   const target=new URL(connection);target.pathname=`/${name}`;
   sql=postgres(target.toString(),{max:1,onnotice:()=>{}});
+  // The isolated PostgreSQL service starts without Supabase's API roles.
+  await sql.unsafe(`DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN CREATE ROLE anon NOLOGIN; END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN CREATE ROLE authenticated NOLOGIN; END IF;
+  END $$`);
   await sql.unsafe('CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions');
   await sql.unsafe(await readFile(new URL('../supabase/access.sql',import.meta.url),'utf8'));
   await sql.unsafe(await readFile(new URL('../supabase/demo-projects.sql',import.meta.url),'utf8'));
@@ -81,7 +86,7 @@ test('real pgcrypto OpenPGP ciphertext decrypts in memory and reconciles all ten
   await sql?.end();
   if(created)await admin.unsafe(`DROP DATABASE ${name}`);
   await admin.end();
-  await new Promise(resolve=>{const child=spawn('/opt/homebrew/bin/gpgconf',['--homedir',home,'--kill','gpg-agent'],{stdio:'ignore'});child.on('error',resolve);child.on('close',resolve);});
+  await new Promise(resolve=>{const child=spawn(process.platform === 'darwin' ? '/opt/homebrew/bin/gpgconf' : '/usr/bin/gpgconf',['--homedir',home,'--kill','gpg-agent'],{stdio:'ignore'});child.on('error',resolve);child.on('close',resolve);});
   await rm(home,{recursive:true,force:true});
  }
 });

@@ -3,7 +3,7 @@ import { spawn } from 'node:child_process';
 import { realpath, stat } from 'node:fs/promises';
 import { isAbsolute } from 'node:path';
 
-export async function runIsolatedGpg({gpgPath='/opt/homebrew/bin/gpg',homedir,args,input=Buffer.alloc(0),maxBytes=16*1024*1024}) {
+export async function runIsolatedGpg({gpgPath=process.platform === 'darwin' ? '/opt/homebrew/bin/gpg' : '/usr/bin/gpg',homedir,args,input=Buffer.alloc(0),maxBytes=16*1024*1024}) {
   if (!isAbsolute(homedir) || !isAbsolute(gpgPath)) throw new Error('Isolated GPG requires absolute paths');
   const home = await realpath(homedir);
   const info = await stat(home);

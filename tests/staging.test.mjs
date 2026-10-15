@@ -468,6 +468,12 @@ test("trusted Cloudflare deployment uploads only the artifact and freshly isolat
         executed=true;
         const config=JSON.parse(readFileSync(args[args.indexOf("--config")+1],"utf8"));
         assert.equal(config.no_bundle,true); assert.equal(config.name,"vibies-staging");
+        assert.deepEqual(config.assets.run_worker_first,["/*","!/_next/static/*","!/*/_next/static/*"]);
+        const workerFirst = path => config.assets.run_worker_first.some(pattern => !pattern.startsWith("!") && new RegExp(`^${pattern.replaceAll("*", ".*")}$`).test(path)) &&
+          !config.assets.run_worker_first.some(pattern => pattern.startsWith("!") && new RegExp(`^${pattern.slice(1).replaceAll("*", ".*")}$`).test(path));
+        for (const path of ["/_next/static/chunks/app.js","/_next/static/css/app.css","/base/_next/static/media/logo.png"]) assert.equal(workerFirst(path),false,path);
+        for (const path of ["/staging.json","/staging.json?nonce=abc","/demo"]) assert.equal(workerFirst(path),true,path);
+
         assert.deepEqual(config.d1_databases.map(binding=>binding.database_id),[DATABASE]);
         assert.equal(config.vars.VIBIES_ENVIRONMENT,"staging");
         assert.deepEqual(Object.keys(opts.env).sort(),["CI","CLOUDFLARE_ACCOUNT_ID","CLOUDFLARE_API_TOKEN","HOME","PATH","WRANGLER_LOG_PATH","WRANGLER_SEND_METRICS"]);
