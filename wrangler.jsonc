@@ -5,16 +5,18 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
-  "main": "vinext/server/fetch-handler",
+  "main": "worker/index.ts",
   "assets": {
     "directory": "dist/client",
     "html_handling": "none",
     "not_found_handling": "none",
     "binding": "ASSETS",
     "run_worker_first": [
-      "/*",
-      "!/_next/static/*",
-      "!/*/_next/static/*"
+      "/api/*",
+      "/auth/*",
+      "/projects/action",
+      "/admin/members/action",
+      "/staging.json"
     ]
   },
   "workers_dev": true,

@@ -88,7 +88,7 @@ jobs:
         working-directory: candidate
         run: |
           npm ci
-          npm run build:vinext
+          npm run build:cloudflare
       - name: Package only deployable files and D1 migrations
         env:
           STAGING_SOURCE_SHA: ${{ needs.select.outputs.head }}

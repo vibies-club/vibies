@@ -46,6 +46,8 @@ jobs:
       - run: npm test
       - name: Check D1 schema and security suites
         run: npm run test:d1
+      - name: Check static Worker HTTP boundary
+        run: npm run test:worker
       - name: Rehearse synthetic D1 migration
         run: npm run test:migration
       - name: Rehearse encrypted PostgreSQL export into D1
@@ -63,7 +65,7 @@ jobs:
         env:
           VIBIES_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/vibies_access_test
       - name: Build Cloudflare Worker
-        run: npm run build:vinext
+        run: npm run build:cloudflare
       - run: npm run build
       - name: Check access through the built server
         env:

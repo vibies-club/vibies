@@ -100,7 +100,7 @@ export async function deployPreviewArtifact(options) {
       name: WORKER, main: "staging-entry.js", compatibility_date: "2026-10-15", compatibility_flags: ["nodejs_compat"],
       no_bundle: true, find_additional_modules: true, rules: [{ type: "ESModule", globs: ["**/*.js", "**/*.mjs"] }, { type: "CompiledWasm", globs: ["**/*.wasm"] }],
       workers_dev: true, preview_urls: false,
-      assets: { directory: "./client", binding: "ASSETS", html_handling: "none", not_found_handling: "none", run_worker_first: ["/*", "!/_next/static/*", "!/*/_next/static/*"] },
+      assets: { directory: "./client", binding: "ASSETS", html_handling: "none", not_found_handling: "none", run_worker_first: ["/api/*", "/auth/*", "/projects/action", "/admin/members/action", "/staging.json"] },
       d1_databases: [{ binding: "DB", database_name: name, database_id: databaseId }],
       version_metadata: { binding: "STAGING_VERSION" },
       vars: { VIBIES_DATABASE_BACKEND: "d1", VIBIES_ENVIRONMENT: "staging", VIBIES_STAGING: "true", VIBIES_APP_ORIGIN: options.origin,

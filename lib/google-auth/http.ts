@@ -1,4 +1,4 @@
-import { assertWritable, isReadOnly, readOnlyResponse } from "../read-only.ts";
+import { isReadOnly, readOnlyResponse } from "../read-only.ts";
 import { appOrigin, digest, sameOriginPost, token, validToken } from "../access-core.ts";
 import { begin_sign_in, consume_sign_in, end_session, type AccessDatabase } from "../d1/access.ts";
 import { createGoogleAuth, googleCallbackHandler, type GoogleAuthConfig } from "./better-auth.ts";
@@ -7,7 +7,7 @@ import { clearGoogleCookies, cookie, grantCookie, readCookies } from "./cookies.
 export { clearGoogleCookies, grantCookie } from "./cookies.ts";
 
 export type GoogleRoutesConfig = Omit<GoogleAuthConfig, 'link' | 'store'> & {
-  store: AccessDatabase; sessionCookie: string; browserCookie: string;
+  store: AccessDatabase; sessionCookie: string; browserCookie: string; readOnly?: boolean; loginDestination?: string;
 };
 const fixedDestination = '/auth/google/callback';
 function redirect(path: string) {
@@ -36,7 +36,7 @@ export function createGoogleRoutes(config: GoogleRoutesConfig) {
   };
   async function start(request: Request, linking: boolean) {
     if (!sameOriginPost(request,origin)) return new Response('Forbidden',{status:403});
-    if (isReadOnly()) return readOnlyResponse();
+    if (config.readOnly ?? isReadOnly()) return readOnlyResponse();
     const jar = readCookies(request); const browser = jar.get(config.browserCookie);
     if (!validToken(browser)) return redirect('/auth/browser');
     let grant: string | undefined;
@@ -78,7 +78,7 @@ export function createGoogleRoutes(config: GoogleRoutesConfig) {
     }
   }
   async function callback(request: Request) {
-    if (isReadOnly()) return readOnlyResponse();
+    if (config.readOnly ?? isReadOnly()) return readOnlyResponse();
     const jar = readCookies(request); const grant = jar.get(grantCookie(secure)); const previous = jar.get(config.sessionCookie);
     const auth = authFor(request);
     let failureMessage = 'failed';
@@ -105,7 +105,7 @@ export function createGoogleRoutes(config: GoogleRoutesConfig) {
         if (!session || !await finishGoogleSignIn(config.store,session.user.id,digest(next),session.session.token))
           throw new Error('Google sign-in unavailable');
         if (validToken(previous)) await end_session(config.store,digest(previous));
-        response=redirect('/welcome');
+        response=redirect(config.loginDestination ?? '/welcome');
         response.headers.append('Set-Cookie',cookie(config.sessionCookie,next,secure,86400));
       }
     } catch { response=failure(); }
@@ -114,7 +114,7 @@ export function createGoogleRoutes(config: GoogleRoutesConfig) {
   }
   async function signOut(request: Request, response: Response) {
     try {
-      assertWritable();
+      if (config.readOnly ?? isReadOnly()) throw new Error("Read only");
       const auth = authFor(request);
       await auth.api.signOut({headers:request.headers});
       const grant = readCookies(request).get(grantCookie(secure));

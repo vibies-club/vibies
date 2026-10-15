@@ -58,3 +58,13 @@ A separate local workerd CPU profile rendered the synthetic member for 100 succe
 ## Hosted CI repair
 
 The first PR head passed migration-check and links. app-check failed because the standalone encrypted-export rehearsal created canonical schemas before the disposable PostgreSQL service had Supabase API roles. The fixture now explicitly creates missing `anon` and `authenticated` NOLOGIN roles. GPG execution retains fixed absolute paths, selecting `/usr/bin` on Linux and Homebrew on macOS. Nine encryption/rehearsal tests passed, and a separate fresh PostgreSQL 17 cluster verified role bootstrap and canonical schema creation. Linux execution remains for the next hosted CI run.
+
+## Static architecture proof
+
+The approved static architecture builds with Vite and prerenders only public home content. Every private read or mutation goes through the request-local Worker services and D1 activation guard. The root validated typecheck, 106 offline tests, 55 D1/Google tests, 9 Worker boundary tests and the retained Next.js build. Native private-page redirect, GitHub login and return to the original project, Google login, sign-out, and persisted milestone completion were verified on the isolated compatibility Worker. Production data and hosting remain unchanged.
+
+The first static version had a 1.982 ms median and 75.429 ms P99 across 16 requests (zero errors), including first-use dynamic authentication module loading. The next version imports authentication code at module startup, preserving request-local provider configuration. Its deployed startup time is 39 ms, below the 1-second startup limit. Live per-request CPU evidence for that version remains pending.
+
+Current compatibility version: `ff748da6-30b0-428f-ab39-0cbe8797cbe3`. Workers Builds production command was updated to `CLOUDFLARE_ENV=production npm run build:cloudflare`; saving the setting completed. No production build or activation was triggered.
+
+The remote D1 read-only query of the synthetic project returned milestone `Verify Cloudflare save and refresh` with `completed = 1`; two rows read, zero rows written. Twenty consecutive authenticated project reloads also succeeded on the optimized static version. All 20 final viewport screenshots were opened and inspected at 390/768/1280/1440px, with zero horizontal overflow. Independent Impeccable design and detector assessments found no major defect; see `static-craft-61.md`.

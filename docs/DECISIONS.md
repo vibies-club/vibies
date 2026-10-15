@@ -584,18 +584,33 @@ only the Instructor merges. Required GitHub approval, the three head checks,
 staging eligibility, and post-merge receipts remain in force. The local
 `pr_reviewer` verdict supplements these gates.
 
-## D-021: Build the Workers application with vinext
+## D-021: Deliver static React pages with authenticated Worker APIs
 
-**Date and status:** 2026-10-15, selected for issue #61 and implemented locally;
-Instructor merge and hosted compatibility proof pending.
+**Date and status:** 2026-10-15, approved amendment for issue #61;
+implementation and verification in progress. Hosted static delivery and API CPU
+proof, current-head CI and review, production data cutover, and Instructor merge
+remain pending.
 
-**Decision:** Keep the Next.js App Router source and use `vinext` 1.2.0,
-`@vinext/cloudflare` 1.1.1, Vite 8.3.4, and `@cloudflare/vite-plugin` 1.64.0 for
-the Workers build. Wrangler 4.151.0 supplies deployment tooling. The separate
-`build:vinext` command preserves the existing Next build as source-stack proof.
+**Decision:** Build `frontend/` as static React pages with Vite and serve them
+through Workers Static Assets. Use small, fetch-native `worker/` APIs for
+authenticated page data, OAuth, and native form actions. Keep D1 storage and the
+restricted Better Auth Google integration, including their existing identity,
+approval, authorization, and privacy boundaries. Client guards are presentation
+only; the Worker authorizes every protected read and write.
 
-**Why:** This provides a Workers runtime path while retaining the current app
-structure. Local build success is not proof of hosted route or browser parity.
+`vite.cloudflare.config.ts` and `scripts/prerender-static.mjs` build the public
+home HTML and an empty reusable application shell. Private data arrives only
+through authenticated JSON and is never embedded in build output. Pin esbuild
+0.28.2 as a direct development dependency for build-time public prerendering and
+bundled Worker boundary tests. Preserve the existing Next.js source-host build
+and deployment for rollback until retirement is authorized.
+
+**Why:** Live vinext SSR requests exceeded the Workers Free 10 ms CPU allowance;
+the isolated OpenNext comparison was slower. The owner approved static delivery
+to remove request-time page rendering while retaining the Free-plan boundary.
+This replaces the initial vinext deployment decision, not the required security
+or release gates. Static delivery alone does not prove authenticated API or
+OAuth callback CPU suitability.
 
 ## D-022: Add optional linked Google sign-in through Better Auth
 
@@ -631,7 +646,8 @@ and the source deployment for rollback until retirement is authorized.
 ## D-024: Keep the Cloudflare migration within the Free-plan boundary
 
 **Date and status:** 2026-10-15, selected for issue #61; account Free plan verified,
-full authenticated-flow capacity verification pending.
+full authenticated-flow capacity verification for the static architecture
+pending.
 
 **Decision:** Target Cloudflare Workers and D1 on the Free plan. Do not enable
 paid upgrades, subscriptions, or capacity purchases automatically. Staging uses

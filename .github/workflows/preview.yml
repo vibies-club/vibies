@@ -68,7 +68,7 @@ jobs:
         working-directory: candidate
         run: |
           npm ci
-          npm run build:vinext
+          npm run build:cloudflare
       - name: Package candidate as inert deployment data
         env:
           STAGING_SOURCE_SHA: ${{ needs.select.outputs.head }}

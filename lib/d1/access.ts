@@ -32,14 +32,14 @@ function checked<T>(result: D1Result<T>): T[] {
   return result.results;
 }
 
-export async function access_state(db: AccessDatabase, hash: string | null): Promise<Access> {
+export async function access_state(db: AccessDatabase, hash: string | null, readOnly = isReadOnly()): Promise<Access> {
   if (!validToken(hash)) return { kind: "signed_out" };
   type SessionAccess = {
     github_id: string; instructor_github_id: string | null; instructor_nickname: string | null;
     nickname: string | null; status: string | null; onboarding_completed: number | null;
   };
   const results = await db.batch<SessionAccess>([
-    ...(!isReadOnly() ? [db.prepare("DELETE FROM sessions WHERE session_hash = ? AND julianday(created_at) <= julianday('now', '-24 hours')").bind(hash)] : []),
+    ...(!readOnly ? [db.prepare("DELETE FROM sessions WHERE session_hash = ? AND julianday(created_at) <= julianday('now', '-24 hours')").bind(hash)] : []),
     db.prepare(`SELECT s.github_id, c.instructor_github_id,
     c.instructor_nickname, a.nickname, a.status, a.onboarding_completed
     FROM sessions s CROSS JOIN community c LEFT JOIN accounts a ON a.github_id = s.github_id
