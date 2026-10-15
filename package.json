@@ -28,7 +28,7 @@
     "build:cloudflare:production": "CLOUDFLARE_ENV=production npm run build:cloudflare",
     "build:cloudflare": "vite build --config vite.cloudflare.config.ts && node scripts/prerender-static.mjs",
     "dev:cloudflare": "vite dev --config vite.cloudflare.config.ts --port 3001",
-    "test:worker": "node --test worker/boundary.test.mjs"
+    "test:worker": "node --test worker/boundary.test.mjs tests/google-coordinator.test.mjs"
   },
   "dependencies": {
     "@better-auth/core": "1.7.9",

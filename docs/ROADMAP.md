@@ -21,8 +21,10 @@ chosen.
   cutover only after the release gates and Instructor merge. Static page and
   private API browser proof passed, but Google authentication still exceeds the
   nominal Free CPU allowance after schema and initialization optimizations.
-  The draft migration is blocked on Free-plan auth suitability; a proposed Durable Object OAuth coordinator awaits the owner’s technology choice; keep Vercel and
-  Supabase available until their retirement is authorized.
+  The owner approved a per-browser SQLite Durable Object OAuth coordinator.
+  Its lifecycle and isolated-preview tests pass; live CPU and authentication
+  proof remain before release. Keep Vercel and Supabase available until their
+  retirement is authorized.
 
 - Record the P8 and P13 browser receipts for issue #20 on staging in
   [Roadmap verification](ROADMAP-VERIFICATION.md).

@@ -6,7 +6,9 @@ import { repositoryId, projectVersion } from '../lib/project-core';
 import { verifyRepository } from '../lib/project-github';
 import { readCookies, cookie } from '../lib/google-auth/cookies';
 import type { ProjectContext } from '../lib/projects';
+import type { GoogleCoordinator } from './google-coordinator';
 export interface Env {
+  GOOGLE_COORDINATOR?: DurableObjectNamespace<GoogleCoordinator>;
   DB: access.AccessDatabase;
   VIBIES_APP_ORIGIN: string;
   VIBIES_ENVIRONMENT: string;

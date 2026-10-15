@@ -1,3 +1,4 @@
+import { GOOGLE_COORDINATOR_BINDINGS, GOOGLE_COORDINATOR_MIGRATIONS, validateStagingBindings } from "./preview-cloudflare-deploy.mjs";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { cpSync, lstatSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -74,8 +75,7 @@ export async function deployStagingArtifact(options) {
   // A PR Worker must not inherit any OAuth, deployment, or production secrets.
   const priorSettings = await request(`/workers/scripts/${WORKER}/settings`, { allowMissing: true });
   const priorBindings = priorSettings?.bindings ?? [];
-  if (!Array.isArray(priorBindings) || priorBindings.some(binding => !["plain_text", "d1", "assets", "version_metadata"].includes(binding.type)))
-    throw new Error("staging Worker has secret or unsupported bindings");
+  await validateStagingBindings(request, priorBindings, WORKER);
   const priorDb = priorBindings.find(binding => binding.name === "DB" && binding.type === "d1")?.id;
   let priorOwnedDb;
   if (priorDb) {
@@ -124,13 +124,14 @@ export async function deployStagingArtifact(options) {
     cpSync(join(options.artifact.root, "server"), join(directory, "server"), { recursive: true, dereference: false });
     cpSync(join(options.artifact.root, "client"), join(directory, "client"), { recursive: true, dereference: false });
     // The identity path is served by trusted code rather than candidate app code.
-    writeFileSync(join(directory, "staging-entry.js"), `import application from './server/index.js';\nexport default {async fetch(request,env,ctx){const url=new URL(request.url);if(url.pathname==='/staging.json'){const nonce=url.searchParams.get('nonce');const headers={'Cache-Control':'no-store'};if(!nonce||!/^[a-f0-9-]{16,64}$/.test(nonce))return new Response(null,{status:400,headers});return Response.json({...${JSON.stringify(marker)},versionId:env.STAGING_VERSION.id,environment:'staging',nonce},{headers});}return application.fetch(request,env,ctx);}};\n`);
+    writeFileSync(join(directory, "staging-entry.js"), `import application from './server/index.js';\nexport { GoogleCoordinator } from './server/index.js';\nexport default {async fetch(request,env,ctx){const url=new URL(request.url);if(url.pathname==='/staging.json'){const nonce=url.searchParams.get('nonce');const headers={'Cache-Control':'no-store'};if(!nonce||!/^[a-f0-9-]{16,64}$/.test(nonce))return new Response(null,{status:400,headers});return Response.json({...${JSON.stringify(marker)},versionId:env.STAGING_VERSION.id,environment:'staging',nonce},{headers});}return application.fetch(request,env,ctx);}};\n`);
     const config = {
       name: WORKER, main: "staging-entry.js", compatibility_date: "2026-10-15", compatibility_flags: ["nodejs_compat"],
       no_bundle: true, find_additional_modules: true, rules: [{ type: "ESModule", globs: ["**/*.js", "**/*.mjs"] }, { type: "CompiledWasm", globs: ["**/*.wasm"] }],
       workers_dev: true, preview_urls: false,
       assets: { directory: "./client", binding: "ASSETS", html_handling: "none", not_found_handling: "none", run_worker_first: ["/api/*", "/auth/*", "/projects/action", "/admin/members/action", "/staging.json"] },
       d1_databases: [{ binding: "DB", database_name: name, database_id: databaseId }],
+      durable_objects: GOOGLE_COORDINATOR_BINDINGS, migrations: GOOGLE_COORDINATOR_MIGRATIONS,
       version_metadata: { binding: "STAGING_VERSION" },
       vars: { VIBIES_DATABASE_BACKEND: "d1", VIBIES_ENVIRONMENT: "staging", VIBIES_STAGING: "true", VIBIES_APP_ORIGIN: options.origin,
         VIBIES_STAGING_SHA: marker.sha, VIBIES_STAGING_WORKER: WORKER, VIBIES_STAGING_DATABASE_ID: databaseId,
@@ -159,9 +160,9 @@ export async function deployStagingArtifact(options) {
     const [deployments, settings] = await Promise.all([
       request(`/workers/scripts/${WORKER}/deployments`), request(`/workers/scripts/${WORKER}/settings`),
     ]);
+    await validateStagingBindings(request, settings?.bindings, WORKER, true);
     const versions = deployments?.deployments?.[0]?.versions;
     if (versions?.length !== 1 || versions[0].version_id !== versionId || versions[0].percentage !== 100 ||
-      !Array.isArray(settings?.bindings) || settings.bindings.some(binding => !["plain_text", "d1", "assets", "version_metadata"].includes(binding.type)) ||
       settings.bindings.filter(binding => binding.type === "d1").length !== 1 ||
       settings.bindings.find(binding => binding.name === "DB" && binding.type === "d1")?.id !== databaseId ||
       settings.bindings.find(binding => binding.name === "VIBIES_STAGING_SHA" && binding.type === "plain_text")?.text !== marker.sha ||

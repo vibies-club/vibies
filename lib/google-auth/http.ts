@@ -8,6 +8,8 @@ export { clearGoogleCookies, grantCookie } from "./cookies.ts";
 
 export type GoogleRoutesConfig = Omit<GoogleAuthConfig, 'link' | 'store'> & {
   store: AccessDatabase; sessionCookie: string; browserCookie: string; readOnly?: boolean; loginDestination?: string;
+  recordGrantHash?: (hash: string) => Promise<void>;
+  recordSessionHash?: (hash: string) => Promise<void>;
 };
 const fixedDestination = '/auth/google/callback';
 function redirect(path: string) {
@@ -47,6 +49,7 @@ export function createGoogleRoutes(config: GoogleRoutesConfig) {
       await consume_sign_in(config.store,digest(browser),digest(attempt));
       const session = jar.get(config.sessionCookie);
       grant = linking ? token() : undefined;
+      if (grant) await config.recordGrantHash?.(digest(grant));
       if (linking && (!validToken(session) || !await beginGoogleLink(config.store,digest(session),digest(grant!))))
         return redirect('/welcome?google=reauth');
       const auth = await googleAuthForRequest({...config,link:grant ? {grantHash:digest(grant),sessionHash:digest(session!)}:undefined});
@@ -102,6 +105,7 @@ export function createGoogleRoutes(config: GoogleRoutesConfig) {
       } else {
         const session = await auth.api.getSession({headers:requestWithCookies(request,result.headers)});
         const next = token();
+        if (session) await config.recordSessionHash?.(digest(next));
         if (!session || !await finishGoogleSignIn(config.store,session.user.id,digest(next),session.session.token))
           throw new Error('Google sign-in unavailable');
         if (validToken(previous)) await end_session(config.store,digest(previous));

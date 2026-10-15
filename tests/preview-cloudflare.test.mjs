@@ -5,8 +5,10 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { validatePull, validateArtifact, validateRun, selectPreview, cleanupPreview } from '../scripts/preview-cloudflare.mjs';
-import { deployPreviewArtifact, previewWorker, ownedDatabase } from '../scripts/preview-cloudflare-deploy.mjs';
+import { deployPreviewArtifact, previewWorker, ownedDatabase, validateStagingBindings } from '../scripts/preview-cloudflare-deploy.mjs';
 const REPO='vibies-club/vibies', HEAD='a'.repeat(40), MAIN='b'.repeat(40), HASH='c'.repeat(64);
+const NS='d'.repeat(32);
+const coordinator=(worker='vibies-pr-61')=>({type:'durable_object_namespace',name:'GOOGLE_COORDINATOR',class_name:'GoogleCoordinator',script_name:worker,namespace_id:NS});
 const DB='22222222-2222-4222-8222-222222222222', VERSION='11111111-1111-4111-8111-111111111111';
 const pull=()=>({number:61,state:'open',base:{ref:'main',sha:MAIN,repo:{full_name:REPO}},head:{sha:HEAD,repo:{full_name:REPO}}});
 const response = result => Response.json({success:true,result});
@@ -45,8 +47,9 @@ test('allocation refuses inherited secrets and preserves reserved D1 slots witho
   }
 });
 test('fixed deployment binds only fresh synthetic DB and preserves ambiguous uploads', async()=>{
-  for(const ambiguous of [false,true]) {
-    const root=mkdtempSync(join(tmpdir(),'preview-test-'));let uploaded=false;const calls=[];
+  for(const mode of ['initial','repeat','ambiguous']) {
+    const ambiguous=mode==='ambiguous';
+    const root=mkdtempSync(join(tmpdir(),'preview-test-'));let uploaded=false, invalidNamespace=false;const calls=[];
     const schema=[{type:'table',name:'synthetic',sql:'CREATE TABLE synthetic(id INTEGER)'}];
     const schemaHash=createHash('sha256').update(JSON.stringify(schema)).digest('hex');
     try {
@@ -55,7 +58,8 @@ test('fixed deployment binds only fresh synthetic DB and preserves ambiguous upl
       writeFileSync(join(root,'client/index.html'),'synthetic');writeFileSync(join(root,'migrations/0001_app.sql'),'CREATE TABLE synthetic(id INTEGER);');
       const cf=async(url,init)=>{
         calls.push({url,method:init.method});const body=init.body?JSON.parse(init.body):null;
-        if(url.endsWith('/settings'))return response({bindings:uploaded?[{type:'d1',name:'DB',id:DB},{type:'plain_text',name:'VIBIES_STAGING_SHA',text:HEAD},{type:'plain_text',name:'VIBIES_STAGING_ARTIFACT_HASH',text:HASH}]:[]});
+        if(url.includes('/workers/durable_objects/namespaces?'))return response([{id:NS,script:invalidNamespace?'vibies-production':'vibies-pr-61',class:'GoogleCoordinator',use_sqlite:true}]);
+        if(url.endsWith('/settings'))return response({bindings:uploaded?[coordinator(),{type:'d1',name:'DB',id:DB},{type:'plain_text',name:'VIBIES_STAGING_SHA',text:HEAD},{type:'plain_text',name:'VIBIES_STAGING_ARTIFACT_HASH',text:HASH}]:(mode==='repeat'?[coordinator()]:[])});
         if(url.includes('/d1/database?'))return response([]);
         if(url.endsWith('/d1/database'))return response({uuid:DB,name:body.name});
         if(url.endsWith('/query'))return response([{success:true,results:body.sql.startsWith('SELECT type,name')?schema:body.sql.startsWith('SELECT schema_hash')?[{schema_hash:schemaHash,migration_hash:HASH,source_sha:HEAD}]:[]}]);
@@ -65,6 +69,9 @@ test('fixed deployment binds only fresh synthetic DB and preserves ambiguous upl
       const promise=deployPreviewArtifact({...opts,origin:'https://vibies-pr-61.example.workers.dev',plan:{head:HEAD,schemaHash:HASH,migrations:[{path:'d1/migrations/0001_app.sql'}]},artifact:{root,artifactHash:HASH},cloudflareFetch:cf,execute(_node,args,options){
         const config=JSON.parse(readFileSync(args[args.indexOf('--config')+1],'utf8'));
         assert.equal(config.name,'vibies-pr-61');assert.equal(config.no_bundle,true);
+        assert.deepEqual(config.durable_objects,{bindings:[{name:'GOOGLE_COORDINATOR',class_name:'GoogleCoordinator'}]});
+        assert.deepEqual(config.migrations,[{tag:'v1-google-coordinator',new_sqlite_classes:['GoogleCoordinator']}]);
+        assert.match(readFileSync(join(options.cwd,'staging-entry.js'),'utf8'),/export \{ GoogleCoordinator \} from '\.\/server\/index.js'/);
         assert.deepEqual(config.assets.run_worker_first,["/api/*","/auth/*","/projects/action","/admin/members/action","/staging.json"]);
         const workerFirst = input => { const path = input.split("?")[0]; return config.assets.run_worker_first.some(pattern => !pattern.startsWith("!") && new RegExp(`^${pattern.replaceAll("*", ".*")}$`).test(path)) &&
           !config.assets.run_worker_first.some(pattern => pattern.startsWith("!") && new RegExp(`^${pattern.slice(1).replaceAll("*", ".*")}$`).test(path)); };
@@ -76,7 +83,7 @@ test('fixed deployment binds only fresh synthetic DB and preserves ambiguous upl
         assert.equal(options.env.NODE_OPTIONS,undefined);assert(!args.includes('npm'));
         uploaded=true;if(ambiguous)throw Error('upload timeout');
       }});
-      if(ambiguous)await assert.rejects(promise,/timeout/);else{const deployment=await promise;await deployment.verify();}
+      if(ambiguous)await assert.rejects(promise,/timeout/);else{const deployment=await promise;await deployment.verify();invalidNamespace=true;await assert.rejects(deployment.verify(),/namespace/);}
       assert(!calls.some(call=>call.method==='DELETE'));
       assert(calls.filter(call=>call.url.endsWith('/query')).every(call=>call.url.includes(DB)));
     } finally {rmSync(root,{recursive:true,force:true});}
@@ -137,4 +144,41 @@ test('workflow queues all pending previews and limits PR write permission to tru
   assert.doesNotMatch(build,/CLOUDFLARE_API_TOKEN|pull-requests: write|environment: preview/);
   const deploy=workflow.split('\n  deploy:')[1].split('\n  cleanup:')[0];
   assert.match(deploy,/pull-requests: write/);
+});
+
+
+test('coordinator accepts only the same Worker SQLite namespace on initial and repeated uploads', async()=>{
+  const request=async()=>[{id:NS,script:'vibies-pr-61',class:'GoogleCoordinator',use_sqlite:true}];
+  await validateStagingBindings(request,[],'vibies-pr-61');
+  await assert.rejects(validateStagingBindings(request,[],'vibies-pr-61',true),/coordinator/);
+  await validateStagingBindings(request,[coordinator()],'vibies-pr-61',true);
+  await validateStagingBindings(request,[{...coordinator(),script_name:undefined}],'vibies-pr-61',true);
+  for(const patch of [{name:'OTHER'},{class_name:'Other'},{script_name:'vibies-production'},
+    {environment:'production'},{namespace_id:'foreign'}]) {
+    await assert.rejects(validateStagingBindings(request,[{...coordinator(),...patch}],'vibies-pr-61'),/coordinator/);
+  }
+  await assert.rejects(validateStagingBindings(request,[coordinator(),coordinator()],'vibies-pr-61'),/coordinator/);
+  for(const patch of [{script:'vibies-production'},{class:'Other'},{id:'e'.repeat(32)},{use_sqlite:false}]) {
+    await assert.rejects(validateStagingBindings(async()=>[{id:NS,script:'vibies-pr-61',class:'GoogleCoordinator',use_sqlite:true,...patch}],
+      [coordinator()],'vibies-pr-61'),/namespace/);
+  }
+});
+
+test('foreign namespace or secret is rejected before preview allocation', async()=>{
+  for(const invalid of [coordinator('vibies-production'),{...coordinator(),class_name:'Other'},
+    {...coordinator(),namespace_id:'e'.repeat(32)}]) {
+    const calls=[];
+    const cf=async(url,init)=>{calls.push(init.method);if(url.endsWith('/settings'))return response({bindings:[invalid]});
+      if(url.includes('/workers/durable_objects/namespaces?'))return response([{id:NS,script:'vibies-pr-61',class:'GoogleCoordinator',use_sqlite:true}]);
+      throw Error('unexpected allocation');};
+    await assert.rejects(deployPreviewArtifact({...opts,cloudflareFetch:cf}),/coordinator|namespace/);
+    assert(calls.every(method=>method==='GET'));
+  }
+});
+
+test('every configured environment provisions its own SQLite coordinator',()=>{
+  const config=JSON.parse(readFileSync(new URL('../wrangler.jsonc',import.meta.url),'utf8'));
+  assert.deepEqual(config.migrations,[{tag:'v1-google-coordinator',new_sqlite_classes:['GoogleCoordinator']}]);
+  for(const environment of [config,...Object.values(config.env)])
+    assert.deepEqual(environment.durable_objects,{bindings:[{name:'GOOGLE_COORDINATOR',class_name:'GoogleCoordinator'}]});
 });

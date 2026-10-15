@@ -396,7 +396,7 @@ test("artifact validation rejects modified migrations, files and symlinks", asyn
   const root=mkdtempSync(join(tmpdir(),"staging-artifact-test-"));
   try {
     for(const path of ["server","client","migrations"]) mkdirSync(join(root,path));
-    writeFileSync(join(root,"server/index.js"),"export default {fetch(){return new Response('synthetic')}}");
+    writeFileSync(join(root,"server/index.js"),"export class GoogleCoordinator {fetch(){return new Response('coordinator')}}\nexport default {fetch(){return new Response('synthetic')}}");
     const sql="CREATE TABLE synthetic(id INTEGER);";
     writeFileSync(join(root,"migrations/0001_application.sql"),sql);
     const blob=createHash("sha1").update(`blob ${Buffer.byteLength(sql)}\0${sql}`).digest("hex");
@@ -440,14 +440,16 @@ test("trusted Cloudflare deployment uploads only the artifact and freshly isolat
   const migrationHash="d".repeat(64);
   try {
     for(const name of ["server","client","migrations"]) mkdirSync(join(root,name));
-    writeFileSync(join(root,"server/index.js"),"export default {fetch(){return new Response('synthetic')}}");
+    writeFileSync(join(root,"server/index.js"),"export class GoogleCoordinator {fetch(){return new Response('coordinator')}}\nexport default {fetch(){return new Response('synthetic')}}");
     writeFileSync(join(root,"client/index.html"),"synthetic");
     writeFileSync(join(root,"migrations/0001_application.sql"),"CREATE TABLE synthetic(id INTEGER);");
     const cloudflareFetch=async(url,init)=>{
       calls.push({url,init});
       const body=init.body?JSON.parse(init.body):null;
       let result;
-      if(url.endsWith("/settings")) result={bindings:uploaded?[
+      if(url.includes("/workers/durable_objects/namespaces?")) result=[{id:"d".repeat(32),script:"vibies-staging",class:"GoogleCoordinator",use_sqlite:true}];
+      else if(url.endsWith("/settings")) result={bindings:uploaded?[
+        {type:"durable_object_namespace",name:"GOOGLE_COORDINATOR",class_name:"GoogleCoordinator",script_name:"vibies-staging",namespace_id:"d".repeat(32)},
         {type:"d1",name:"DB",id:DATABASE},{type:"plain_text",name:"VIBIES_STAGING_SHA",text:HEAD},
         {type:"plain_text",name:"VIBIES_STAGING_ARTIFACT_HASH",text:ARTIFACT}]:[]};
       else if(url.includes("/d1/database?")) result=[];
@@ -468,6 +470,8 @@ test("trusted Cloudflare deployment uploads only the artifact and freshly isolat
         executed=true;
         const config=JSON.parse(readFileSync(args[args.indexOf("--config")+1],"utf8"));
         assert.equal(config.no_bundle,true); assert.equal(config.name,"vibies-staging");
+        assert.deepEqual(config.durable_objects,{bindings:[{name:"GOOGLE_COORDINATOR",class_name:"GoogleCoordinator"}]});
+        assert.deepEqual(config.migrations,[{tag:"v1-google-coordinator",new_sqlite_classes:["GoogleCoordinator"]}]);
         assert.deepEqual(config.assets.run_worker_first,["/api/*","/auth/*","/projects/action","/admin/members/action","/staging.json"]);
         const workerFirst = input => { const path = input.split("?")[0]; return config.assets.run_worker_first.some(pattern => !pattern.startsWith("!") && new RegExp(`^${pattern.replaceAll("*", ".*")}$`).test(path)) &&
           !config.assets.run_worker_first.some(pattern => pattern.startsWith("!") && new RegExp(`^${pattern.slice(1).replaceAll("*", ".*")}$`).test(path)); };
@@ -480,6 +484,7 @@ test("trusted Cloudflare deployment uploads only the artifact and freshly isolat
         assert.doesNotMatch(JSON.stringify(config),/synthetic-secret/);
         wrapper=readFileSync(join(opts.cwd,"staging-entry.js"),"utf8");
         assert.match(wrapper,/env.STAGING_VERSION.id/);
+        assert.match(wrapper,/export \{ GoogleCoordinator \} from/);
         uploaded=true;
       },
     });
@@ -489,8 +494,10 @@ test("trusted Cloudflare deployment uploads only the artifact and freshly isolat
     const mf=new Miniflare({compatibilityDate:"2026-08-06",modulesRoot:root,modules:[
       {type:"ESModule",path:join(root,"staging-entry.js"),contents:wrapper},
       {type:"ESModule",path:join(root,"server/index.js"),contents:readFileSync(join(root,"server/index.js"),"utf8")},
-    ],bindings:{STAGING_VERSION:{id:VERSION}}});
+    ],bindings:{STAGING_VERSION:{id:VERSION}},durableObjects:{GOOGLE_COORDINATOR:{className:"GoogleCoordinator",useSQLite:true}}});
     try {
+      const namespace=await mf.getDurableObjectNamespace("GOOGLE_COORDINATOR");
+      assert.equal(await (await namespace.get(namespace.idFromName("wrapper-export-proof")).fetch("https://coordinator.test")).text(),"coordinator");
       const identity=await mf.dispatchFetch(`https://staging.test/staging.json?nonce=${"a".repeat(32)}`);
       assert.equal(identity.headers.get("cache-control"),"no-store");
       assert.deepEqual(await identity.json(),{sha:HEAD,worker:"vibies-staging",databaseId:DATABASE,schemaHash,

@@ -697,3 +697,12 @@ readiness; each deployment still needs capacity and provider proof.
 **Decision:** Prepare only Better Auth’s grant-free adapter/context from imported Cloudflare bindings during module initialization. Pin the directly imported `@better-auth/core` to 1.7.9 for its public environment parser. Disable auth telemetry, and skip priming if an environment override could enable it. Missing configuration or initialization errors retain the normal request-time fallback.
 
 **Why:** Cloudflare supports binding-based client initialization at module scope. This moves pure metadata setup outside the first request without issuing SQL or network calls. Tests trap both kinds of I/O and verify telemetry/missing-configuration skip paths. Request-time activation, authorization and exact configuration comparisons remain mandatory; this does not establish Free-plan CPU suitability.
+
+
+## D-030: Coordinate each browser’s Google login in a SQLite Durable Object
+
+**Date:** 2026-10-15
+
+**Decision:** Use one same-Worker SQLite Durable Object per hashed browser token to serialize Google starts, callbacks, linking and sign-out. Persist attempt phases and hashed revocation references before external effects. Interrupted exchanges require a fresh flow. D1 remains authoritative for accounts, approval, projects and sessions. Each compatibility, preview, staging and production Worker has its own namespace. This supersedes D-029 startup priming.
+
+**Why:** Live Google callbacks still exceeded the ordinary Workers Free CPU allowance after the bounded initialization optimizations. The owner selected Durable Objects after reviewing the alternatives. Cloudflare’s account dashboard confirms the $0 Free plan and includes SQLite Durable Objects. The coordinator also closes duplicate-callback and concurrent-sign-out races; live proof must establish both Worker and object CPU suitability before production migration. No paid plan or card is authorized.

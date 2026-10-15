@@ -120,3 +120,16 @@ Regression checks for commit fbc01f0 passed: 106 offline, 61 D1/Google, 9 Worker
 The startup candidate prepares only a grant-free Better Auth context from imported Cloudflare bindings. A workerd test proves zero SQL and network calls, exact-cache reuse, and safe skip behavior for missing configuration or telemetry overrides. The focused review is saved verbatim in `auth-startup-61.md`. Ten Worker/startup tests, 19 Google tests, typecheck, and the static build passed. Compatibility-only version `d99050b9-ad81-4163-a538-468d5b01d65c` deployed successfully with 61 ms reported Worker startup time. Live route measurements remain pending; no production state changed.
 
 A scoped read for startup version d99050b9 returned a successful Google callback at 43 ms (13:09:31.861 UTC), sign-out at 9 ms, and the public shell at 0 ms. The owner reached the synthetic account in the browser. Startup preparation therefore does not clear the Free auth CPU gate. The owner has been offered the proposed Durable Object flow-coordination design in `notes/plans/61-free-auth.md`; no new resource is authorized or created yet.
+
+
+## Approved per-browser Durable Object coordinator
+
+The owner approved the Free-plan Durable Object option. The fresh plan review and focused security review are recorded in `plan-61-free-auth.md` and `coordinator-security-61.md`. The initial logout recovery finding was fixed: incoming and newly issued session hashes plus linking-grant hashes are durably recorded before external cleanup. Duplicate callbacks and interrupted exchanges fail closed; D1 remains the authority.
+
+Validation: 109 offline tests, 22 Worker/coordinator tests, 61 D1/Google tests, 17 migration tests, typecheck, retained Next.js build and static Cloudflare build passed. Worker types include the per-environment coordinator. Startup priming was removed.
+
+The dashboard confirms Workers Free is the current $0 plan and lists SQLite Durable Objects in its included allowance. Compatibility version `e11068fa-eeac-4db4-b743-9b7946bbebe7` deployed successfully with SQLite namespace `bf17c688362f41f883dbf0cd804febe1`, owned only by `vibies-compatibility`. No production namespace, import or activation was performed.
+
+Live home-to-sign-in navigation, sign-out and Google login reached the isolated Migration Tester account. A synthetic milestone was marked incomplete and remained incomplete after refresh; remote `wrangler d1 execute --remote` returned its title and completed=0, with one row read and zero rows written. The screenshot is `/private/tmp/vibies-coordinator-saved-refresh.png`; it is a local proof artifact, not an application asset.
+
+Exact-version telemetry for 13:27:49.108–13:28:34.169 UTC contained 17 events. The forwarding Worker used 1 ms for each sign-out, Google start and callback. Adjacent coordinator RPC events used 10, 27 and 43 ms respectively, within the Durable Object 30-second CPU allowance; associating RPC events to these route names is an inference from adjacent timestamps. Other Worker requests used 0–7 ms. One superseded page read was canceled at 2 ms; remaining events were ok. These finite samples support the architecture and do not guarantee every future request's timing.
