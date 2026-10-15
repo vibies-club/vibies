@@ -1,4 +1,5 @@
-import { betterAuth, type BetterAuthOptions } from "better-auth";
+import { betterAuth, type BetterAuthOptions } from "better-auth/minimal";
+import { createKyselyAdapter, kyselyAdapter } from "@better-auth/kysely-adapter";
 import { APIError, createAuthEndpoint } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
 import { appOrigin } from "../access-core.ts";
@@ -18,17 +19,41 @@ export type GoogleAuthConfig = {
   link?: { grantHash: string; sessionHash: string };
 };
 
+type PreparedDatabase = Awaited<ReturnType<typeof createKyselyAdapter>> & {
+  kysely: NonNullable<Awaited<ReturnType<typeof createKyselyAdapter>>["kysely"]>;
+  databaseType: NonNullable<Awaited<ReturnType<typeof createKyselyAdapter>>["databaseType"]>;
+};
+const preparedDatabases = new WeakMap<object, Promise<PreparedDatabase>>();
+
+/** Share only the connection/dialect, never an adapter's options or request hooks. */
+function prepareDatabase(database: GoogleAuthConfig["database"]) {
+  const cached = preparedDatabases.get(database);
+  if (cached) return cached;
+  const prepared = createKyselyAdapter({ database }).then((result) => {
+    if (!result.kysely || !result.databaseType) throw new Error("Google auth database unavailable");
+    return { ...result, kysely: result.kysely, databaseType: result.databaseType };
+  });
+  preparedDatabases.set(database, prepared);
+  void prepared.catch(() => {
+    if (preparedDatabases.get(database) === prepared) preparedDatabases.delete(database);
+  });
+  return prepared;
+}
+
 /** Construct per request. Do not expose `auth.handler`: use googleCallbackHandler below. */
-export function createGoogleAuth(config: GoogleAuthConfig) {
+export async function createGoogleAuth(config: GoogleAuthConfig) {
   const origin = appOrigin(config.origin);
   const grant = async () => config.link
     ? googleLinkGrant(config.store, config.link.grantHash, config.link.sessionHash) : null;
+  const prepared = await prepareDatabase(config.database);
   return betterAuth({
     appName: "Vibies",
     baseURL: origin,
     basePath: GOOGLE_AUTH_PATH,
     secret: config.secret,
-    database: config.database,
+    // A fresh factory captures this auth instance's schema and hooks. D1's stock
+    // preparation disables transactions and retains its native SQL behavior.
+    database: kyselyAdapter(prepared.kysely, { type: prepared.databaseType, transaction: prepared.transaction }),
     logger: { disabled: true },
     trustedOrigins: [origin],
     emailAndPassword: { enabled: false },
@@ -99,12 +124,12 @@ export function googleAuthForRequest(config: GoogleAuthConfig) {
     secret: config.secret, clientId: config.clientId, clientSecret: config.clientSecret };
   const auth = createGoogleAuth(snapshot);
   sharedAuth = { config: snapshot, auth };
-  void auth.$context.catch(() => { if (sharedAuth?.auth === auth) sharedAuth = undefined; });
+  void auth.then(instance => instance.$context).catch(() => { if (sharedAuth?.auth === auth) sharedAuth = undefined; });
   return auth;
 }
 
 /** Only the OAuth callback is public. Initiation, bridge and session APIs are server-side only. */
-export async function googleCallbackHandler(auth: ReturnType<typeof createGoogleAuth>, request: Request) {
+export async function googleCallbackHandler(auth: Awaited<ReturnType<typeof createGoogleAuth>>, request: Request) {
   const url = new URL(request.url);
   if (url.pathname !== `${GOOGLE_AUTH_PATH}/callback/google` || request.method !== "GET")
     return new Response("Not found", { status: 404 });

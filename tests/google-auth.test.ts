@@ -67,7 +67,7 @@ test("Better Auth pinned D1 adapter strips tokens and profile and atomically con
   const { db, sqlite, auth } = fixture();
   try {
     const userId = (await beginGoogleLink(db, hash(2), hash(20)))!;
-    const instance = auth({ grantHash: hash(20), sessionHash: hash(2) });
+    const instance = await auth({ grantHash: hash(20), sessionHash: hash(2) });
     const context = await instance.$context;
     const account = await context.internalAdapter.createAccount({ userId, providerId: "google", accountId: "synthetic-google-sub",
       accessToken: "must-not-persist", refreshToken: "must-not-persist", idToken: "must-not-persist", scope: "email profile", password: "must-not-persist" });
@@ -86,7 +86,7 @@ test("Revocation or wrong owner at insertion denies linking even after bridge cr
   const { db, sqlite, auth } = fixture();
   try {
     const userId = (await beginGoogleLink(db, hash(2), hash(20)))!;
-    const context = await auth({ grantHash: hash(20), sessionHash: hash(2) }).$context;
+    const context = await (await auth({ grantHash: hash(20), sessionHash: hash(2) })).$context;
     assert.equal(await context.internalAdapter.createAccount({ userId: hash(99), providerId: "google", accountId: "other-sub" }), null);
     sqlite.exec("UPDATE accounts SET status='revoked'");
     assert.equal(await context.internalAdapter.createAccount({ userId, providerId: "google", accountId: "sub" }), null);
@@ -98,7 +98,7 @@ test("Server-only bridge sets protected short-lived cookie; public management pa
   const { db, sqlite, auth } = fixture();
   try {
     await beginGoogleLink(db, hash(2), hash(20));
-    const instance = auth({ grantHash: hash(20), sessionHash: hash(2) });
+    const instance = await auth({ grantHash: hash(20), sessionHash: hash(2) });
     const response = await instance.api.githubBridge({ method: "POST", headers: new Headers({ origin: "https://vibies.test", "user-agent": "must-not-persist" }), asResponse: true });
     assert.equal(response.status, 200);
     const cookie = response.headers.get("set-cookie")!;
@@ -115,7 +115,7 @@ test("Google login bridges only linked currently approved identity, once, withou
   const { db, sqlite, auth } = fixture();
   try {
     const userId = (await beginGoogleLink(db, hash(2), hash(20)))!;
-    const context = await auth({ grantHash: hash(20), sessionHash: hash(2) }).$context;
+    const context = await (await auth({ grantHash: hash(20), sessionHash: hash(2) })).$context;
     await context.internalAdapter.createAccount({ userId, providerId: "google", accountId: "sub" });
     const session = await context.internalAdapter.createSession(userId);
     assert.equal(await finishGoogleSignIn(db, userId, hash(30), session.token), true);
@@ -154,7 +154,7 @@ test("Real Better Auth Google callback links, signs in, rejects replay and unlin
   };
   try {
     const userId = (await beginGoogleLink(db, hash(2), hash(20)))!;
-    const instance = auth({ grantHash: hash(20), sessionHash: hash(2) });
+    const instance = await auth({ grantHash: hash(20), sessionHash: hash(2) });
     const bridge = await instance.api.githubBridge({ method: 'POST', asResponse: true });
     let cookie = mergeCookies('', bridge);
     const headers = () => new Headers({ origin: 'https://vibies.test', cookie });
@@ -173,7 +173,7 @@ test("Real Better Auth Google callback links, signs in, rejects replay and unlin
     assert.match(replay.headers.get('location')!, /error=/);
 
     // The normal Google login path resolves the existing stable subject and mints a short bridge.
-    const loginAuth = auth();
+    const loginAuth = await auth();
     const login = await loginAuth.api.signInSocial({ body: { provider: 'google', callbackURL: 'https://vibies.test/auth/google/complete', disableRedirect: true }, asResponse: true });
     cookie = mergeCookies('', login);
     const loginUrl = new URL((await login.json() as { url: string }).url);
@@ -198,7 +198,7 @@ test("Database guard rejects bypass, expiration and reassignment independently o
     assert.throws(insert, /google_link_forbidden/);
     sqlite.exec("DELETE FROM google_link_grants");
     await beginGoogleLink(db, hash(2), hash(21));
-    const context = await auth({ grantHash: hash(21), sessionHash: hash(2) }).$context;
+    const context = await (await auth({ grantHash: hash(21), sessionHash: hash(2) })).$context;
     await context.internalAdapter.createAccount({ userId, providerId:'google', accountId:'sub' });
     assert.throws(() => sqlite.prepare("UPDATE google_accounts SET accountId='replacement'").run(), /google_link_immutable/);
     assert.equal(await context.internalAdapter.createUser({ name:'PRIVATE-NAME', email:'private@example.com' }, { method:'credential' }), null);
@@ -211,7 +211,7 @@ test("Unlinked Google callback cannot sign up or create a Vibies account", async
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => Response.json({ access_token:'private-token', id_token:syntheticJwt(), token_type:'Bearer', expires_in:3600 });
   try {
-    const instance = auth();
+    const instance = await auth();
     const start = await instance.api.signInSocial({ body:{provider:'google',callbackURL:'https://vibies.test/auth/google/complete',disableRedirect:true},asResponse:true });
     const url = new URL((await start.json() as { url: string }).url);
     const callback = await googleCallbackHandler(instance, new Request(`https://vibies.test${GOOGLE_AUTH_PATH}/callback/google?code=test&state=${url.searchParams.get('state')}`,{headers:{cookie:mergeCookies('',start)}}));
@@ -321,12 +321,12 @@ test('Unlinked Google HTTP callback explains linking without creating an account
 test('pinned Google schema passes explicit validation and detects a missing table', async () => {
   const { sqlite, auth } = fixture();
   try {
-    const context = await auth().$context;
+    const context = await (await auth()).$context;
     assert.equal(typeof context.explicitSchemaCheck, 'function');
     await context.explicitSchemaCheck!();
     sqlite.exec('ALTER TABLE google_verifications RENAME TO missing_google_verifications');
     // Use a fresh check so the earlier successful result cannot mask schema drift.
-    const broken = await auth().$context;
+    const broken = await (await auth()).$context;
     await assert.rejects(async () => { await broken.explicitSchemaCheck!(); }, /google_verifications/);
   } finally { sqlite.close(); }
 });
@@ -370,7 +370,7 @@ test('grant-free auth cache matches every configuration field and never caches g
       assert.equal(googleAuthForRequest({ ...config }), original);
       const different = googleAuthForRequest({ ...config, ...changed });
       assert.notEqual(different, original);
-      await different.$context;
+      await (await different).$context;
     }
     const original = googleAuthForRequest(config);
     const linked = { ...config, link: { grantHash: hash(20), sessionHash: hash(2) } };
@@ -382,9 +382,10 @@ test('grant-free auth cache matches every configuration field and never caches g
     const mutable: typeof linked | typeof config = { ...config };
     const snapshotted = googleAuthForRequest(mutable);
     Object.assign(mutable, { link: linked.link, origin: 'https://changed.test' });
-    await assert.rejects(() => snapshotted.api.githubBridge({ method: 'POST', headers: new Headers() }));
-    assert.equal((await snapshotted.$context).baseURL, 'https://vibies.test/auth/google/provider');
-    await Promise.all([a.$context, b.$context]);
+    await assert.rejects(async () => (await snapshotted).api.githubBridge({ method: 'POST', headers: new Headers() }));
+    assert.equal((await (await snapshotted).$context).baseURL, 'https://vibies.test/auth/google/provider');
+    const [contextA, contextB] = await Promise.all([a, b].map(async instance => (await instance).$context));
+    assert.notEqual(contextA.adapter, contextB.adapter);
   } finally { first.sqlite.close(); second.sqlite.close(); }
 });
 
@@ -395,13 +396,13 @@ test('shared grant-free auth isolates concurrent cookies, databases and link aut
   try {
     const ownerA = await beginGoogleLink(first.db, hash(1), hash(20));
     const ownerB = await beginGoogleLink(first.db, hash(2), hash(21));
-    const bridge = async (grantHash: string, sessionHash: string) => googleAuthForRequest({ ...config,
-      link: { grantHash, sessionHash } }).api.githubBridge({ method: 'POST', headers: new Headers(), asResponse: true });
+    const bridge = async (grantHash: string, sessionHash: string) => (await googleAuthForRequest({ ...config,
+      link: { grantHash, sessionHash } })).api.githubBridge({ method: 'POST', headers: new Headers(), asResponse: true });
     const [bridgeA, bridgeB] = await Promise.all([bridge(hash(20), hash(1)), bridge(hash(21), hash(2))]);
     const headersA = new Headers({ cookie: mergeCookies('', bridgeA) });
     const headersB = new Headers({ cookie: mergeCookies('', bridgeB) });
-    const shared = googleAuthForRequest(config);
-    const other = googleAuthForRequest({ ...config, database: second.db, store: second.db });
+    const shared = await googleAuthForRequest(config);
+    const other = await googleAuthForRequest({ ...config, database: second.db, store: second.db });
     const [sessionA, sessionB, anonymous, otherEnvironment] = await Promise.all([
       shared.api.getSession({ headers: headersA }), shared.api.getSession({ headers: headersB }),
       shared.api.getSession({ headers: new Headers() }), other.api.getSession({ headers: headersA }),
@@ -416,4 +417,26 @@ test('shared grant-free auth isolates concurrent cookies, databases and link aut
     assert.equal((await shared.$context).newSession, null);
     assert.equal(second.sqlite.prepare('SELECT count(*) n FROM google_sessions').get()!.n, 0);
   } finally { first.sqlite.close(); second.sqlite.close(); }
+});
+
+
+test('failed database preparation clears caches and callback still clears OAuth cookies', async () => {
+  const { db, sqlite } = fixture();
+  const database = {} as typeof db;
+  const config = { database, store: db, origin: 'https://vibies.test',
+    secret: 'synthetic-test-secret-with-at-least-32-characters', clientId: 'synthetic-client', clientSecret: 'synthetic-secret' };
+  try {
+    const failed = googleAuthForRequest(config);
+    await assert.rejects(failed, /Google auth database unavailable/);
+    const routes = createGoogleRoutes({ ...config, sessionCookie: 'vibies-session', browserCookie: 'vibies-browser' });
+    const callback = await routes.callback(new Request(`https://vibies.test${GOOGLE_AUTH_PATH}/callback/google`, {
+      headers: { cookie: '__Secure-vibies-google.oauth_state=stale' },
+    }));
+    assert.equal(callback.headers.get('location'), '/sign-in?message=failed');
+    assert.ok(callback.headers.getSetCookie().some(value => value.includes('Max-Age=0')));
+    Object.assign(database, db);
+    const recovered = googleAuthForRequest(config);
+    assert.notEqual(recovered, failed);
+    assert.equal((await (await recovered).$context).adapter.id, 'kysely');
+  } finally { sqlite.close(); }
 });

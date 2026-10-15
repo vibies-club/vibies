@@ -681,3 +681,11 @@ readiness; each deployment still needs capacity and provider proof.
 **Decision:** Disable Better Auth runtime schema introspection. Reuse one grant-free Google auth instance only when the database and store objects, origin, client credentials, and auth secret match exactly; copy only those fields into the cache. Grant-bearing instances always remain fresh. Keep explicit schema validation and missing-schema failure tests in the required D1 suite, alongside deployment migration checks.
 
 **Why:** Better Auth 1.7.9 caches schema validation per adapter instance, while request-local initialization preserves link-grant and environment isolation. Repeating D1 metadata scans and endpoint initialization for each OAuth operation wastes the Free-plan CPU budget. A bounded grant-free cache avoids retaining request cookies, destinations, or authorization grants; activation checks still run before the auth subsystem is reached. SQL errors still fail the affected sign-in operation; database constraints, authorization hooks, and deployment activation checks remain enforced.
+
+## D-028: Use the minimal auth entry point with the stock D1 adapter
+
+**Date:** 2026-10-15
+
+**Decision:** Import Better Auth 1.7.9 from `better-auth/minimal` and pin `@better-auth/kysely-adapter` at the same version. Cache only stock connection/dialect preparation by database identity; construct each auth instance's adapter with its own options and hooks. Use Vite's server `build.minify` setting to reduce deployed code without changing the supported Cloudflare bundle flow.
+
+**Why:** Avoid unused full-entry setup while retaining stock SQL behavior and D1 transaction semantics. Link-bearing auth instances remain isolated, and failed initialization clears only matching cache entries. Minification reduces server JavaScript from approximately 1.60 MB to 0.76 MB; code size and passing tests alone do not prove Free-plan CPU suitability.

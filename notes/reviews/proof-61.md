@@ -102,3 +102,11 @@ The cache build was deployed only to compatibility Worker version 166e25ee-a1f7-
 The Free CPU gate remains unresolved after the approved static rewrite and bounded auth optimizations. No production data was imported, no source write barrier or destination activation was performed, no production traffic was switched, and no paid plan or card step was taken. PR #62 remains draft. Instructor approval/merge, trusted automatic preview/staging receipts, metadata-only GitHub App configuration, controlled import/reconciliation, domain choice and production proof remain subsequent gates.
 
 Manual PR preview version 59dd4283-1dc3-480e-a99e-282909fddc39 serves commit 3c87f1d with isolated D1 177f2b16-63d3-4c33-9beb-0216f77c7189 and artifact hash 0af97a24935b6721ad3ffce3fb66a656d8ab606493ebc1827095baa26d97f3c6. The home page and header Sign in link were exercised; the sign-in page displayed the matching source prefix. This is manual preview evidence, not the automatic workflow receipt.
+
+## Minimal auth and minified Worker comparison
+
+The minimal Better Auth entry point and explicitly pinned stock Kysely adapter passed 61 D1/Google tests, including 19 Google cases, 9 Worker boundary tests, typecheck and the static build. A focused independent review found no concrete security or correctness issue; its raw output is in `minimal-auth-61.md`.
+
+Compatibility version `ef041366-d12d-476c-907c-acb38093bfd1` deployed the minimal entry point. The approved owner Google login reached the existing synthetic Migration Tester account. Subsequent Google chooser navigation stalled during repeated checks; these attempts must not be counted as successful callbacks without provider or browser evidence.
+
+Compatibility version `0ae1591c-b911-4d85-a8bf-4720ec825259` additionally enables Vite server minification. Total upload decreased from 1562.69 KiB to 743.41 KiB. This is a build-size result, not a CPU conclusion. Route-specific measurement and repeated live callback proof remain pending. Neither experiment touched production data or traffic.

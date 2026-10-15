@@ -49,7 +49,7 @@ export function createGoogleRoutes(config: GoogleRoutesConfig) {
       grant = linking ? token() : undefined;
       if (linking && (!validToken(session) || !await beginGoogleLink(config.store,digest(session),digest(grant!))))
         return redirect('/welcome?google=reauth');
-      const auth = googleAuthForRequest({...config,link:grant ? {grantHash:digest(grant),sessionHash:digest(session!)}:undefined});
+      const auth = await googleAuthForRequest({...config,link:grant ? {grantHash:digest(grant),sessionHash:digest(session!)}:undefined});
       let headers = new Headers({origin});
       let bridge: Response | undefined;
       if (linking) {
@@ -80,11 +80,11 @@ export function createGoogleRoutes(config: GoogleRoutesConfig) {
   async function callback(request: Request) {
     if (config.readOnly ?? isReadOnly()) return readOnlyResponse();
     const jar = readCookies(request); const grant = jar.get(grantCookie(secure)); const previous = jar.get(config.sessionCookie);
-    const auth = authFor(request);
     let failureMessage = 'failed';
     const failure = () => redirect(validToken(grant)?'/welcome?google=failed':`/sign-in?message=${failureMessage}`);
     let response: Response;
     try {
+      const auth = await authFor(request);
       const result = await googleCallbackHandler(auth,request);
       const destination = new URL(result.headers.get('location') ?? '/', origin);
       if (!validToken(grant) && destination.origin === origin && destination.pathname === fixedDestination &&
@@ -115,7 +115,7 @@ export function createGoogleRoutes(config: GoogleRoutesConfig) {
   async function signOut(request: Request, response: Response) {
     try {
       if (config.readOnly ?? isReadOnly()) throw new Error("Read only");
-      const auth = authFor(request);
+      const auth = await authFor(request);
       await auth.api.signOut({headers:request.headers});
       const grant = readCookies(request).get(grantCookie(secure));
       if (validToken(grant)) await cancelGoogleLink(config.store,digest(grant));

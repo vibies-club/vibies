@@ -10,7 +10,7 @@ export default defineConfig({
   plugins: [react(), cloudflare({ configPath: fileURLToPath(new URL("./wrangler.jsonc", import.meta.url)), viteEnvironment: { name: "server" } })],
   environments: {
     client: { build: { outDir: fileURLToPath(new URL("./dist/client", import.meta.url)), emptyOutDir: true } },
-    server: { build: { outDir: fileURLToPath(new URL("./dist/server", import.meta.url)), emptyOutDir: true } },
+    server: { build: { minify: true, outDir: fileURLToPath(new URL("./dist/server", import.meta.url)), emptyOutDir: true } },
   },
   build: { sourcemap: false },
 });
