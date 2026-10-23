@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 
-import { execFileSync } from "node:child_process";
-import { randomUUID } from "node:crypto";
-import { appendFileSync } from "node:fs";
+import { randomUUID, createHash } from "node:crypto";
+import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
+import { deployStagingArtifact, inspectArtifact } from "./staging-cloudflare.mjs";
 import process from "node:process";
 import { pathToFileURL } from "node:url";
 
 const REPOSITORY = "vibies-club/vibies";
 const API = "https://api.github.com";
-const STAGING_REF = "refs/heads/staging";
 const REQUIRED_CHECKS = [
   { check: "app-check", workflow: "app", path: ".github/workflows/app.yml" },
   { check: "migration-check", workflow: "database", path: ".github/workflows/database.yml" },
@@ -26,10 +25,6 @@ function record(value) {
 
 function isSha(value) {
   return typeof value === "string" && /^[0-9a-f]{40}$/.test(value);
-}
-
-function safeProjectId(value) {
-  return typeof value === "string" && /^prj_[A-Za-z0-9_-]{1,123}$/.test(value);
 }
 
 function stagingOrigin(value) {
@@ -106,41 +101,25 @@ async function getCommit(request, sha) {
   return { sha, tree: data.tree.sha, parents: data.parents.map((parent) => parent.sha) };
 }
 
-async function getSupabaseTree(request, rootTree) {
-  const data = await request(`/repos/${REPOSITORY}/git/trees/${rootTree}`);
-  if (!record(data) || data.sha !== rootTree || data.truncated !== false || !Array.isArray(data.tree)) {
-    throw new SafeError("GitHub returned invalid root tree metadata");
-  }
-  const matches = data.tree.filter((entry) => entry?.path === "supabase");
-  if (matches.length !== 1 || matches[0].type !== "tree" || matches[0].mode !== "040000" ||
-      !isSha(matches[0].sha)) {
-    throw new SafeError("commit does not have one valid supabase tree");
-  }
-  return matches[0].sha;
+async function getMigrations(request, rootTree) {
+  const data = await request(`/repos/${REPOSITORY}/git/trees/${rootTree}?recursive=1`);
+  if (!record(data) || data.sha !== rootTree || data.truncated !== false || !Array.isArray(data.tree))
+    throw new SafeError("GitHub returned an incomplete migration tree");
+  const migrations = data.tree.filter(entry => entry?.path?.startsWith("d1/migrations/"));
+  const files = migrations.filter(entry => entry.type !== "tree").map(entry => {
+    if (!/^d1\/migrations\/[0-9]{4}_[a-z0-9_]+\.sql$/.test(entry.path) || entry.type !== "blob" ||
+        entry.mode !== "100644" || !isSha(entry.sha)) throw new SafeError("invalid D1 migration metadata");
+    return { path: entry.path, blob: entry.sha };
+  }).sort((a, b) => a.path.localeCompare(b.path));
+  if (files.length === 0 || new Set(files.map(file => file.path.slice(14, 18))).size !== files.length)
+    throw new SafeError("missing or duplicate D1 migration versions");
+  return files;
 }
 
-async function getMigrationVersions(request, supabaseTree) {
-  const data = await request(`/repos/${REPOSITORY}/git/trees/${supabaseTree}?recursive=1`);
-  if (!record(data) || data.sha !== supabaseTree || data.truncated !== false || !Array.isArray(data.tree)) {
-    throw new SafeError("GitHub returned an incomplete supabase tree");
-  }
-  const versions = [];
-  const seen = new Set();
-  for (const entry of data.tree) {
-    if (!record(entry) || typeof entry.path !== "string" || typeof entry.type !== "string" ||
-        typeof entry.mode !== "string" || !isSha(entry.sha)) {
-      throw new SafeError("GitHub returned invalid supabase tree metadata");
-    }
-    if (!/^migrations\/[^/]+\.sql$/.test(entry.path)) continue;
-    const match = /^migrations\/(\d{14})_[a-z0-9_]+\.sql$/.exec(entry.path);
-    if (!match || entry.type !== "blob" || entry.mode !== "100644" || seen.has(match[1])) {
-      throw new SafeError("supabase tree has invalid migration metadata");
-    }
-    seen.add(match[1]);
-    versions.push(match[1]);
-  }
-  if (versions.length === 0) throw new SafeError("supabase tree has no migrations");
-  return versions.sort();
+export function requireMigrationAncestry(base, candidate) {
+  if (base.length > candidate.length || base.some((file, index) =>
+    file.path !== candidate[index]?.path || file.blob !== candidate[index]?.blob))
+    throw new SafeError("D1 migrations must retain main's unchanged ordered prefix");
 }
 
 function validatePull(data, prNumber, currentMain) {
@@ -250,230 +229,155 @@ async function requireChecks(request, sha, prNumber, context) {
   }
 }
 
-function gitPushRef(sha, previous) {
-  // ponytail: the staging ruleset admits only deploy keys, and GITHUB_TOKEN cannot
-  // bypass a ruleset, so the ref moves over SSH with the key held in the environment.
-  const remote = `git@github.com:${REPOSITORY}.git`;
-  const git = (args) => execFileSync("git", args, { stdio: ["ignore", "ignore", "inherit"] });
-  git(["fetch", "--quiet", "--depth=1", remote, sha]);
-  git(["push", "--quiet", `--force-with-lease=${STAGING_REF}:${previous}`, remote, `${sha}:${STAGING_REF}`]);
+function commonOptions(options) {
+  if (options.repository !== REPOSITORY) throw new SafeError("unexpected repository");
+  if (options.actor?.toLowerCase() !== "0xinbeta") throw new SafeError("only the Instructor may operate staging");
+  if (!isSha(options.workflowSha)) throw new SafeError("invalid workflow commit SHA");
+  if (!["Preview PR", "Clear"].includes(options.operation)) throw new SafeError("invalid staging operation");
+  if (options.operation === "Preview PR" && (!Number.isSafeInteger(options.prNumber) || options.prNumber < 1))
+    throw new SafeError("Preview PR requires a valid PR number");
+  if (typeof options.githubToken !== "string" || !options.githubToken) throw new SafeError("GitHub API credential is missing");
 }
 
-async function updateStagingRef(request, pushRef, sha) {
-  const previous = await getRef(request, "staging");
-  try {
-    await pushRef(sha, previous);
-  } catch {
-    throw new SafeError("the staging ref push did not complete");
+export async function prepareStaging(options) {
+  commonOptions(options);
+  const request = api(options.fetchImpl ?? fetch, options.githubToken);
+  const main = await getRef(request, "main");
+  if (main !== options.workflowSha) throw new SafeError("the workflow commit is not current main");
+  const mainCommit = await getCommit(request, main);
+  const baseMigrations = await getMigrations(request, mainCommit.tree);
+  let head = main, selected, commit = mainCommit;
+  if (options.operation === "Preview PR") {
+    selected = await getPull(request, options.prNumber, main);
+    head = selected.head;
+    await requireMainAncestor(request, main, head);
+    commit = await requireSyntheticMerge(request, mainCommit, head, selected.merge);
+    await requireChecks(request, head, options.prNumber, { main, ref: selected.ref });
+  } else await requireChecks(request, main);
+  const migrations = await getMigrations(request, commit.tree);
+  requireMigrationAncestry(baseMigrations, migrations);
+  if (await getRef(request, "main") !== main) throw new SafeError("main changed during staging selection");
+  if (selected) {
+    const current = await getPull(request, options.prNumber, main);
+    if (JSON.stringify(current) !== JSON.stringify(selected)) throw new SafeError("PR head or merge commit changed during staging selection");
   }
-  if (await getRef(request, "staging") !== sha) {
-    throw new SafeError("GitHub did not confirm the staging ref update");
-  }
+  return {
+    format: 1, operation: options.operation, prNumber: options.operation === "Preview PR" ? options.prNumber : null,
+    main, head, merge: selected?.merge ?? null, migrations,
+    schemaHash: createHash("sha256").update(JSON.stringify(migrations)).digest("hex"),
+  };
 }
 
-async function readMarker(fetchImpl, origin, expected) {
-  const nonce = expected.nonce();
-  let response;
-  try {
-    response = await fetchImpl(`${origin}/staging.json?nonce=${encodeURIComponent(nonce)}`, {
-      method: "GET",
-      headers: { accept: "application/json" },
-      cache: "no-store",
-      redirect: "error",
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
-  } catch {
-    return { ready: false, reason: "the staging request did not complete" };
-  }
-  if (!response.ok) return { ready: false, reason: `staging returned HTTP ${response.status}` };
-  if (!(response.headers.get("content-type") ?? "").toLowerCase().includes("application/json")) {
-    return { ready: false, reason: "staging returned an unexpected content type" };
-  }
-  let marker;
-  try {
-    marker = await response.json();
-  } catch {
-    return { ready: false, reason: "staging returned invalid JSON" };
-  }
-  if (!record(marker) || Object.keys(marker).sort().join(",") !== "nonce,projectId,ref,sha" ||
-      !safeProjectId(marker.projectId) || !isSha(marker.sha) ||
-      typeof marker.nonce !== "string" || typeof marker.ref !== "string") {
-    throw new SafeError("staging returned an invalid marker schema");
-  }
-  if (marker.projectId !== expected.projectId || marker.ref !== "staging" || marker.nonce !== nonce) {
-    throw new SafeError("staging marker identity did not match this request");
-  }
-  return marker.sha === expected.sha
-    ? { ready: true }
-    : { ready: false, reason: "the staging alias still serves a different commit" };
-}
-
-async function waitForDeployment({
-  fetchImpl, origin, projectId, sha, now, sleep, nonce, timeoutMs,
-}) {
+async function waitForMarker({ fetchImpl, origin, expected, now, sleep, nonce, timeoutMs }) {
   const deadline = now() + timeoutMs;
-  let reason = "no staging marker was received";
-  while (now() <= deadline) {
-    const marker = await readMarker(fetchImpl, origin, { projectId, sha, nonce });
-    if (marker.ready) return;
-    reason = marker.reason;
+  let reason = "no staging identity received";
+  do {
+    const challenge = nonce();
+    let response;
+    try {
+      response = await fetchImpl(`${origin}/staging.json?nonce=${encodeURIComponent(challenge)}`, {
+        method: "GET", headers: { accept: "application/json" }, cache: "no-store", redirect: "error",
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+    } catch { reason = "staging request did not complete"; }
+    if (response?.ok) {
+      if (!(response.headers.get("content-type") ?? "").toLowerCase().includes("application/json"))
+        throw new SafeError("staging identity has an unexpected content type");
+      let marker;
+      try { marker = await response.json(); } catch { throw new SafeError("staging returned invalid JSON"); }
+      const wanted = { ...expected, environment: "staging", nonce: challenge };
+      if (!record(marker) || JSON.stringify(Object.keys(marker).sort()) !== JSON.stringify(Object.keys(wanted).sort()) ||
+          Object.entries(wanted).some(([key, value]) => marker[key] !== value))
+        throw new SafeError("staging server identity does not match the deployed artifact, version and database");
+      if (!/no-store/i.test(response.headers.get("cache-control") ?? ""))
+        throw new SafeError("staging identity is cacheable");
+      return;
+    }
+    if (response) reason = `staging returned HTTP ${response.status}`;
     const remaining = deadline - now();
     if (remaining <= 0) break;
     await sleep(Math.min(POLL_INTERVAL_MS, remaining));
-  }
+  } while (now() <= deadline);
   throw new SafeError(`staging deployment timed out: ${reason}`);
 }
 
-async function requireMainUnchanged(request, expected) {
-  if (await getRef(request, "main") !== expected) {
-    throw new SafeError("main changed during the staging operation");
-  }
-}
-
-async function recheckPreview(request, prNumber, currentMain, selected) {
-  await requireChecks(request, selected.head, prNumber, { main: currentMain, ref: selected.ref });
-  await requireMainUnchanged(request, currentMain);
-  const pull = await getPull(request, prNumber, currentMain);
-  if (pull.head !== selected.head || pull.ref !== selected.ref || pull.merge !== selected.merge) {
-    throw new SafeError("PR head or merge commit changed during the staging operation");
-  }
-}
-
-function receipt({ operation, prNumber, main, head, merge, tree, versions, origin, projectId }) {
-  return [
-    "## Shared staging receipt",
-    "",
-    `- Result: success`,
-    `- Operation: ${operation}`,
-    `- PR: ${prNumber === undefined ? "none" : `#${prNumber}`}`,
-    `- Main: \`${main}\``,
-    `- Head: \`${head}\``,
-    `- PR merge commit: ${merge ? `\`${merge}\`` : "not applicable"}`,
-    `- Supabase tree: \`${tree}\``,
-    `- Migration versions: ${versions.map((version) => `\`${version}\``).join(", ")}`,
-    `- Vercel project: \`${projectId}\``,
-    `- URL: ${origin}`,
-    "",
-    "This receipt records one point in time. A changed head, main commit, or database baseline requires a new receipt.",
-    "",
-  ].join("\n");
-}
-
-export async function runStaging({
-  repository,
-  workflowSha,
-  operation,
-  prNumber,
-  origin,
-  projectId,
-  baselineTree,
-  githubToken,
-  fetchImpl = globalThis.fetch,
-  pushRef = gitPushRef,
-  now = Date.now,
-  sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)),
-  nonce = randomUUID,
-  timeoutMs = DEPLOY_TIMEOUT_MS,
-  writeSummary = () => {},
-}) {
-  if (repository !== REPOSITORY) throw new SafeError("unexpected repository");
-  if (!isSha(workflowSha)) throw new SafeError("invalid workflow commit SHA");
-  if (!["Preview PR", "Clear"].includes(operation)) throw new SafeError("invalid staging operation");
-  if (operation === "Preview PR" && (!Number.isSafeInteger(prNumber) || prNumber < 1)) {
-    throw new SafeError("Preview PR requires a valid PR number");
-  }
-  origin = stagingOrigin(origin);
-  if (!safeProjectId(projectId)) throw new SafeError("invalid staging project ID");
-  if (!isSha(baselineTree)) throw new SafeError("invalid staging Supabase tree");
-  if (typeof githubToken !== "string" || githubToken.length === 0) {
-    throw new SafeError("GitHub API credential is missing");
-  }
-  if (!Number.isFinite(timeoutMs) || timeoutMs < 0 || timeoutMs > DEPLOY_TIMEOUT_MS) {
+export async function runStaging(options) {
+  const origin = stagingOrigin(options.origin);
+  const timeoutMs = options.timeoutMs ?? DEPLOY_TIMEOUT_MS;
+  if (!Number.isFinite(timeoutMs) || timeoutMs < 0 || timeoutMs > DEPLOY_TIMEOUT_MS)
     throw new SafeError("invalid deployment timeout");
-  }
-
-  const request = api(fetchImpl, githubToken);
-  const currentMain = await getRef(request, "main");
-  if (currentMain !== workflowSha) {
-    throw new SafeError("the workflow commit is not current main");
-  }
-  const mainCommit = await getCommit(request, currentMain);
-  const mainTree = await getSupabaseTree(request, mainCommit.tree);
-  if (mainTree !== baselineTree) throw new SafeError("current main does not match the staging Supabase baseline");
-  const versions = await getMigrationVersions(request, mainTree);
-
-  let head = currentMain;
-  let merge;
-  let selected;
-  if (operation === "Preview PR") {
-    selected = await getPull(request, prNumber, currentMain);
-    head = selected.head;
-    merge = selected.merge;
-    await requireMainAncestor(request, currentMain, head);
-    const headCommit = await requireSyntheticMerge(request, mainCommit, head, merge);
-    const candidateTree = await getSupabaseTree(request, headCommit.tree);
-    if (candidateTree !== mainTree || candidateTree !== baselineTree) {
-      throw new SafeError("PR, main, and staging Supabase trees do not match");
-    }
-    await recheckPreview(request, prNumber, currentMain, selected);
-  } else {
-    await requireChecks(request, currentMain);
-    await requireMainUnchanged(request, currentMain);
-  }
-
-  await updateStagingRef(request, pushRef, head);
-  await waitForDeployment({ fetchImpl, origin, projectId, sha: head, now, sleep, nonce, timeoutMs });
-
-  if (operation === "Preview PR") await recheckPreview(request, prNumber, currentMain, selected);
-  else {
-    await requireChecks(request, currentMain);
-    await requireMainUnchanged(request, currentMain);
-  }
-  if (await getRef(request, "staging") !== head) {
-    throw new SafeError("staging ref changed before the success receipt");
-  }
-
-  const markdown = receipt({ operation, prNumber, main: currentMain, head, merge, tree: mainTree,
-    versions, origin, projectId });
-  if (operation === "Preview PR") {
-    const comment = await request(`/repos/${REPOSITORY}/issues/${prNumber}/comments`, {
+  const selected = await prepareStaging(options);
+  if (JSON.stringify(options.plan) !== JSON.stringify(selected)) throw new SafeError("staging selection changed after the build");
+  const inspect = options.inspect ?? inspectArtifact;
+  const artifactId = String(options.artifactId ?? "");
+  const digest = options.artifactDigest;
+  if (!/^[1-9][0-9]*$/.test(artifactId) || !/^[a-f0-9]{64}$/.test(digest ?? "") || !/^[1-9][0-9]*$/.test(options.runId ?? ""))
+    throw new SafeError("missing build artifact provenance");
+  const uploaded = await api(options.fetchImpl ?? fetch, options.githubToken)(`/repos/${REPOSITORY}/actions/artifacts/${artifactId}`);
+  if (!record(uploaded) || String(uploaded.id) !== artifactId || uploaded.expired !== false ||
+      uploaded.name !== `staging-build-${options.runId}-${options.runAttempt}` || uploaded.digest !== `sha256:${digest}` ||
+      String(uploaded.workflow_run?.id) !== options.runId || uploaded.workflow_run?.head_sha !== selected.main ||
+      uploaded.workflow_run?.head_branch !== "main" || !Number.isSafeInteger(uploaded.workflow_run?.repository_id) ||
+      uploaded.workflow_run.repository_id !== uploaded.workflow_run.head_repository_id)
+    throw new SafeError("build artifact does not belong to this trusted workflow run");
+  const artifact = await inspect(options.artifactDirectory, selected);
+  const deployed = await (options.deploy ?? deployStagingArtifact)({ ...options, plan: selected, artifact });
+  if (!record(deployed) || deployed.worker !== "vibies-staging" ||
+      !/^[0-9a-f-]{36}$/.test(deployed.versionId ?? "") || !/^[0-9a-f-]{36}$/.test(deployed.databaseId ?? "") ||
+      deployed.artifactHash !== artifact.artifactHash || !/^[a-f0-9]{64}$/.test(deployed.schemaHash ?? "") || deployed.migrationHash !== selected.schemaHash)
+    throw new SafeError("deployment provider did not confirm the expected artifact");
+  const expected = { sha: selected.head, worker: deployed.worker, versionId: deployed.versionId,
+    databaseId: deployed.databaseId, schemaHash: deployed.schemaHash, migrationHash: deployed.migrationHash, artifactHash: deployed.artifactHash };
+  await waitForMarker({ fetchImpl: options.fetchImpl ?? fetch, origin, expected,
+    now: options.now ?? Date.now, sleep: options.sleep ?? (ms => new Promise(resolve => setTimeout(resolve, ms))),
+    nonce: options.nonce ?? randomUUID, timeoutMs });
+  if (JSON.stringify(await prepareStaging(options)) !== JSON.stringify(selected))
+    throw new SafeError("main or PR changed before the success receipt");
+  await deployed.verify?.();
+  await deployed.cleanup?.();
+  const markdown = ["## Shared staging receipt", "", "- Result: success", `- Operation: ${selected.operation}`,
+    `- PR: ${selected.prNumber ? `#${selected.prNumber}` : "none"}`, `- Main: \`${selected.main}\``,
+    `- Head: \`${selected.head}\``, `- Worker: \`${deployed.worker}\``, `- Worker version: \`${deployed.versionId}\``,
+    `- Synthetic D1: \`${deployed.databaseId}\``, `- Schema SHA-256: \`${deployed.schemaHash}\``, `- Migration SHA-256: \`${selected.schemaHash}\``,
+    `- Artifact SHA-256: \`${artifact.artifactHash}\``, `- URL: ${origin}`, "",
+    "This receipt records one verified deployment. A changed head, main, artifact, Worker version or database requires a new receipt.", ""].join("\n");
+  if (selected.prNumber) {
+    const comment = await api(options.fetchImpl ?? fetch, options.githubToken)(`/repos/${REPOSITORY}/issues/${selected.prNumber}/comments`, {
       method: "POST", body: { body: markdown },
     });
-    if (!record(comment) || !Number.isSafeInteger(comment.id) || comment.id < 1 ||
-        comment.body !== markdown ||
-        comment.issue_url !== `${API}/repos/${REPOSITORY}/issues/${prNumber}`) {
+    if (!record(comment) || !Number.isSafeInteger(comment.id) || comment.id < 1 || comment.body !== markdown ||
+      comment.issue_url !== `${API}/repos/${REPOSITORY}/issues/${selected.prNumber}`)
       throw new SafeError("GitHub did not confirm the pull request receipt");
-    }
   }
-  writeSummary(markdown);
-  return { operation, prNumber, main: currentMain, head, merge, tree: mainTree, versions, origin };
+  options.writeSummary?.(markdown);
+  return { ...selected, ...deployed, origin };
 }
 
 async function main() {
-  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
-  const writeSummary = (text) => {
-    if (summaryPath) appendFileSync(summaryPath, text, "utf8");
+  const env = process.env;
+  const options = {
+    repository: env.GITHUB_REPOSITORY, actor: env.GITHUB_ACTOR, workflowSha: env.STAGING_WORKFLOW_SHA,
+    operation: env.STAGING_OPERATION,
+    prNumber: /^[1-9]\d*$/.test(env.STAGING_PR_NUMBER ?? "") ? Number(env.STAGING_PR_NUMBER) : undefined,
+    githubToken: env.GITHUB_TOKEN, origin: env.STAGING_ORIGIN,
+    artifactDirectory: env.STAGING_ARTIFACT_DIRECTORY, accountId: env.CLOUDFLARE_ACCOUNT_ID,
+    cloudflareToken: env.CLOUDFLARE_API_TOKEN, artifactId: env.STAGING_ARTIFACT_ID, artifactDigest: env.STAGING_ARTIFACT_DIGEST, runId: env.GITHUB_RUN_ID, runAttempt: env.GITHUB_RUN_ATTEMPT,
+    writeSummary: text => { if (env.GITHUB_STEP_SUMMARY) appendFileSync(env.GITHUB_STEP_SUMMARY, text); },
   };
   try {
-    await runStaging({
-      repository: process.env.GITHUB_REPOSITORY,
-      workflowSha: process.env.STAGING_WORKFLOW_SHA,
-      operation: process.env.STAGING_OPERATION,
-      prNumber: process.env.STAGING_OPERATION === "Preview PR" &&
-          /^[1-9]\d*$/.test(process.env.STAGING_PR_NUMBER ?? "")
-        ? Number(process.env.STAGING_PR_NUMBER) : undefined,
-      origin: process.env.STAGING_ORIGIN,
-      projectId: process.env.STAGING_PROJECT_ID,
-      baselineTree: process.env.STAGING_SUPABASE_TREE,
-      githubToken: process.env.GITHUB_TOKEN,
-      writeSummary,
-    });
+    if (process.argv[2] === "select") {
+      const plan = await prepareStaging(options);
+      writeFileSync(env.STAGING_PLAN_PATH, JSON.stringify(plan));
+      if (env.GITHUB_OUTPUT) appendFileSync(env.GITHUB_OUTPUT, `head=${plan.head}\n`);
+    } else if (process.argv[2] === "deploy") {
+      await runStaging({ ...options, plan: JSON.parse(readFileSync(env.STAGING_PLAN_PATH, "utf8")) });
+    } else throw new SafeError("select or deploy phase is required");
   } catch (error) {
-    const message = error instanceof SafeError ? error.message : "unexpected internal error";
-    writeSummary(`## Shared staging receipt\n\n- Result: failed\n- Reason: ${message}\n`);
+    // Never print provider bodies, command output, credentials or candidate code.
+    const message = error instanceof SafeError ? error.message : "deployment setup or verification failed; no success receipt issued";
+    options.writeSummary(`## Shared staging receipt\n\n- Result: failed\n- Reason: ${message}\n`);
     console.error(`Staging operation failed: ${message}`);
     process.exitCode = 1;
   }
 }
-
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main();

@@ -71,10 +71,10 @@ export function githubAccount(value: unknown) {
 
 export async function exchangeGitHub(config: GitHubConfig, code: string, verifier: string, fetcher = fetch) {
   const response = await fetcher("https://github.com/login/oauth/access_token", {
-    method: "POST", headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
+    method: "POST", headers: { "User-Agent": "Vibies", Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ client_id: config.clientId, client_secret: config.clientSecret,
       code, code_verifier: verifier, redirect_uri: `${config.origin}/auth/callback` }),
-    cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10_000),
+    cache: "no-store", redirect: "manual", signal: AbortSignal.timeout(10_000),
   });
   if (!response.ok) throw new Error("Sign-in failed");
   const result: unknown = await response.json();
@@ -84,8 +84,8 @@ export async function exchangeGitHub(config: GitHubConfig, code: string, verifie
       !("token_type" in result) || String(result.token_type).toLowerCase() !== "bearer" ||
       ("scope" in result && result.scope !== "")) throw new Error("Sign-in failed");
   const identity = await fetcher("https://api.github.com/user", {
-    headers: { Authorization: `Bearer ${result.access_token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
-    cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10_000),
+    headers: { "User-Agent": "Vibies", Authorization: `Bearer ${result.access_token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+    cache: "no-store", redirect: "manual", signal: AbortSignal.timeout(10_000),
   });
   if (!identity.ok) throw new Error("Sign-in failed");
   // GitHub returns a profile. Only these two validated fields leave this function.

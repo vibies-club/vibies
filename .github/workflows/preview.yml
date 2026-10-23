@@ -1,0 +1,144 @@
+name: preview
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, closed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Same-repository open PR to preview
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Account-wide D1 allocation and replacement must not race across PRs.
+# Do not cancel a deployment while its resource state may be ambiguous.
+concurrency:
+  group: cloudflare-preview-allocation
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  select:
+    if: github.repository == 'vibies-club/vibies' && ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository))
+    runs-on: ubuntu-latest
+    outputs:
+      head: ${{ steps.select.outputs.head }}
+    steps:
+      # pull_request_target uses the trusted base commit, never the PR workflow.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - id: select
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PREVIEW_PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+          PREVIEW_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/preview-cloudflare.mjs select
+
+  build:
+    needs: select
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.select.outputs.head }}
+          path: candidate
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: trusted
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      # No environment, Cloudflare token or application secrets in this job.
+      - name: Build candidate without provider credentials
+        working-directory: candidate
+        run: |
+          npm ci
+          npm run build:cloudflare
+      - name: Package candidate as inert deployment data
+        env:
+          STAGING_SOURCE_SHA: ${{ needs.select.outputs.head }}
+          STAGING_SOURCE_DIRECTORY: ${{ github.workspace }}/candidate
+          STAGING_ARTIFACT_DIRECTORY: ${{ runner.temp }}/preview-build
+        run: node trusted/scripts/staging-cloudflare-artifact.mjs
+      - id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/preview-build
+          include-hidden-files: true
+          retention-days: 1
+          if-no-files-found: error
+
+  deploy:
+    needs: [select, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: preview
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install trusted deployment tooling only
+        run: npm ci --ignore-scripts
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact_id }}
+          path: ${{ runner.temp }}/preview-build
+          merge-multiple: true
+      - name: Deploy and verify synthetic preview
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PREVIEW_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_WORKERS_SUBDOMAIN: ${{ vars.CLOUDFLARE_WORKERS_SUBDOMAIN }}
+          PREVIEW_D1_RESERVED_SLOTS: ${{ vars.PREVIEW_D1_RESERVED_SLOTS }}
+          PREVIEW_PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+          PREVIEW_HEAD: ${{ needs.select.outputs.head }}
+          PREVIEW_ARTIFACT_ID: ${{ needs.build.outputs.artifact_id }}
+          PREVIEW_ARTIFACT_DIGEST: ${{ needs.build.outputs.artifact_digest }}
+          PREVIEW_ARTIFACT_DIRECTORY: ${{ runner.temp }}/preview-build
+        run: node scripts/preview-cloudflare.mjs deploy
+
+  cleanup:
+    if: github.repository == 'vibies-club/vibies' && github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: preview
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Delete only the closed PR's owned preview
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PREVIEW_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          PREVIEW_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node scripts/preview-cloudflare.mjs cleanup

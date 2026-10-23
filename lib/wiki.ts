@@ -1,17 +1,6 @@
-export type WikiEntry = {
-  id: string;
-  title: string;
-  topic: string;
-  where: "shell" | "tmux" | "Codex" | "SQL Editor" | "browser";
-  command?: string;
-  keys?: string;
-  usage: string;
-  prerequisites: string;
-  placeholders?: string;
-  result: string;
-  sources: { file: string; location: string }[];
-  guide?: { label: string; href: string };
-};
+import { filterEntries, type WikiEntry } from "./wiki-filter.ts";
+
+export type { WikiEntry };
 
 const replaceBrackets = "Replace each value in [brackets], including the brackets, before you run the command.";
 const repository = "https://github.com/vibies-club/vibies/blob/main";
@@ -1081,12 +1070,5 @@ export const wikiEntries: WikiEntry[] = [
 export const wikiTopics = [...new Set(wikiEntries.map((entry) => entry.topic))];
 
 export function filterWiki(query: string, topic: string): WikiEntry[] {
-  const words = query.trim().toLowerCase();
-  const selectedTopic = topic.trim();
-
-  return wikiEntries.filter((entry) =>
-    (!selectedTopic || entry.topic === selectedTopic) &&
-    (!words || [entry.title, entry.command, entry.keys, entry.usage, entry.prerequisites, entry.placeholders, entry.result]
-      .some((value) => value?.toLowerCase().includes(words))),
-  );
+  return filterEntries(wikiEntries, query, topic);
 }

@@ -1,9 +1,12 @@
-import { database, sessionHash } from "../../../../lib/access";
+import { isReadOnly, readOnlyResponse } from "../../../../lib/read-only";
+import { domainOperation } from "../../../../lib/domain";
+import { sessionHash } from "../../../../lib/access";
 import { nickname } from "../../../../lib/access-core";
 import { allowedPost, go, safeError } from "../../../../lib/access-http";
 
 export async function POST(request: Request) {
   if (!allowedPost(request)) return safeError(403);
+  if (isReadOnly()) return readOnlyResponse();
   const hash = await sessionHash();
   if (!hash) return safeError(403);
   try {
@@ -27,7 +30,7 @@ export async function POST(request: Request) {
         (action === "revoke" && form.get("confirm") !== "yes")) return go("/admin/members?message=invalid");
     const name = action === "approve" ? nickname(form.get("nickname")) : null;
     if (action === "approve" && !name) return go("/admin/members?message=nickname");
-    const [row] = await database()`select vibies_private.change_member(${hash}, ${githubId}, ${action}, ${name}) as result`;
+    const row = { result: await domainOperation("change_member", hash, githubId, action, name) };
     if (row.result.kind === "forbidden") return safeError(403);
     const message = ["ok", "full", "nickname", "duplicate", "missing", "invalid"].includes(row.result.kind) ? row.result.kind : "error";
     return go(`/admin/members?message=${message}`);

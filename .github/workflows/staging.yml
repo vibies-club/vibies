@@ -17,20 +17,21 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
-  checks: read
-  actions: read
 
 concurrency:
   group: reusable-staging
   cancel-in-progress: false
 
 jobs:
-  staging:
-    if: github.repository == 'vibies-club/vibies' && github.ref == 'refs/heads/main'
+  select:
+    if: github.repository == 'vibies-club/vibies' && github.ref == 'refs/heads/main' && github.actor == '0xinBeta'
     runs-on: ubuntu-latest
-    timeout-minutes: 12
-    environment: staging
+    permissions:
+      contents: read
+      checks: read
+      actions: read
+    outputs:
+      head: ${{ steps.select.outputs.head }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -40,22 +41,110 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Install the staging deploy key
-        env:
-          STAGING_DEPLOY_KEY: ${{ secrets.STAGING_DEPLOY_KEY }}
-        run: |
-          umask 077
-          mkdir -p "$HOME/.ssh"
-          printf '%s\n' "$STAGING_DEPLOY_KEY" > "$HOME/.ssh/staging_deploy_key"
-          printf 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl\n' > "$HOME/.ssh/known_hosts"
-          echo "GIT_SSH_COMMAND=ssh -i $HOME/.ssh/staging_deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts" >> "$GITHUB_ENV"
-      - name: Update and verify shared staging
+      - id: select
+        name: Validate exact source and migration ancestry using trusted main code
         env:
           GITHUB_TOKEN: ${{ github.token }}
           STAGING_OPERATION: ${{ inputs.operation }}
           STAGING_PR_NUMBER: ${{ inputs.pr_number }}
           STAGING_WORKFLOW_SHA: ${{ github.sha }}
+          STAGING_PLAN_PATH: ${{ runner.temp }}/selection.json
+        run: node scripts/staging.mjs select
+      - uses: actions/upload-artifact@v4
+        with:
+          name: staging-selection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/selection.json
+          retention-days: 1
+          if-no-files-found: error
+
+  build:
+    needs: select
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: vibies-club/vibies
+          ref: ${{ needs.select.outputs.head }}
+          path: candidate
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: vibies-club/vibies
+          ref: ${{ github.sha }}
+          path: trusted
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      # This job has no environment or Cloudflare/provider secrets. Candidate
+      # dependencies and build scripts never run in the protected deploy job.
+      - name: Build the selected SHA without deployment credentials
+        working-directory: candidate
+        run: |
+          npm ci
+          npm run build:cloudflare
+      - name: Package only deployable files and D1 migrations
+        env:
+          STAGING_SOURCE_SHA: ${{ needs.select.outputs.head }}
+          STAGING_SOURCE_DIRECTORY: ${{ github.workspace }}/candidate
+          STAGING_ARTIFACT_DIRECTORY: ${{ runner.temp }}/staging-build
+        run: node trusted/scripts/staging-cloudflare-artifact.mjs
+      - uses: actions/upload-artifact@v4
+        id: upload
+        with:
+          name: staging-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/staging-build
+          include-hidden-files: true
+          retention-days: 1
+          if-no-files-found: error
+
+  deploy:
+    needs: [select, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: staging
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: vibies-club/vibies
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install trusted main deployment tooling
+        run: npm ci --ignore-scripts
+      - uses: actions/download-artifact@v4
+        with:
+          name: staging-selection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/staging-selection
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact_id }}
+          path: ${{ runner.temp }}/staging-build
+          merge-multiple: true
+      - name: Deploy and verify isolated synthetic Cloudflare staging
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_STAGING_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          STAGING_OPERATION: ${{ inputs.operation }}
+          STAGING_PR_NUMBER: ${{ inputs.pr_number }}
+          STAGING_WORKFLOW_SHA: ${{ github.sha }}
           STAGING_ORIGIN: ${{ vars.STAGING_ORIGIN }}
-          STAGING_PROJECT_ID: ${{ vars.STAGING_PROJECT_ID }}
-          STAGING_SUPABASE_TREE: ${{ vars.STAGING_SUPABASE_TREE }}
-        run: node scripts/staging.mjs
+          STAGING_PLAN_PATH: ${{ runner.temp }}/staging-selection/selection.json
+          STAGING_ARTIFACT_DIRECTORY: ${{ runner.temp }}/staging-build
+          STAGING_ARTIFACT_ID: ${{ needs.build.outputs.artifact_id }}
+          STAGING_ARTIFACT_DIGEST: ${{ needs.build.outputs.artifact_digest }}
+        run: node scripts/staging.mjs deploy

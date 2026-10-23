@@ -32,8 +32,11 @@ Database changes also follow the migration checks and rollout order in
 ## The three required checks
 
 Every PR reports `app-check`, `migration-check`, and `links`. `app-check` runs
-typecheck, the offline tests, the database suites on an isolated Postgres, the
-production build, and the built-server HTTP checks. `migration-check` runs the
+typecheck, offline and read-only-barrier tests, the database suites on isolated
+Postgres, D1/workerd and Google security tests, synthetic migration and encrypted
+export roundtrips, PostgreSQL/D1 parity, both production builds, and the
+built-server HTTP checks. The encrypted roundtrip uses a separate disposable
+PostgreSQL service and its own temporary database. `migration-check` runs the
 snapshot and history guards on every PR, plus the full disposable Supabase
 proof unless every changed file is on the fast list that the
 [deployment guide](docs/DATABASE-DEPLOYMENT.md#local-and-ci-checks) owns.
@@ -42,40 +45,40 @@ migration proof. Make a red check green before you ask for review.
 
 ## Hosted proof on staging
 
-Vibies has one shared test site, https://vibies-staging.vercel.app, whose
-database follows `main`'s merged schema. The Instructor puts one PR on it at a time with
-the manual **staging** workflow. Your PR is eligible only when all of these
-hold:
+Issue #61 implements a Cloudflare replacement for shared staging. It is pending
+Instructor merge and successful hosted **Preview PR** and **Clear** runs. The
+historical Vercel/Supabase staging receipts do not prove the replacement live.
 
-- it is open, ready rather than a draft, and comes from this repository into
-  `main`;
-- its head contains current `main`, so merge `main` into your branch and push
-  before you ask;
-- its required checks passed on that exact head;
-- its `supabase/` folder is identical to `main`'s.
+The Instructor runs the manual **staging** workflow from current `main`. An
+eligible PR is open, non-draft, from this repository into `main`, contains
+current `main`, and has passing required checks on its exact head. Its D1
+migration list must preserve main's existing migration bytes and order; new
+versions may follow that unchanged prefix.
 
-A PR that changes the schema cannot use staging before it merges. Its proof is
-the full migration check in CI plus local receipts. If its criteria require
-hosted database proof, the Instructor can grant a temporary branch with an
-agreed cost cap.
+The workflow builds the selected SHA in a job without deployment credentials.
+A separate protected job uses trusted main scripts to validate the artifact,
+create an isolated synthetic D1 database, and deploy the fixed
+`vibies-staging` Worker. It never pushes the `staging` ref. **Clear** follows the
+same flow using current main and a fresh synthetic database.
 
-Sign-in on staging is separate from production. Sign in once with GitHub at
-the staging origin, then ask the Instructor to approve your account there with
-a Nickname that follows the [safety rules](#safety).
-
-The workflow posts a receipt comment on the PR with the exact deployed commit.
-Quote it in your receipts. A Ready deployment alone proves nothing. The guards,
-the operator steps, and the limits live in
+A success receipt requires the selected SHA, uploaded artifact digest, actual
+D1 schema digest, migration digest, Worker version, database binding, and a
+fresh no-store identity response to agree. Quote that receipt for hosted claims.
+The synthetic staging Worker has no OAuth or GitHub App secrets. Its identity
+receipt alone does not prove authenticated Member flows; those require a
+separately authorized environment and explicit evidence. Setup, failure handling,
+and historical rollback context live in
 [Reusable staging](docs/DATABASE-DEPLOYMENT.md#reusable-staging).
 
 ## After merge
 
-Supabase applies new migrations to production and to staging. Vercel deploys
-`main` to production. The cleanup workflow removes any branch-specific Preview
-settings. After a schema merge the Instructor confirms the staging migration
-list, updates the staging baseline, and runs Clear before staging accepts the
-next PR. Keep your issue open until every post-merge receipt it asks for is
-recorded.
+Until the Instructor authorizes and verifies the Cloudflare cutover, retain the
+existing Supabase/Vercel production deployment and rollback configuration.
+Issue #61's local builds and synthetic tests do not switch live traffic. After
+the trusted staging workflow reaches main, record hosted Preview PR and Clear
+receipts before describing it as operational. Production D1 import,
+reconciliation, activation, and traffic cutover require their own receipts.
+Keep your issue open until every post-merge receipt it asks for is recorded.
 
 ## Writing rules
 

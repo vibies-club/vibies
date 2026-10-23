@@ -15,3 +15,12 @@ supabase/.branches/
 .playwright-cli/
 .agents/skills/impeccable/scripts/bin/
 .impeccable/config.local.json
+/dist/
+.vinext/
+
+# Local Cloudflare runtime state and secrets
+.wrangler/
+.dev.vars*
+
+!.dev.vars.example
+.vercel

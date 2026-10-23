@@ -65,7 +65,7 @@ globalThis.fetch = async (input, init = {}) => {
   const headers = new Headers(input instanceof Request ? input.headers : undefined);
   new Headers(init.headers).forEach((value, key) => headers.set(key, value));
   assert.equal(init.cache, "no-store");
-  assert.equal(init.redirect, "error");
+  assert.equal(init.redirect, "manual");
   assert.ok(init.signal);
   assert.equal(headers.get("accept"), "application/vnd.github+json");
   assert.equal(headers.get("x-github-api-version"), "2026-03-10");

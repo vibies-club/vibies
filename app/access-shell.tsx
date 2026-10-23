@@ -1,14 +1,19 @@
-import { cookies } from "next/headers";
-import { cookieName } from "../lib/access";
+import { accessState } from "../lib/access";
 
 export function SignOut() {
   return <form action="/auth/sign-out" method="post"><button type="submit" className="secondary">Sign out</button></form>;
 }
 
+export async function AccountLinks() {
+  const state = await accessState();
+  return state.kind === "member" || state.kind === "instructor" || state.kind === "denied"
+    ? <><a href="/welcome">My account</a><SignOut /></>
+    : <a href="/sign-in">Sign in</a>;
+}
+
 export async function AccessShell({ children, className, brand }: { children: React.ReactNode; className?: string; brand?: React.ReactNode }) {
-  const signedIn = (await cookies()).has(cookieName("session"));
   return <main className={className ? `access ${className}` : "access"}>
-    <header><a href="/demo" aria-label="Vibies home">{brand ?? <>vibies<span>.</span></>}</a><nav aria-label="Account">{signedIn ? <SignOut /> : <a href="/sign-in">Sign in</a>}</nav></header>
+    <header><a href="/" aria-label="Vibies home">{brand ?? <>vibies<span>.</span></>}</a><nav className="account-controls" aria-label="Account"><AccountLinks /></nav></header>
     {children}
     <footer>Private community. Nicknames only. <a href="/demo">View the public demo</a></footer>
   </main>;

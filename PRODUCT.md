@@ -65,7 +65,8 @@ keyboard, and their status remains clear without color alone.
 Vibies is not public. A prospective or returning Member must pass both access
 checks:
 
-1. GitHub authentication proves the person's identity.
+1. GitHub establishes the person's identity; a Google identity explicitly linked
+   to that approved account may be used for later sign-ins.
 2. The Instructor approves the person's membership.
 
 Authentication alone never grants Member access. An authenticated person without
@@ -106,6 +107,13 @@ A successful GitHub sign-in identifies an account by its stable GitHub account
 identifier. A changed GitHub username keeps the same access. A different account
 does not inherit approval. The first successful sign-in for an unknown account
 creates one unapproved entry. Repeated sign-ins reuse it.
+
+Google sign-in is optional. An approved Member or the Instructor may link Google
+from a GitHub-authenticated session created within the last five minutes. Google
+sign-in then returns to the same account and always rechecks current access.
+Matching email addresses never link accounts, and an unlinked Google identity
+cannot register or receive membership. Changing a Google link requires fresh
+GitHub authentication. Member-facing identity remains the agreed Nickname.
 
 An authenticated person without approval sees an access-denied page with a
 sign-out action. Approved Members may open a minimal welcome page while

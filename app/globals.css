@@ -1,72 +1,93 @@
-:root { color-scheme: light; font-family: Arial, Helvetica, sans-serif; color: #202820; background: #f6f5ef; }
+:root { color-scheme: light; font-family: var(--font-display), sans-serif; color: #2a1a08; background: #fdf6dc; }
 * { box-sizing: border-box; }
 body { margin: 0; }
 .staging-banner { padding: 10px 16px; text-align: center; background: #f7e7a5; color: #453400; font-size: 14px; }
 main { width: min(100% - 48px, 960px); margin: auto; }
-header { display: flex; align-items: center; justify-content: space-between; padding: 28px 0; border-bottom: 1px solid #d7dad0; }
+header { display: flex; align-items: center; justify-content: space-between; padding: 28px 0; border-bottom: 1px solid #efcf8a; }
 header a { font-size: 30px; letter-spacing: -1.5px; font-weight: 800; color: inherit; text-decoration: none; }
-header a span { color: #49793b; }
+header a span { color: #9a560b; }
 .label, .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; }
 section { padding: clamp(48px, 9vw, 96px) 0 64px; max-width: 700px; }
-.eyebrow { color: #486341; }
+.eyebrow { color: #9a560b; }
 h1 { font-size: clamp(40px, 7vw, 72px); line-height: 1.06; letter-spacing: -2px; margin: 20px 0; }
-.intro, article p { line-height: 1.6; color: #535d50; }
-article { margin-top: 40px; padding: clamp(24px, 4vw, 36px); background: #fff; border: 1px solid #d7dad0; border-radius: 12px; overflow-wrap: anywhere; }
+.intro, article p { line-height: 1.6; color: #6b5234; }
+article { margin-top: 40px; padding: clamp(24px, 4vw, 36px); background: #fffcf3; border: 1px solid #efcf8a; border-radius: 12px; overflow-wrap: anywhere; }
 h2 { font-size: 28px; line-height: 1.2; margin: 16px 0; }
-.tag { display: inline-block; margin-top: 16px; padding: 8px 12px; border-radius: 6px; background: #edf3e7; color: #38582b; font-size: 12px; }
-footer { border-top: 1px solid #d7dad0; padding: 24px 0 40px; font-size: 13px; color: #535d50; }
+.tag { display: inline-block; margin-top: 16px; padding: 8px 12px; border-radius: 6px; background: #fff1c9; color: #9a560b; font-size: 12px; }
+footer { border-top: 1px solid #efcf8a; padding: 24px 0 40px; font-size: 13px; color: #6b5234; }
 li { margin: 10px 0; }
 code { font-size: 12px; }
-a:focus-visible { outline: 3px solid #49793b; outline-offset: 5px; }
+a:focus-visible { outline: 3px solid #9a560b; outline-offset: 5px; }
 @media (max-width: 440px) { main { width: calc(100% - 32px); } h1 { letter-spacing: -1px; } }
-button, .button { display: inline-block; font: inherit; font-weight: 700; background: #38582b; color: #fff; border: 1px solid #38582b; border-radius: 6px; padding: 12px 18px; cursor: pointer; text-decoration: none; }
+button, .button { display: inline-block; font: inherit; font-weight: 700; background: #f5b73d; color: #2a1a08; border: 1px solid #9a560b; border-radius: 12px; padding: 12px 18px; cursor: pointer; text-decoration: none; }
 button:disabled { opacity: .55; cursor: not-allowed; }
-button.secondary, .button.secondary { color: #38582b; background: #fff; }
-button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid #49793b; outline-offset: 4px; }
+button.secondary, .button.secondary { color: #9a560b; background: #fffcf3; }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid #9a560b; outline-offset: 4px; }
 .access header nav a, header > a:not(:first-child) { font-size: 16px; letter-spacing: normal; }
 .access h1 { font-size: clamp(36px, 6vw, 60px); }
 .access p { line-height: 1.6; }
 .access form { margin: 18px 0; }
 .access label { display: block; font-weight: 700; margin: 12px 0 8px; }
-.access input:not([type=hidden], [type=checkbox]) { display: block; max-width: 100%; width: 320px; font: inherit; padding: 12px; border: 1px solid #727d6b; border-radius: 4px; margin-bottom: 16px; }
+.access input:not([type=hidden], [type=checkbox]) { display: block; max-width: 100%; width: 320px; font: inherit; padding: 12px; border: 1px solid #d99a2b; border-radius: 4px; margin-bottom: 16px; }
 .access .confirmation { font-weight: 400; }
 .access input[type=checkbox] { width: 20px; height: 20px; vertical-align: middle; }
-.access .hint { font-size: 14px; color: #535d50; margin-top: 24px; }
-.access .privacy { padding: 18px; background: #edf3e7; border-left: 3px solid #49793b; }
-.access [role=status] { padding: 16px; border: 1px solid #727d6b; border-radius: 4px; }
+.access .hint { font-size: 14px; color: #6b5234; margin-top: 24px; }
+.access .privacy { padding: 18px; background: #fff1c9; border-left: 3px solid #9a560b; }
+.access [role=status] { padding: 16px; border: 1px solid #d99a2b; border-radius: 4px; }
 .members article { margin: 16px 0 28px; }
 .members h2 { margin-top: 40px; }
 .members h3 { font-size: 22px; margin-top: 0; }
 summary { cursor: pointer; text-decoration: underline; padding: 12px 0; }
-.access textarea, .access select { display: block; width: 100%; max-width: 560px; font: inherit; padding: 12px; border: 1px solid #727d6b; border-radius: 4px; }
-.access textarea:focus-visible, .access select:focus-visible { outline: 3px solid #49793b; outline-offset: 4px; }
+.access textarea, .access select { display: block; width: 100%; max-width: 560px; font: inherit; padding: 12px; border: 1px solid #d99a2b; border-radius: 4px; }
+.access textarea:focus-visible, .access select:focus-visible { outline: 3px solid #9a560b; outline-offset: 4px; }
 .project-summary { white-space: pre-wrap; overflow-wrap: anywhere; }
 .roadmap { margin-top: 48px; }
 .roadmap progress { display: block; width: 100%; height: 20px; }
-.roadmap-milestone { margin: 24px 0; padding: 20px; border: 1px solid #d7dad0; border-radius: 8px; background: #fff; }
+.roadmap-milestone { margin: 24px 0; padding: 20px; border: 1px solid #efcf8a; border-radius: 8px; background: #fffcf3; }
 .roadmap-milestone h3 { margin-top: 0; }
 .roadmap-controls form, .roadmap-order form { display: inline-block; margin: 8px 8px 8px 0; }
 .roadmap-controls details { margin-top: 12px; }
-.roadmap-add { margin-top: 32px; padding-top: 24px; border-top: 1px solid #d7dad0; }
-.roadmap-summary { font-weight: 700; color: #38582b; }
+.roadmap-add { margin-top: 32px; padding-top: 24px; border-top: 1px solid #efcf8a; }
+.roadmap-summary { font-weight: 700; color: #9a560b; }
+
+.account-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: flex-end; }
+.account-controls form, .access .account-controls form { margin: 0; }
+.account-controls button { font-size: 14px; }
+::selection { background: #ffd977; color: #2a1a08; }
+.label, .account-controls { font-family: var(--font-mono), monospace; }
+
+/* Keep access surfaces inside the shared honey and cocoa visual system. */
+.access { font-size: 17px; }
+.access h1 { font-weight: 800; letter-spacing: -.035em; }
+.access .hint, .access footer { font-size: 15px; }
+.access footer a { color: #9a560b; text-underline-offset: .22em; text-decoration-thickness: 1.5px; }
+.access .account-controls a { display: inline-flex; align-items: center; min-height: 44px; }
+.access .sign-in-primary { background: linear-gradient(#ffd977, #f5b73d); border-color: #d99a2b; box-shadow: 0 1px 0 rgb(255 255 255 / .7) inset, 0 10px 24px -10px rgb(154 86 11 / .55); transition: transform 180ms cubic-bezier(.23, 1, .32, 1), box-shadow 180ms cubic-bezier(.23, 1, .32, 1); }
+.access .sign-in-primary:hover { transform: translateY(-2px); box-shadow: 0 1px 0 rgb(255 255 255 / .7) inset, 0 12px 26px -10px rgb(154 86 11 / .6); }
+.access .sign-in-google { margin-top: 28px; }
+.access .sign-in-google .hint { margin: 0; }
+.access .sign-in-google form { margin: 4px 0 18px; }
+.access .sign-in-google button { min-height: 44px; padding: 8px 0; border: 0; border-radius: 0; background: transparent; color: #9a560b; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: .22em; }
+@media (max-width: 420px) { .access .sign-in-primary { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .access .sign-in-primary { transition: none; } .access .sign-in-primary:hover { transform: none; } }
 .wiki { max-width: none; }
 .wiki-search { display: grid; grid-template-columns: minmax(0, 1fr) minmax(160px, 220px) auto; gap: 16px; align-items: end; }
 .wiki-search input[type=search], .wiki-search select { width: 100%; margin-bottom: 0; }
 .wiki-results, .wiki-copy { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
 .wiki .hint { margin-top: 12px; }
 .wiki-entry { margin-top: 24px; scroll-margin-top: 24px; }
-.wiki-entry:target { border-color: #49793b; outline: 2px solid #49793b; }
+.wiki-entry:target { border-color: #9a560b; outline: 2px solid #9a560b; }
 .wiki-entry h2 a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 4px; }
-.wiki-code { padding: 18px; background: #edf3e7; border-left: 3px solid #49793b; white-space: pre-wrap; overflow-wrap: anywhere; user-select: all; }
+.wiki-code { padding: 18px; background: #fff3d1; border-left: 3px solid #9a560b; white-space: pre-wrap; overflow-wrap: anywhere; user-select: all; }
 .wiki-code code { font-size: 15px; line-height: 1.7; }
-.wiki-keys kbd { display: inline-block; padding: 12px 16px; border: 1px solid #727d6b; border-bottom-width: 3px; border-radius: 6px; font-size: 15px; background: #f6f5ef; }
-.wiki-code:focus-visible { outline: 3px solid #49793b; outline-offset: 4px; }
+.wiki-keys kbd { display: inline-block; padding: 12px 16px; border: 1px solid #b58a4a; border-bottom-width: 3px; border-radius: 6px; font-size: 15px; background: #f6f5ef; }
+.wiki-code:focus-visible { outline: 3px solid #9a560b; outline-offset: 4px; }
 .wiki-copy button { padding: 8px 12px; font-size: 14px; }
 .wiki-copy button:disabled { opacity: .6; cursor: default; }
 .access .wiki-copy-status { padding: 0; border: 0; font-size: 14px; }
 .wiki-notes { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px 20px; line-height: 1.6; margin-top: 24px; }
 .wiki-notes dt { font-weight: 700; }
-.wiki-notes dd { margin: 0; color: #535d50; }
+.wiki-notes dd { margin: 0; color: #6b5234; }
 .wiki-entry details { font-size: 14px; }
 .wiki-empty { padding: 24px 0; }
 @media (max-width: 600px) { .wiki-search { grid-template-columns: 1fr; gap: 8px; } .wiki-search button { justify-self: start; margin-top: 12px; } .wiki-notes { grid-template-columns: 1fr; gap: 4px; } .wiki-notes dd { margin-bottom: 12px; } }

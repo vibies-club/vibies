@@ -1,10 +1,13 @@
-import { accessState, database, sessionHash } from "../../../lib/access";
+import { isReadOnly, readOnlyResponse } from "../../../lib/read-only";
+import { domainOperation } from "../../../lib/domain";
+import { accessState, sessionHash } from "../../../lib/access";
 import { allowedPost, go, safeError } from "../../../lib/access-http";
 import { milestoneDetails, projectDetails, projectForm, projectId, projectVersion, repositoryId } from "../../../lib/project-core";
 import { projectActor, verifyProject, type ProjectContext } from "../../../lib/projects";
 
 export async function POST(request: Request) {
   if (!allowedPost(request)) return safeError(403);
+  if (isReadOnly()) return readOnlyResponse();
   const hash = await sessionHash();
   if (!hash) return safeError(403);
   try {
@@ -22,7 +25,7 @@ export async function POST(request: Request) {
       if (!repositoryId(id) || !details) return go("/projects/connect?message=invalid");
       const verified = await verifyProject(actor, id);
       if (verified.kind !== "verified") return go(`/projects/connect?message=${verified.kind}`);
-      const [row] = await database()`select vibies_private.connect_project(${hash}, ${id}, ${details.title}, ${details.summary}, ${details.demoUrl}) as result`;
+      const row = { result: await domainOperation("connect_project", hash, id, details.title, details.summary, details.demoUrl) };
       const result = row.result;
       if (result.kind === "forbidden") return safeError(403);
       if (["created", "existing"].includes(result.kind) && projectId(result.id)) return go(`/projects/${result.id}?message=${result.kind}`);
@@ -41,23 +44,23 @@ export async function POST(request: Request) {
       if (action === "milestone_add" || action === "milestone_edit") {
         const details = milestoneDetails(form.get("title"), form.get("blockedNote") ?? null);
         if (!details) return go(`/projects/${id}?message=invalid`);
-        const [row] = action === "milestone_add"
-          ? await database()`select vibies_private.add_project_milestone(${hash}, ${id}::uuid, ${version}::bigint, ${details.title}, ${details.blockedNote}) as result`
-          : await database()`select vibies_private.edit_project_milestone(${hash}, ${id}::uuid, ${milestoneId}::uuid, ${version}::bigint, ${details.title}, ${details.blockedNote}) as result`;
-        result = row.result;
+        const value = action === "milestone_add"
+          ? await domainOperation("add_project_milestone", hash, id, version, details.title, details.blockedNote)
+          : await domainOperation("edit_project_milestone", hash, id, milestoneId, version, details.title, details.blockedNote);
+        result = value;
       } else if (action === "milestone_complete") {
         const completed = form.get("completed");
         if (completed !== null && completed !== "yes" && completed !== "no") return safeError(400);
-        const [row] = await database()`select vibies_private.set_project_milestone_completion(${hash}, ${id}::uuid, ${milestoneId}::uuid, ${version}::bigint, ${completed === "yes"}) as result`;
+        const row = { result: await domainOperation("set_project_milestone_completion", hash, id, milestoneId, version, completed === "yes") };
         result = row.result;
       } else if (action === "milestone_move") {
         const direction = form.get("direction");
         if (direction !== "up" && direction !== "down") return safeError(400);
-        const [row] = await database()`select vibies_private.move_project_milestone(${hash}, ${id}::uuid, ${milestoneId}::uuid, ${version}::bigint, ${direction}) as result`;
+        const row = { result: await domainOperation("move_project_milestone", hash, id, milestoneId, version, direction) };
         result = row.result;
       } else {
         if (form.get("confirm") !== "yes") return safeError(400);
-        const [row] = await database()`select vibies_private.delete_project_milestone(${hash}, ${id}::uuid, ${milestoneId}::uuid, ${version}::bigint) as result`;
+        const row = { result: await domainOperation("delete_project_milestone", hash, id, milestoneId, version) };
         result = row.result;
       }
       if (result.kind === "forbidden") return safeError(403);
@@ -79,7 +82,7 @@ export async function POST(request: Request) {
       if (access.kind !== "instructor") return safeError(403);
       const version = form.get("version");
       if (!projectVersion(version)) return safeError(400);
-      const [row] = await database()`select vibies_private.moderate_project(${hash}, ${id}::uuid, ${version}::bigint, ${action === "hide"}) as result`;
+      const row = { result: await domainOperation("moderate_project", hash, id, version, action === "hide") };
       if (row.result.kind === "forbidden") return safeError(403);
       if (row.result.kind === "restored") return go("/projects?message=restored");
       return go(`/projects/${id}?message=${["hidden", "stale"].includes(row.result.kind) ? row.result.kind : "error"}`);
@@ -92,10 +95,10 @@ export async function POST(request: Request) {
       if (action === "edit") {
         const details = projectDetails(form.get("title"), form.get("summary"), form.get("demoUrl") ?? "");
         if (!details) return go(`/projects/${id}?message=invalid`);
-        const [row] = await database()`select vibies_private.edit_project(${hash}, ${id}::uuid, ${context.version}::bigint, ${details.title}, ${details.summary}, ${details.demoUrl}) as result`;
+        const row = { result: await domainOperation("edit_project", hash, id, context.version, details.title, details.summary, details.demoUrl) };
         result = row.result;
       } else {
-        const [row] = await database()`select vibies_private.delete_project(${hash}, ${id}::uuid, ${context.version}::bigint) as result`;
+        const row = { result: await domainOperation("delete_project", hash, id, context.version) };
         result = row.result;
       }
       if (result.kind === "forbidden") return safeError(403);
@@ -112,11 +115,11 @@ export async function POST(request: Request) {
       if (verified.kind === "unknown") return go(`/projects/${id}?message=unknown`);
       let result;
       if (action === "check" || verified.kind === "lost") {
-        const [row] = await database()`select vibies_private.record_project_connection(${hash}, ${id}::uuid, ${context.version}::bigint, ${verified.kind === "verified"}) as result`;
+        const row = { result: await domainOperation("record_project_connection", hash, id, context.version, verified.kind === "verified") };
         result = row.result;
       } else {
         // Fresh Verified is established only here on the server, never from form data.
-        const [row] = await database()`select vibies_private.publish_project(${hash}, ${id}::uuid, ${context.version}::bigint) as result`;
+        const row = { result: await domainOperation("publish_project", hash, id, context.version) };
         result = row.result;
       }
       if (result.kind === "forbidden") return safeError(403);

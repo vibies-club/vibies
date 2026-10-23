@@ -1,7 +1,8 @@
+service_tier = "ultrafast"
 name = "explorer"
 description = "Finds files and traces how the code works, with path citations."
-model = "gpt-6-luna"
-model_reasoning_effort = "max"
+model = "gpt-6.1-sol"
+model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 developer_instructions = """
 Find files, trace how the code works, and cite paths. Never edit files.
