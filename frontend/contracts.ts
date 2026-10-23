@@ -4,6 +4,7 @@ import type { MemberAccount } from "../lib/d1/access";
 import type { DemoState } from "../lib/demo";
 import type { Project } from "../lib/project-read";
 import type { RepositoryChoice } from "../lib/project-github";
+import type { CourseManifest, CourseSession, GateBoard, GateCheck } from "../lib/course";
 
 /** Only validated presentation data crosses the Worker/browser boundary. */
 export type PageData = {
@@ -20,4 +21,8 @@ export type PageData = {
   project?: { kind: "ok"; project: Project } | { kind: "missing" };
   wiki?: WikiEntry[];
   connect?: { install: string | null; repositories: RepositoryChoice[]; status?: string };
+  course?: CourseManifest;   // /welcome, /course
+  session?: CourseSession;   // /course/:n
+  gates?: { mine: GateCheck[] }; // /welcome, /course, /course/:n
+  gateBoard?: GateBoard;     // /admin/gates
 };

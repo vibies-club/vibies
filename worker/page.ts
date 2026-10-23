@@ -27,7 +27,7 @@ export async function page(request:Request,s:Services,env:Env) {
     if(privatePath(path)) {
       if(data.access.kind==='signed_out') {data.redirect='/sign-in?message=expired';}
       else if(data.access.kind==='denied')data.redirect='/access-denied';
-      else if(path==='/admin/members'&&data.access.kind!=='instructor')data.redirect='/welcome';
+      else if((path==='/admin/members'||path==='/admin/gates')&&data.access.kind!=='instructor')data.redirect='/welcome';
       else if(path==='/projects/connect'&&data.access.kind==='instructor')data.redirect='/projects';
     }
     if(!data.redirect){
@@ -38,14 +38,18 @@ export async function page(request:Request,s:Services,env:Env) {
         const row=await(await s.database()).prepare(`SELECT EXISTS(SELECT 1 FROM google_identity_map m JOIN google_accounts g ON g.userId=m.user_id WHERE m.github_id=s.github_id) linked,(s.auth_provider='github' AND julianday(s.created_at)>julianday('now','-5 minutes')) canLink FROM sessions s WHERE s.session_hash=? AND julianday(s.created_at)>julianday('now','-24 hours')`).bind(hash).first<{linked:number;canLink:number}>();
         if(row)data.linking={linked:row.linked===1,canLink:row.canLink===1};
       }
-      if(path==='/admin/members'){
+      // ponytail: Home reuses the members operation for the Instructor's waiting count.
+      if(path==='/admin/members'||(path==='/welcome'&&data.access.kind==='instructor')){
         const v=await s.domainOperation('members',hash);
         if(v.kind!=='ok'||!Number.isInteger(v.activeCount)||v.activeCount<0||v.activeCount>8||!Array.isArray(v.accounts)||!v.accounts.every((a:any)=>a&&typeof a.githubId==='string'&&/^[1-9]\d{0,19}$/.test(a.githubId)&&typeof a.username==='string'&&(a.nickname===null||typeof a.nickname==='string')&&['unapproved','approved','revoked'].includes(a.status)))throw new Error('Unavailable');
         data.members={activeCount:v.activeCount,accounts:v.accounts.map((a:any)=>({githubId:a.githubId,username:a.username,nickname:a.nickname,status:a.status}))};
       }
-      if(path==='/projects'){
+      if(path==='/projects'||path==='/welcome'){
         const v=await s.domainOperation('projects',hash);if(v.kind!=='ok'||!Array.isArray(v.mine)||!Array.isArray(v.community))throw new Error('Unavailable');
         data.projects={mine:v.mine.map(readProject),community:v.community.map(readProject)};
+        // Home shows the first product's roadmap, which only the single-project read carries.
+        const first=path==='/welcome'?data.projects.mine[0]:undefined;
+        if(first){const p=await s.domainOperation('project',hash,first.id);if(p.kind==='ok')data.project={kind:'ok',project:readProject(p.project)};}
       }
       if(path.startsWith('/projects/')&&projectId(path.slice(10))){
         const v=await s.domainOperation('project',hash,path.slice(10));
