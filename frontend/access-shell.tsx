@@ -20,5 +20,5 @@ export function AccessShell({ data, children, className, brand }: { data: PageDa
 }
 
 export function Retry({ href = "/welcome" }: { href?: string }) {
-  return <section><h1>We could not check your access</h1><p>No private information was loaded. Please try again.</p><a className="button" href={href}>Try again</a></section>;
+  return <section className="retry"><h1>We could not check your access</h1><p>No private information was loaded. Please try again.</p><a className="button primary" href={href}>Try again</a></section>;
 }
