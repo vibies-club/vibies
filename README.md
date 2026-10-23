@@ -29,6 +29,7 @@ There is no configured lint script.
 | [Community rules](RULES.md) | Behavior, safety, privacy conduct, feedback conduct, and enforcement |
 | [Contributing guide](CONTRIBUTING.md) | Merge, CI, staging, safety, and contributor gates |
 | [Shared error log](docs/ERROR_LOG.md) | Solved class workflow blockers and how to find or contribute a fix |
+| [Class command wiki](PRODUCT.md#class-command-wiki) | The protected `/wiki` command reference, its access, and its content boundary |
 | [Agent instructions](AGENTS.md) | How agents must work in this repository |
 | [Product](PRODUCT.md) | Purpose, scope, roles, permissions, privacy boundaries, and exclusions |
 | [Landing page brief](docs/LANDING-BRIEF.md) | The exact copy and limits of the public home page |
