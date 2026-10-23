@@ -8,23 +8,21 @@ chosen.
 
 ## Now
 
+- Build the next feature the Instructor picks. The open backlog is issues #19,
+  #21 to #24, #26 to #28, and #58.
+- Approve the eighth student through the normal flow when they sign in.
 - Record the P8 and P13 browser receipts for issue #20 on staging in
   [Roadmap verification](ROADMAP-VERIFICATION.md).
-- Approve the eighth student through the normal flow when they sign in.
-- Bring [PR #33](https://github.com/vibies-club/vibies/pull/33) for issue #31
-  and [PR #36](https://github.com/vibies-club/vibies/pull/36) for issue #25
-  back to a mergeable state. Both are behind main with conflicts, and PR #33
-  has changes requested. Only the Instructor merges.
-- Complete the live Production Member publishing check when Builder is
-  available.
 
 ## Next
 
+- Error Library: rebuild issue #31 as one new migration, merged directly ahead
+  of the issue #27 app PR that uses it. Closed PR #33 and its branch hold the
+  earlier schema work.
+- Cloudflare move (issue #61): when the move is chosen, reopen PR #62, rebase
+  it, and split its live-site style changes into their own PR.
 - Run the first staging Preview PR selection on an eligible PR and record its
   receipt in the [deployment guide](DATABASE-DEPLOYMENT.md#reusable-staging).
-- After PR #33 merges, verify its Production migration before starting the
-  Error Library app child under issue #27.
-- Close issue #32; its final receipt is posted.
 - Manual Sync, deliberate owner Disconnect, and Archive actions remain outside
   #17. Resolve their feature plans before implementation.
 - Resolve Class Project lifecycle authority or individual Comment and Feedback
