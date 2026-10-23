@@ -644,6 +644,6 @@ and works without JavaScript. A copy button is an optional JavaScript
 enhancement. A source inventory belongs in the implementing PR receipt, with no
 additional documentation file.
 
-**Related documents:** [Product class command wiki](PRODUCT.md#class-command-wiki),
+**Related documents:** [Product class command wiki](../PRODUCT.md#class-command-wiki),
 [contributing guide](../CONTRIBUTING.md#add-a-command-entry), and
 [shared error log](ERROR_LOG.md).
