@@ -10,6 +10,7 @@ import type { GoogleCoordinator } from './google-coordinator';
 export interface Env {
   GOOGLE_COORDINATOR?: DurableObjectNamespace<GoogleCoordinator>;
   DB: access.AccessDatabase;
+  COURSE?: R2Bucket;
   VIBIES_APP_ORIGIN: string;
   VIBIES_ENVIRONMENT: string;
   VIBIES_READ_ONLY?: string;

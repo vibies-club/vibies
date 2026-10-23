@@ -3,6 +3,7 @@ import { page } from './page';
 import { auth } from './auth';
 import { projectAction } from './project-action';
 import { memberAction } from './member-action';
+import { courseFile } from './course';
 export { GoogleCoordinator } from './google-coordinator';
 
 export type WorkerEnv=Env & {ASSETS?:{fetch(request:Request):Promise<Response>}};
@@ -21,6 +22,7 @@ async function handle(request:Request,env:WorkerEnv):Promise<Response>{
       if(path==='/projects/action')return await projectAction(request,s);
       return await memberAction(request,s);
     }
+    if(path.startsWith('/course-files/'))return await courseFile(request,createServices(request,env),env,path);
     if(['/','/demo','/errors','/sign-in','/access-denied'].includes(path)||privatePath(path)){
       if(request.method!=='GET'&&request.method!=='HEAD')return new Response('Method not allowed',{status:405,headers:{Allow:'GET, HEAD'}});
       if(env.ASSETS)return env.ASSETS.fetch(new Request(new URL(path==='/'?'/index.html':'/shell.html',url),request));

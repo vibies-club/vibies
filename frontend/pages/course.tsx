@@ -10,13 +10,7 @@ function Stub({ data, title, text = "Course pages are on the way." }: { data: Pa
   </AppShell>;
 }
 
-export function CoursePage({ data }: { data: PageData; search: URLSearchParams }) {
-  return <Stub data={data} title="Course" />;
-}
-
-export function SessionPage({ data }: { data: PageData; search: URLSearchParams }) {
-  return <Stub data={data} title={`Session ${window.location.pathname.slice("/course/".length)}`} />;
-}
+export { CoursePage, SessionPage } from "./course-pages";
 
 export function CollaboratePage({ data }: { data: PageData; search: URLSearchParams }) {
   return <Stub data={data} title="Collaborate" text="Collaboration is on the way." />;

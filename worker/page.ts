@@ -5,6 +5,7 @@ import { readProject } from '../lib/project-read';
 import { projectId } from '../lib/project-core';
 import { wikiEntries } from '../lib/wiki';
 import { privatePath, type Services, type Env } from './services';
+import { coursePage } from './course';
 export async function page(request:Request,s:Services,env:Env) {
   const url=new URL(request.url),path=url.searchParams.get('path');
   const valid=path&&(['/','/demo','/errors','/sign-in','/access-denied'].includes(path)||privatePath(path));
@@ -33,6 +34,7 @@ export async function page(request:Request,s:Services,env:Env) {
     if(!data.redirect){
       const hash=await s.sessionHash();
       if(path==='/wiki')data.wiki=wikiEntries;
+      await coursePage(path,data,env);
       if(path==='/demo')data.demo=demoState(await(await s.database()).prepare('SELECT id,title,summary FROM demo_projects WHERE id=1').first(),null);
       if(path==='/welcome'&&s.googleEnabled&&hash){
         const row=await(await s.database()).prepare(`SELECT EXISTS(SELECT 1 FROM google_identity_map m JOIN google_accounts g ON g.userId=m.user_id WHERE m.github_id=s.github_id) linked,(s.auth_provider='github' AND julianday(s.created_at)>julianday('now','-5 minutes')) canLink FROM sessions s WHERE s.session_hash=? AND julianday(s.created_at)>julianday('now','-24 hours')`).bind(hash).first<{linked:number;canLink:number}>();
@@ -72,7 +74,7 @@ export async function page(request:Request,s:Services,env:Env) {
         }
       }
     }
-  }catch { data.kind='error';delete data.members;delete data.projects;delete data.project;delete data.linking;delete data.connect;delete data.demo; }
+  }catch { data.kind='error';delete data.members;delete data.projects;delete data.project;delete data.linking;delete data.connect;delete data.demo;delete data.course;delete data.session;delete data.gates; }
   const response=Response.json(data,{status:data.kind==='error'?503:data.redirect?.startsWith('/sign-in')?401:data.redirect==='/access-denied'?403:200,headers:{'Cache-Control':'private, no-store','Vary':'Cookie','X-Content-Type-Options':'nosniff'}});
   if(data.redirect?.startsWith('/sign-in')&&privatePath(path))s.setCookie(response,'return',encodeURIComponent(path!),600);
   const returnTo=privatePath(url.searchParams.get('returnTo'));
