@@ -27,7 +27,7 @@ CREATE TABLE jobs (
   deliverable TEXT NOT NULL CHECK (deliverable IN ('pull_request','live_url','file_link')),
   window_days INTEGER NOT NULL CHECK (window_days BETWEEN 1 AND 30),
   money_usd INTEGER CHECK (money_usd IS NULL OR money_usd BETWEEN 1 AND 1000000),
-  share_percent INTEGER CHECK (share_percent IS NULL OR share_percent BETWEEN 1 AND 100),
+  share_percent INTEGER CHECK (share_percent IS NULL OR share_percent BETWEEN 2 AND 100),
   -- No ON DELETE SET NULL check on share: a deleted product leaves the job without its project.
   project_id TEXT REFERENCES personal_projects(id) ON DELETE SET NULL,
   -- No foreign key: roadmap reorder deletes and reinserts milestone rows.
@@ -134,12 +134,20 @@ WHEN NEW.status <> OLD.status AND NOT ((OLD.status = 'pending' AND NEW.status IN
   OR (OLD.status = 'active' AND NEW.status = 'superseded'))
 BEGIN SELECT RAISE(ABORT,'agreement_transition'); END;
 -- Activation needs lines that total 100, and for a proposal every listed person's acceptance.
+-- A proposal activates only when everyone listed accepted, and everyone (still approved) whose line it drops or
+-- lowers against the previous active version accepted too. Job grants only move the poster's own line.
 CREATE TRIGGER share_agreements_activation BEFORE UPDATE OF status ON share_agreements
 WHEN NEW.status = 'active' AND OLD.status = 'pending' AND (
   coalesce((SELECT sum(percent) FROM share_agreement_lines WHERE agreement_id = NEW.id), 0) <> 100
   OR (NEW.source = 'proposal' AND EXISTS (SELECT 1 FROM share_agreement_lines l WHERE l.agreement_id = NEW.id
     AND NOT EXISTS (SELECT 1 FROM share_agreement_acceptances c WHERE c.agreement_id = NEW.id
-      AND c.account_id = l.account_id AND c.decision = 'accepted'))))
+      AND c.account_id = l.account_id AND c.decision = 'accepted')))
+  OR (NEW.source = 'proposal' AND EXISTS (SELECT 1 FROM share_agreement_lines ol JOIN accounts acc ON acc.internal_id = ol.account_id AND acc.status = 'approved'
+    WHERE ol.agreement_id = (SELECT pa.id FROM share_agreements pa WHERE pa.project_id = NEW.project_id AND pa.id <> NEW.id
+      AND pa.activated_at IS NOT NULL ORDER BY pa.version DESC LIMIT 1)
+    AND ol.percent > coalesce((SELECT nl.percent FROM share_agreement_lines nl WHERE nl.agreement_id = NEW.id AND nl.account_id = ol.account_id), 0)
+    AND NOT EXISTS (SELECT 1 FROM share_agreement_acceptances c WHERE c.agreement_id = NEW.id
+      AND c.account_id = ol.account_id AND c.decision = 'accepted'))))
 BEGIN SELECT RAISE(ABORT,'agreement_not_ready'); END;
 CREATE TRIGGER share_agreements_closed_delete BEFORE DELETE ON share_agreements
 WHEN EXISTS (SELECT 1 FROM personal_projects WHERE id = OLD.project_id)
@@ -169,8 +177,12 @@ CREATE TABLE share_agreement_acceptances (
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   PRIMARY KEY (agreement_id, account_id)
 );
+-- Listed people answer, and so do holders of the current active version (their line may drop or shrink).
 CREATE TRIGGER share_acceptances_listed BEFORE INSERT ON share_agreement_acceptances
-WHEN NOT EXISTS (SELECT 1 FROM share_agreement_lines WHERE agreement_id = NEW.agreement_id AND account_id = NEW.account_id)
+WHEN (NOT EXISTS (SELECT 1 FROM share_agreement_lines WHERE agreement_id = NEW.agreement_id AND account_id = NEW.account_id)
+    AND NOT EXISTS (SELECT 1 FROM share_agreement_lines ol JOIN share_agreements oa ON oa.id = ol.agreement_id
+      WHERE oa.status = 'active' AND oa.project_id = (SELECT project_id FROM share_agreements WHERE id = NEW.agreement_id)
+      AND ol.account_id = NEW.account_id))
   OR (SELECT status FROM share_agreements WHERE id = NEW.agreement_id) IS NOT 'pending'
 BEGIN SELECT RAISE(ABORT,'acceptance_not_listed'); END;
 CREATE TRIGGER share_acceptances_no_update BEFORE UPDATE ON share_agreement_acceptances

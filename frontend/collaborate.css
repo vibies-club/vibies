@@ -149,6 +149,7 @@
 .brings { display: block; margin-top: 2px; color: var(--ink-2); font-weight: 400; }
 .pending { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--honey-edge); border-radius: var(--radius-button); background: var(--cell-fill); }
 .pending .agreement-table, .team-item .agreement-table { background: var(--paper); }
+.share-change { margin: 0; padding: 8px 12px; border-left: 3px solid var(--honey-edge); background: var(--paper); }
 .proposal { display: grid; gap: 12px; margin: 0; }
 .proposal-rows { display: grid; gap: 10px; }
 .proposal-row { padding: 14px; }

@@ -27,7 +27,7 @@ export function JobForm({ projects, instructor, job }: { projects: LinkableProje
   const chosen = projects.find(p => p.id === project);
   const owned = projects.filter(p => p.line !== null);
   const moneyValue = /^\d{1,7}$/.test(money) && Number(money) >= 1 ? Number(money) : null;
-  const shareValue = /^\d{1,3}$/.test(share) && Number(share) >= 1 && Number(share) <= 100 ? Number(share) : null;
+  const shareValue = /^\d{1,3}$/.test(share) && Number(share) >= 2 && Number(share) <= 100 ? Number(share) : null;
   const criteria = job?.criteria ?? [];
   const criterion = (n: number) => <input key={n} id={n === 1 ? f("c1") : undefined} name={`criterion${n}`} required={n === 1} maxLength={200}
     defaultValue={criteria[n - 1] ?? ""} aria-label={`Criterion ${n}`} placeholder={n === 1 ? "The habit screen has a dark mode toggle" : undefined} />;
@@ -65,7 +65,7 @@ export function JobForm({ projects, instructor, job }: { projects: LinkableProje
         <input id={f("money")} name="money" type="number" inputMode="numeric" min={1} max={1000000} step={1} value={money} onChange={event => setMoney(event.target.value)} className="short" /></div>
       {!instructor && <>
         <label htmlFor={f("share")}>Share in whole percent</label>
-        <div className="affix"><input id={f("share")} name="share" type="number" inputMode="numeric" min={1} max={100} step={1} value={share}
+        <div className="affix"><input id={f("share")} name="share" type="number" inputMode="numeric" min={2} max={100} step={1} value={share}
           onChange={event => setShare(event.target.value)} className="short" disabled={owned.length === 0} aria-describedby={f("share-hint")} /><span className="mono" aria-hidden="true">%</span></div>
         <p id={f("share-hint")} className="hint">{owned.length === 0 ? "Connect a product to offer a share of it." :
           chosen?.line !== null && chosen?.line !== undefined ? `Paid from your own line on ${chosen.title}. Your line today: ${chosen.line}%.` : "Pick the product below. The share comes from your own line."}</p>

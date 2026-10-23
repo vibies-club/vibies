@@ -58,6 +58,7 @@ function nextStep(page: JobData): Step {
   const f = keys(job);
   const tier = job.finalTier ?? job.lockedTier ?? 100;
   const owed = job.money !== null ? usd(payout(job.money, tier)) : null;
+  const settled = job.events?.at(-1)?.kind === "resolved";
   const record = <ActionForm action="job_accept" fields={f} primary>Record the automatic acceptance</ActionForm>;
   const dispute = <details className="disclosure"><summary>Open a dispute</summary>
     <ReasonForm job={job} action="job_dispute" label="What went wrong" button="Open dispute" hint="The instructor reads both sides and settles it. Everyone involved sees the outcome." /></details>;
@@ -66,8 +67,9 @@ function nextStep(page: JobData): Step {
     primary: <form action="/collaborate/action" method="post" className="stack-form resolve-form">
       <input type="hidden" name="action" value="job_resolve" /><input type="hidden" name="id" value={job.id} /><input type="hidden" name="version" value={job.version} />
       <fieldset className="choice"><legend>Outcome</legend>
+        {job.shareGranted !== null && <p className="hint">A granted share stays in the agreement. Choose accepted or paid.</p>}
         {[["accepted", "Accepted, payment still due"], ["paid", "Accepted and already paid"], ["open", "Reopen the job for a new claim"], ["cancelled", "Cancel the job"]]
-          .map(([value, label], index) => <label key={value} className="check"><input type="radio" name="outcome" value={value} required defaultChecked={index === 0} /> {label}</label>)}
+          .filter(([value]) => job.shareGranted === null || value === "accepted" || value === "paid").map(([value, label], index) => <label key={value} className="check"><input type="radio" name="outcome" value={value} required defaultChecked={index === 0} /> {label}</label>)}
       </fieldset>
       <Field id="resolve-tier" label="Payout tier (for accepted or paid)"><select id="resolve-tier" name="payout" defaultValue={String(job.lockedTier ?? 100)}>
         <option value="100">100%</option><option value="50">50%</option><option value="0">0%</option></select></Field>
@@ -83,7 +85,13 @@ function nextStep(page: JobData): Step {
         : <>{job.claimant} is working on it. Full pay if delivered by <Time iso={due(job, job.windowDays)!} />.</>,
         primary: releasable ? <ActionForm action="job_release" fields={f} primary confirm={`Release the claim from ${job.claimant}.`}>Release the claim</ActionForm> : undefined };
     }
-    case "changes": return { text: <>Waiting for {job.claimant} to resubmit. A resubmission by <Time iso={addDays(job.changesAt!, 3)} /> keeps the {job.lockedTier}% tier.</>, more: dispute };
+    case "changes": {
+      const releasable = Date.now() > Date.parse(addDays(job.changesAt!, 3));
+      return { text: releasable ? <>{job.claimant} has not resubmitted within 3 days of your change request. You can release the claim so someone else can take it.</>
+        : <>Waiting for {job.claimant} to resubmit. A resubmission by <Time iso={addDays(job.changesAt!, 3)} /> keeps the {job.lockedTier}% tier.</>,
+        primary: releasable ? <ActionForm action="job_release" fields={f} primary confirm={`Release the claim from ${job.claimant}.`}>Release the claim</ActionForm> : undefined,
+        more: dispute };
+    }
     case "delivered": return {
       text: <>{job.claimant} delivered. Check it against every criterion. If you do not answer, it is accepted automatically on <Time iso={addDays(job.deliveredAt!, 7)} />.</>,
       primary: <ActionForm action="job_accept" fields={f} primary>Accept delivery at {job.lockedTier}%</ActionForm>,
@@ -112,7 +120,7 @@ function nextStep(page: JobData): Step {
         <Field id="paid-note" label="Note (optional)" hint="For example how you paid. No account numbers."><input id="paid-note" name="note" maxLength={500} /></Field>
         <button type="submit" className="primary">Mark as paid</button>
       </form>, more: dispute };
-    case "paid": return { text: job.confirmed ? "Complete. Both sides confirmed." : `Waiting for ${job.claimant} to confirm it arrived.` };
+    case "paid": return { text: job.confirmed ? "Complete. Both sides confirmed." : `${settled ? "Settled by the Instructor. " : ""}Waiting for ${job.claimant} to confirm it arrived.` };
     case "disputed": return { text: "The instructor will settle this. Both of you will see the outcome and the reason in the history." };
     case "cancelled": return { text: "This job is cancelled. It stays in the history." };
   }
@@ -132,7 +140,8 @@ function nextStep(page: JobData): Step {
       if (job.lapse === "auto_accepted") return { text: "The poster did not answer within 7 days, so your delivery was accepted automatically. Record it to continue.", primary: record };
       return { text: <>Accepted at {job.finalTier}%. Waiting for {job.poster} to pay {owed}.</>, more: dispute };
     case "paid": return job.confirmed ? { text: "Complete. Thank you for the work." } : {
-      text: job.money !== null ? <>{job.poster} marked {job.paidAmount !== null ? usd(job.paidAmount) : "it"} as paid. Confirm when it arrives.</> :
+      text: settled ? <>Settled by the Instructor. Confirm when {job.money !== null ? "the payment" : "the share"} arrives, or say it did not.</> :
+        job.money !== null ? <>{job.poster} marked {job.paidAmount !== null ? usd(job.paidAmount) : "it"} as paid. Confirm when it arrives.</> :
         <>Your share is recorded in agreement version {job.agreementVersion ?? "?"} of {job.projectTitle}. Confirm when you have seen it.</>,
       primary: <ActionForm action="job_receipt" fields={f} primary>Confirm I received it</ActionForm>,
       more: <details className="disclosure"><summary>It did not arrive</summary>
@@ -171,7 +180,7 @@ function describe(event: JobEvent): ReactNode {
     case "receipt_confirmed": return `${who} confirmed it arrived`;
     case "not_received": return `${who} reported the payment did not arrive`;
     case "disputed": return `${who} opened a dispute`;
-    case "resolved": return `${who} settled the dispute: ${({ accepted: "accepted", paid: "accepted and paid", open: "reopened", cancelled: "cancelled" } as Record<string, string>)[d.outcome ?? ""] ?? "settled"}${d.tier !== undefined && d.tier !== null && (d.outcome === "accepted" || d.outcome === "paid") ? ` at ${d.tier}%` : ""}`;
+    case "resolved": return `${who} settled the dispute: ${({ accepted: "accepted", paid: "accepted and paid", open: "reopened", cancelled: "cancelled" } as Record<string, string>)[d.outcome ?? ""] ?? "settled"}${d.tier !== undefined && d.tier !== null && (d.outcome === "accepted" || d.outcome === "paid") ? ` at ${d.tier}%` : ""}${d.shortfall ? `. The poster's line covered ${d.share ?? 0}% of the share, ${d.shortfall}% short` : ""}`;
     case "hidden": return `${who} hid the job`;
     case "restored": return `${who} made the job visible again`;
     default: return event.kind;

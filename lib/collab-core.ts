@@ -64,7 +64,7 @@ export function jobTerms(form: URLSearchParams): JobTerms | null {
   const windowDays = wholeNumber(form.get("windowDays"), 1, 30);
   const moneyRaw = form.get("money")?.trim() ?? "", shareRaw = form.get("share")?.trim() ?? "";
   const money = moneyRaw ? wholeNumber(moneyRaw.replace(/^\$/, "").replace(/,/g, ""), 1, 1_000_000) : null;
-  const share = shareRaw ? wholeNumber(shareRaw.replace(/%$/, ""), 1, 100) : null;
+  const share = shareRaw ? wholeNumber(shareRaw.replace(/%$/, ""), 2, 100) : null;
   const project = form.get("projectId") || null, milestone = form.get("milestoneId") || null;
   const tags = skills(form.get("skills"));
   const criteria: string[] = [];

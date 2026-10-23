@@ -74,7 +74,8 @@ export async function collaborateAction(request: Request, services: Services) {
       }
       if (result.kind === "forbidden") return safeError(403);
       if (result.kind === "missing") return safeError(404);
-      return back(result.kind);
+      // Accept cannot settle a share the poster no longer covers; the copy points the poster to a dispute.
+      return back(action === "job_accept" && ["insufficient_share", "project_missing"].includes(result.kind) ? `accept_${result.kind}` : result.kind);
     }
 
     const project = form.get("projectId"), from = form.get("from");

@@ -95,6 +95,21 @@ test('Collaborate HTTP boundary: jobs, teams and shares are decided in SQL',asyn
    const team=(await get('/projects/'+P1,4)).team;assert.equal(team.active.version,2);assert.deepEqual(team.active.lines.map(l=>[l.nickname,l.percent]),[['Pixel',70],['Sprout',20],['Nova',10]]);
    assert.equal((await get('/projects/'+P1,1)).team.insider,true);
   });
+  await t.test('disputes: accept points to a dispute, the Instructor resolves what the line covers',async()=>{
+   // P1 is Pixel 70, Sprout 20, Nova 10 here. Two 60% jobs cannot both come from a 70% line.
+   const a=await postJob(2,{money:'',share:'60',projectId:P1}),b=await postJob(2,{money:'',share:'60',projectId:P1});
+   await act('job_claim',a,3);await act('job_deliver',a,3,{url:'https://example.com/pr/a',note:'A'});
+   await act('job_claim',b,4);await act('job_deliver',b,4,{url:'https://example.com/pr/b',note:'B'});
+   assert.equal(message(await act('job_accept',a,2)),'accepted');
+   assert.equal(message(await act('job_accept',b,2)),'accept_insufficient_share');
+   assert.equal(message(await act('job_dispute',b,2,{reason:'My line is too small now'})),'disputed');
+   assert.equal((await act('job_resolve',b,2,{outcome:'paid',payout:'100',reason:'Mine'})).status,403);
+   assert.equal(message(await act('job_resolve',b,1,{outcome:'paid',payout:'100',reason:'Settle what the line covers'})),'resolved');
+   const page=await get('/collaborate/jobs/'+b,4);
+   assert.equal(page.job.job.state,'paid');assert.equal(page.job.job.shareGranted,10);assert.equal(page.job.job.confirmed,false);
+   const last=page.job.job.events.at(-1);assert.equal(last.kind,'resolved');assert.deepEqual([last.detail.share,last.detail.shortfall],[10,50]);
+   assert.equal(message(await act('job_receipt',b,4)),'receipt_confirmed');
+  });
   await t.test('hidden jobs are invisible to other Members; the Instructor moderates',async()=>{
    const id=await postJob();
    assert.equal((await act('job_hide',id,2)).status,403);
@@ -111,7 +126,7 @@ test('Collaborate HTTP boundary: jobs, teams and shares are decided in SQL',asyn
    const id=await db.prepare('SELECT id FROM jobs LIMIT 1').first('id');
    const before=await db.prepare('SELECT count(*) n FROM job_events').first('n');
    for(const action of ['job_post','job_claim','job_deliver','job_accept','job_hide','team_invite','agreement_propose','agreement_accept'])
-    assert.equal((await post({action,id,version:'1',projectId:P1,from:'teams',...terms},3)).status,503,action);
+    assert.equal((await post({action,id,version:'1',projectId:P1,from:'teams',...terms},action==='job_hide'?1:3)).status,503,action);
    assert.equal(await db.prepare('SELECT count(*) n FROM job_events').first('n'),before);
    const board=await get('/collaborate',3);assert.equal(board.kind,'ok');assert.ok(board.collab.jobs.length>0);
    assert.equal((await get('/collaborate/jobs/'+id,3)).job.kind,'ok');

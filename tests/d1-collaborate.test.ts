@@ -262,3 +262,121 @@ test('visibility, moderation and reads', async () => {
   assert.equal(team.team.isOwner, true);
   assert.deepEqual(team.team.candidates, ['Nova', 'Sprout']);
 });
+
+const detailOf = (sqlite: DatabaseSync, id: string) =>
+  JSON.parse((sqlite.prepare('SELECT detail FROM job_events WHERE job_id=? ORDER BY seq DESC LIMIT 1').get(id) as any).detail);
+async function delivered(db: AccessDatabase, sqlite: DatabaseSync, poster: number, claimant: number, extra: Partial<JobTerms>) {
+  const id = await posted(db, poster, extra);
+  assert.equal((await api.job_claim(db, hash(claimant), id, '1')).kind, 'claimed');
+  assert.equal((await api.job_deliver(db, hash(claimant), id, v(sqlite, id), 'https://example.com/pr', 'Done')).kind, 'delivered');
+  return id;
+}
+
+test('resolve settles a share from a deleted product as 0 and records the shortfall', async () => {
+  const { db, sqlite } = fixture();
+  const id = await delivered(db, sqlite, 1, 2, { share: 10, money: 50, projectId: P1 });
+  sqlite.exec(`DELETE FROM personal_projects WHERE id='${P1}'`);
+  assert.equal((await api.job_accept(db, hash(1), id, v(sqlite, id))).kind, 'project_missing');
+  assert.equal((await api.job_dispute(db, hash(1), id, v(sqlite, id), 'The product is gone')).kind, 'disputed');
+  assert.equal((await api.job_resolve(db, hash(99), id, v(sqlite, id), 'accepted', 100, 'Money stands, the share cannot')).kind, 'resolved');
+  const row = job(sqlite, id);
+  assert.equal(row.state, 'accepted'); assert.equal(row.share_granted, 0); assert.equal(row.final_tier, 100);
+  assert.deepEqual([detailOf(sqlite, id).share, detailOf(sqlite, id).shortfall], [0, 10]);
+  assert.equal((await api.job_paid(db, hash(1), id, v(sqlite, id), 50, new Date().toISOString().slice(0, 10), null)).kind, 'paid');
+});
+
+test('resolve settles two 60% jobs as far as the poster line reaches; a granted share cannot be undone', async () => {
+  const { db, sqlite } = fixture();
+  const a = await delivered(db, sqlite, 1, 2, { share: 60, money: null, projectId: P1 });
+  const b = await delivered(db, sqlite, 1, 3, { share: 60, money: null, projectId: P1 });
+  assert.equal((await api.job_accept(db, hash(1), a, v(sqlite, a))).kind, 'accepted');
+  assert.equal((await api.job_accept(db, hash(1), b, v(sqlite, b))).kind, 'insufficient_share');
+  assert.equal((await api.job_dispute(db, hash(1), b, v(sqlite, b), 'My line is too small now')).kind, 'disputed');
+  assert.equal((await api.job_resolve(db, hash(99), b, v(sqlite, b), 'paid', 100, 'Settle what the line covers')).kind, 'resolved');
+  assert.equal(job(sqlite, b).share_granted, 40);
+  assert.equal(job(sqlite, b).receipt_at, null);
+  assert.deepEqual([detailOf(sqlite, b).share, detailOf(sqlite, b).shortfall], [40, 20]);
+  const active = sqlite.prepare("SELECT id FROM share_agreements WHERE project_id=? AND status='active'").get(P1) as any;
+  const lines = sqlite.prepare('SELECT account_id,percent FROM share_agreement_lines WHERE agreement_id=? ORDER BY account_id').all(active.id) as any[];
+  assert.deepEqual(lines.map(l => [l.account_id, l.percent]), [['acc2', 60], ['acc3', 40]]);
+  // The claimant can still say it did not arrive; open and cancel cannot take a granted share back.
+  assert.equal((await api.job_not_received(db, hash(3), b, v(sqlite, b), 'I do not see it')).kind, 'disputed');
+  assert.equal(events(sqlite, b).at(-1), 'not_received');
+  for (const outcome of ['open', 'cancelled'])
+    assert.equal((await api.job_resolve(db, hash(99), b, v(sqlite, b), outcome, null, 'Undo')).kind, 'invalid', outcome);
+  assert.equal((await api.job_resolve(db, hash(99), b, v(sqlite, b), 'paid', 100, 'It is in version 3')).kind, 'resolved');
+  assert.equal(job(sqlite, b).share_granted, 40);
+  assert.equal((await api.job_receipt(db, hash(3), b, v(sqlite, b))).kind, 'receipt_confirmed');
+});
+
+test('hidden jobs: parties keep acting; others cannot see or claim', async () => {
+  const { db, sqlite } = fixture();
+  const id = await posted(db, 1);
+  await api.job_claim(db, hash(2), id, '1');
+  assert.equal((await api.job_moderate(db, hash(99), id, v(sqlite, id), true)).kind, 'hidden');
+  assert.equal((await api.job_deliver(db, hash(2), id, v(sqlite, id), 'https://example.com/pr', 'Done')).kind, 'delivered');
+  assert.equal((await api.job_accept(db, hash(1), id, v(sqlite, id))).kind, 'accepted');
+  assert.equal((await api.collab_job(db, hash(3), id)).kind, 'missing');
+  const other = await posted(db, 1);
+  await api.job_moderate(db, hash(99), other, '1', true);
+  assert.equal((await api.job_claim(db, hash(3), other, v(sqlite, other))).kind, 'hidden_job');
+  assert.equal((await api.job_cancel(db, hash(1), other, v(sqlite, other))).kind, 'cancelled');
+});
+
+test('reject clears the delivery time; release works from changes after 3 days; minimum share is 2%', async () => {
+  const { db, sqlite } = fixture();
+  const id = await delivered(db, sqlite, 1, 2, {});
+  assert.equal((await api.job_reject(db, hash(1), id, v(sqlite, id), 'Nothing meets the criteria')).kind, 'rejected');
+  assert.equal(job(sqlite, id).delivered_at, null);
+  await api.job_deliver(db, hash(2), id, v(sqlite, id), 'https://example.com/b', 'Again');
+  assert.equal((await api.job_changes(db, hash(1), id, v(sqlite, id), [2], null)).kind, 'changes_requested');
+  assert.equal((await api.job_release(db, hash(1), id, v(sqlite, id))).kind, 'too_early');
+  sqlite.prepare('UPDATE jobs SET changes_at=? WHERE id=?').run(ago(4), id);
+  assert.equal(job(sqlite, id).effective_state, 'changes');
+  assert.equal((await api.job_release(db, hash(1), id, v(sqlite, id))).kind, 'released');
+  assert.equal(job(sqlite, id).state, 'open');
+  assert.equal((await api.job_post(db, hash(1), terms({ share: 1, money: null, projectId: P1 }))).kind, 'invalid');
+  assert.throws(() => sqlite.exec(`UPDATE jobs SET share_percent=1,project_id='${P1}' WHERE id='${id}'`), /CHECK/);
+});
+
+test('edit after an expired claim reopens cleanly', async () => {
+  const { db, sqlite } = fixture();
+  const id = await posted(db, 1, { windowDays: 2 });
+  await api.job_claim(db, hash(2), id, '1');
+  sqlite.prepare('UPDATE jobs SET claimed_at=? WHERE id=?').run(ago(5), id);
+  assert.equal(job(sqlite, id).effective_state, 'open');
+  assert.equal((await api.job_edit(db, hash(1), id, v(sqlite, id), terms({ title: 'Add a dark mode, take two' }))).kind, 'edited');
+  assert.deepEqual(events(sqlite, id), ['posted', 'claimed', 'expired', 'edited']);
+  assert.equal(job(sqlite, id).claimant_account_id, null);
+  assert.equal((await api.job_claim(db, hash(3), id, v(sqlite, id))).kind, 'claimed');
+});
+
+test('shares consent: a version that lowers an approved holder waits for them; team removal changes nothing', async () => {
+  const { db, sqlite } = fixture();
+  sqlite.exec(`INSERT INTO project_team(project_id,account_id,role,status) VALUES('${P1}','acc3','Designer','active'),('${P1}','acc4','Writer','active')`);
+  await api.agreement_propose(db, hash(1), P1, '0', [{ key: 'pixel', role: 'Owner', percent: 50, brings: null },
+    { key: 'sprout', role: 'Designer', percent: 30, brings: null }, { key: 'comet', role: 'Writer', percent: 20, brings: null }]);
+  const first = sqlite.prepare("SELECT id FROM share_agreements WHERE status='pending'").get() as any;
+  await api.agreement_respond(db, hash(3), P1, first.id, '1', true);
+  assert.equal((await api.agreement_respond(db, hash(4), P1, first.id, '1', true)).kind, 'activated');
+  // Removing Sprout from the team leaves the active lines as they were.
+  assert.equal((await api.team_remove(db, hash(1), P1, 'Sprout')).kind, 'removed');
+  const lines = (agreement: string) => (sqlite.prepare('SELECT account_id,percent FROM share_agreement_lines WHERE agreement_id=? ORDER BY account_id').all(agreement) as any[]).map(l => [l.account_id, l.percent]);
+  assert.deepEqual(lines(first.id), [['acc1', 50], ['acc3', 30], ['acc4', 20]]);
+  // Version 2 drops Sprout: it waits for Sprout even though Sprout is not listed.
+  assert.equal((await api.agreement_propose(db, hash(1), P1, '1', [{ key: 'pixel', role: 'Owner', percent: 80, brings: null },
+    { key: 'comet', role: 'Writer', percent: 20, brings: null }])).kind, 'proposed');
+  const second = sqlite.prepare("SELECT id FROM share_agreements WHERE status='pending'").get() as any;
+  assert.equal((await api.agreement_respond(db, hash(4), P1, second.id, '2', true)).kind, 'accepted');
+  const board = await api.collab_board(db, hash(3)) as any;
+  assert.deepEqual(board.pending.map((p: any) => [p.version, p.myChange]), [[2, { from: 30, to: 0 }]]);
+  assert.equal((await api.collab_team(db, hash(3), P1) as any).team.myDecision, 'needed');
+  assert.equal((await api.agreement_respond(db, hash(2), P1, second.id, '2', true)).kind, 'forbidden');
+  // The schema refuses to activate it behind Sprout's back.
+  assert.throws(() => sqlite.exec(`UPDATE share_agreements SET status='active',activated_at='x' WHERE id='${second.id}'`), /agreement_not_ready/);
+  assert.equal((await api.agreement_respond(db, hash(3), P1, second.id, '2', true)).kind, 'activated');
+  assert.deepEqual(lines(second.id), [['acc1', 80], ['acc4', 20]]);
+  // A revoked holder does not block: version 3 drops Comet at once.
+  sqlite.exec("UPDATE accounts SET status='revoked' WHERE internal_id='acc4'");
+  assert.equal((await api.agreement_propose(db, hash(1), P1, '2', [{ key: 'pixel', role: 'Owner', percent: 100, brings: null }])).kind, 'activated');
+});

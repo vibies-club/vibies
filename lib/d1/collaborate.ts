@@ -99,7 +99,6 @@ type JobSpec = {
   params?: unknown[];            // bound from ?6
   after?: string[];              // statements that must follow the update, chained on the nonce
   materialize?: boolean;         // record a pending lapse (expiry, auto-acceptance) before this event
-  hiddenOk?: boolean;
 };
 
 async function jobAction(db: AccessDatabase, hash: string | null, id: unknown, version: unknown, spec: JobSpec): Promise<Kind> {
@@ -110,7 +109,7 @@ async function jobAction(db: AccessDatabase, hash: string | null, id: unknown, v
   const decision = `SELECT CASE
     WHEN NOT ${actor} THEN 'forbidden'
     WHEN j.id IS NULL THEN 'missing'
-    ${spec.hiddenOk ? '' : `WHEN j.hidden=1 AND NOT ${instructor} THEN 'hidden_job'`}
+    WHEN j.hidden=1 AND NOT coalesce(${instructor} OR ${isPoster} OR (${isClaimant} AND j.effective_state NOT IN ('open','cancelled')),0) THEN 'hidden_job'
     WHEN NOT coalesce((${spec.role}),0) THEN 'forbidden'
     ${spec.taken ? `WHEN j.effective_state NOT IN (${states}) THEN 'taken'` : ''}
     WHEN j.version<>CAST(?3 AS INTEGER) THEN 'stale'
@@ -162,7 +161,7 @@ function validTerms(t: JobTerms) {
   return typeof t === 'object' && text(t.title, 1, 80) === t.title && text(t.description, 1, 2000, true) === t.description &&
     ['pull_request', 'live_url', 'file_link'].includes(t.deliverable) && Number.isInteger(t.windowDays) && t.windowDays >= 1 && t.windowDays <= 30 &&
     (t.money === null || (Number.isInteger(t.money) && t.money >= 1 && t.money <= 1_000_000)) &&
-    (t.share === null || (Number.isInteger(t.share) && t.share >= 1 && t.share <= 100 && t.projectId !== null)) &&
+    (t.share === null || (Number.isInteger(t.share) && t.share >= 2 && t.share <= 100 && t.projectId !== null)) &&
     (t.money !== null || t.share !== null) && (t.projectId === null || uuid(t.projectId)) &&
     (t.milestoneId === null || (uuid(t.milestoneId) && t.projectId !== null)) &&
     Array.isArray(t.skills) && t.skills.length <= 5 && t.skills.every(s => typeof s === 'string' && /^[a-z0-9][a-z0-9 +#.-]{0,23}$/.test(s)) &&
@@ -192,8 +191,9 @@ export const job_abandon = (db: AccessDatabase, hash: string | null, id: string,
   success: 'abandoned', role: isClaimant, states: ['claimed', 'changes'], event: "'abandoned'", set: `state='open',${claimReset}`,
 });
 export const job_release = (db: AccessDatabase, hash: string | null, id: string, version: string) => jobAction(db, hash, id, version, {
-  success: 'released', role: isPoster, states: ['claimed'],
-  extra: `WHEN julianday('now') <= julianday(j.claimed_at)+j.window_days THEN 'too_early'`,
+  success: 'released', role: isPoster, states: ['claimed', 'changes'],
+  extra: `WHEN j.effective_state='claimed' AND julianday('now') <= julianday(j.claimed_at)+j.window_days THEN 'too_early'
+    WHEN j.effective_state='changes' AND julianday('now') <= julianday(j.changes_at)+3 THEN 'too_early'`,
   event: "'released'", set: `state='open',${claimReset}`,
 });
 export async function job_deliver(db: AccessDatabase, hash: string | null, id: string, version: string, url: unknown, note: unknown): Promise<Kind> {
@@ -206,6 +206,7 @@ export async function job_deliver(db: AccessDatabase, hash: string | null, id: s
       delivery_url=?6,delivery_note=?7`,
   });
 }
+// Accept refuses a share the poster can no longer cover; the dispute path settles what is left (see job_resolve).
 const shareGuard = `WHEN j.share_percent IS NOT NULL AND j.share_granted IS NULL AND j.project_id IS NULL THEN 'project_missing'
   WHEN j.share_percent IS NOT NULL AND j.share_granted IS NULL AND ${lineOf('j.project_id', 'j.poster_account_id')} < j.share_percent THEN 'insufficient_share'`;
 /** Poster accepts a delivery, or either side records the automatic acceptance after 7 silent days. */
@@ -244,7 +245,8 @@ export async function job_reject(db: AccessDatabase, hash: string | null, id: st
     event: "CASE WHEN j.reject_count=0 THEN 'rejected' ELSE 'disputed' END",
     detail: `json_object('note',?6,'reason',CASE WHEN j.reject_count=0 THEN NULL ELSE 'Second reject' END)`,
     set: `state=CASE WHEN reject_count=0 THEN 'claimed' ELSE 'disputed' END,
-      locked_tier=CASE WHEN reject_count=0 THEN NULL ELSE locked_tier END,reject_count=1`,
+      locked_tier=CASE WHEN reject_count=0 THEN NULL ELSE locked_tier END,
+      delivered_at=CASE WHEN reject_count=0 THEN NULL ELSE delivered_at END,reject_count=1`,
   });
 }
 export async function job_paid(db: AccessDatabase, hash: string | null, id: string, version: string, amount: unknown, on: unknown, note: unknown): Promise<Kind> {
@@ -287,26 +289,31 @@ export async function job_resolve(db: AccessDatabase, hash: string | null, id: s
   // 'open' clears the claim; 'cancelled' keeps the record as it stood; 'accepted' and 'paid' settle the tier.
   const keep = (column: string, reset = 'NULL') => `CASE WHEN ?6='open' THEN ${reset} ELSE ${column} END`;
   const settle = (value: string, column: string) => `CASE WHEN ?6 IN ('accepted','paid') THEN ${value} ELSE ${keep(column)} END`;
+  // The share settles as far as the poster's line still reaches (0 when the product is gone); the money half always settles.
+  const due = (t: string) => `${t}.share_percent*CAST(?7 AS INTEGER)/100`;
+  const reach = (t: string) => `CASE WHEN ${t}.project_id IS NULL THEN 0 ELSE min(${lineOf(`${t}.project_id`, `${t}.poster_account_id`)},${due(t)}) END`;
+  const owed = "?6 IN ('accepted','paid') AND j.share_percent IS NOT NULL AND j.share_granted IS NULL";
   return jobAction(db, hash, id, version, {
-    success: 'resolved', role: instructor, states: ['disputed'], hiddenOk: true, params: [outcome, tier, body, crypto.randomUUID()],
-    extra: `WHEN ?6='open' AND j.share_granted IS NOT NULL THEN 'invalid'
-      ${shareGuard.replace(/WHEN j\.share_percent/g, "WHEN ?6 IN ('accepted','paid') AND j.share_percent")}`,
-    event: "'resolved'", detail: `json_object('outcome',?6,'tier',?7,'reason',?8)`,
+    success: 'resolved', role: instructor, states: ['disputed'], params: [outcome, tier, body, crypto.randomUUID()],
+    extra: `WHEN ?6 IN ('open','cancelled') AND j.share_granted IS NOT NULL THEN 'invalid'`,
+    event: "'resolved'",
+    detail: `json_object('outcome',?6,'tier',?7,'reason',?8,'share',CASE WHEN ${owed} THEN ${reach('j')} END,
+      'shortfall',CASE WHEN ${owed} AND ${reach('j')} < ${due('j')} THEN ${due('j')}-${reach('j')} END)`,
     set: `${['claimant_account_id', 'claimed_at', 'first_delivered_at', 'delivered_at', 'delivery_url', 'delivery_note', 'changes_at', 'paid_on', 'paid_note']
         .map(column => `${column}=${keep(column)}`).join(',')},change_rounds=${keep('change_rounds', '0')},reject_count=${keep('reject_count', '0')},
       state=CASE WHEN ?6='accepted' AND money_usd IS NULL THEN 'paid' ELSE ?6 END,
       locked_tier=${settle('CAST(?7 AS INTEGER)', 'locked_tier')},final_tier=${settle('CAST(?7 AS INTEGER)', 'final_tier')},
       accepted_at=${settle(`coalesce(accepted_at,${now})`, 'accepted_at')},
-      share_granted=${settle('CASE WHEN share_percent IS NULL OR project_id IS NULL THEN NULL ELSE coalesce(share_granted,share_percent*CAST(?7 AS INTEGER)/100) END', 'share_granted')},
+      share_granted=${settle(`CASE WHEN share_percent IS NULL THEN NULL ELSE coalesce(share_granted,${reach('jobs')}) END`, 'share_granted')},
       paid_at=CASE WHEN ?6='paid' OR (?6='accepted' AND money_usd IS NULL) THEN coalesce(paid_at,${now}) ELSE ${keep('paid_at')} END,
       paid_amount_usd=CASE WHEN ?6='paid' AND money_usd IS NOT NULL THEN coalesce(paid_amount_usd,money_usd*CAST(?7 AS INTEGER)/100) ELSE ${keep('paid_amount_usd')} END,
-      receipt_at=CASE WHEN ?6='paid' THEN coalesce(receipt_at,${now}) ELSE ${keep('receipt_at')} END`,
+      receipt_at=${keep('receipt_at')}`,
     after: shareGrant('?9'),
   });
 }
 export const job_moderate = (db: AccessDatabase, hash: string | null, id: string, version: string, hidden: boolean) => jobAction(db, hash, id, version, {
   success: hidden ? 'hidden' : 'restored', role: instructor, states: ['open', 'claimed', 'delivered', 'changes', 'accepted', 'paid', 'cancelled', 'disputed'],
-  hiddenOk: true, materialize: false, extra: `WHEN j.hidden=${hidden ? 1 : 0} THEN 'unchanged'`,
+  materialize: false, extra: `WHEN j.hidden=${hidden ? 1 : 0} THEN 'unchanged'`,
   event: hidden ? "'hidden'" : "'restored'", set: `hidden=${hidden ? 1 : 0}`,
 });
 
@@ -362,11 +369,20 @@ export async function team_remove(db: AccessDatabase, hash: string | null, proje
     WHERE project_id=?2 AND account_id=(SELECT internal_id FROM accounts WHERE nickname_key=?3) AND (SELECT kind FROM (${decision}))='removed'`]);
 }
 
-/** Activates agreement ?N once every listed person accepted; the old active version is superseded first. */
+/** Approved holders of the active version whose line agreement ?N drops or lowers: (account_id, was, becomes). */
+const lowered = (agreement: string) => `SELECT ol.account_id, ol.percent was, coalesce(nl.percent,0) becomes FROM share_agreement_lines ol
+  JOIN share_agreements oa ON oa.id=ol.agreement_id AND oa.status='active'
+  JOIN accounts acc ON acc.internal_id=ol.account_id AND acc.status='approved'
+  LEFT JOIN share_agreement_lines nl ON nl.agreement_id=${agreement} AND nl.account_id=ol.account_id
+  WHERE oa.project_id=(SELECT project_id FROM share_agreements WHERE id=${agreement}) AND ol.percent > coalesce(nl.percent,0)`;
+const consented = (agreement: string, account: string) =>
+  `EXISTS (SELECT 1 FROM share_agreement_acceptances c WHERE c.agreement_id=${agreement} AND c.account_id=${account} AND c.decision='accepted')`;
+
+/** Activates agreement ?N once everyone listed, and every holder it lowers, accepted; the old active version is superseded first. */
 const activation = (agreement: string) => {
   const ready = `EXISTS (SELECT 1 FROM share_agreements WHERE id=${agreement} AND status='pending')
-    AND NOT EXISTS (SELECT 1 FROM share_agreement_lines l WHERE l.agreement_id=${agreement} AND NOT EXISTS
-      (SELECT 1 FROM share_agreement_acceptances c WHERE c.agreement_id=${agreement} AND c.account_id=l.account_id AND c.decision='accepted'))`;
+    AND NOT EXISTS (SELECT 1 FROM share_agreement_lines l WHERE l.agreement_id=${agreement} AND NOT ${consented(agreement, 'l.account_id')})
+    AND NOT EXISTS (SELECT 1 FROM (${lowered(agreement)}) x WHERE NOT ${consented(agreement, 'x.account_id')})`;
   return [`UPDATE share_agreements SET status='superseded',closed_at=${now} WHERE project_id=?2 AND status='active' AND ${ready}`,
     `UPDATE share_agreements SET status='active',activated_at=${now} WHERE id=${agreement} AND ${ready}`];
 };
@@ -395,7 +411,8 @@ export async function agreement_propose(db: AccessDatabase, hash: string | null,
       SELECT ?4,a.internal_id,json_extract(l.value,'$.role'),json_extract(l.value,'$.percent'),json_extract(l.value,'$.brings')
       FROM json_each(?5) l JOIN accounts a ON a.nickname_key=json_extract(l.value,'$.key') AND a.status='approved' WHERE ${made}`,
     `INSERT INTO share_agreement_acceptances(agreement_id,account_id,decision) SELECT ?4,p.owner_account_id,'accepted'
-      FROM personal_projects p WHERE p.id=?2 AND ${made} AND EXISTS (SELECT 1 FROM share_agreement_lines WHERE agreement_id=?4 AND account_id=p.owner_account_id)`,
+      FROM personal_projects p WHERE p.id=?2 AND ${made} AND (EXISTS (SELECT 1 FROM share_agreement_lines WHERE agreement_id=?4 AND account_id=p.owner_account_id)
+        OR EXISTS (SELECT 1 FROM (${lowered('?4')}) x WHERE x.account_id=p.owner_account_id))`,
     ...activation('?4'),
   ], `SELECT status FROM share_agreements WHERE id=?4`).then(result => ({ kind: result.kind === 'proposed' && result.last?.status === 'active' ? 'activated' : result.kind }));
 }
@@ -403,7 +420,8 @@ export async function agreement_respond(db: AccessDatabase, hash: string | null,
   if (!validToken(hash) || !uuid(project) || !uuid(agreement) || !projectVersion(version) || typeof accept !== 'boolean') return { kind: 'invalid' };
   const decision = `SELECT CASE WHEN ${me} IS NULL THEN 'forbidden'
     WHEN a.id IS NULL OR a.project_id<>?2 THEN 'missing'
-    WHEN NOT EXISTS (SELECT 1 FROM share_agreement_lines WHERE agreement_id=?3 AND account_id=${me}) THEN 'forbidden'
+    WHEN NOT EXISTS (SELECT 1 FROM share_agreement_lines WHERE agreement_id=?3 AND account_id=${me})
+      AND NOT EXISTS (SELECT 1 FROM (${lowered('?3')}) x WHERE x.account_id=${me}) THEN 'forbidden'
     WHEN a.status<>'pending' OR a.version<>CAST(?4 AS INTEGER) THEN 'stale'
     WHEN EXISTS (SELECT 1 FROM share_agreement_acceptances WHERE agreement_id=?3 AND account_id=${me}) THEN 'already'
     ELSE 'ok' END kind FROM (SELECT 1) LEFT JOIN share_agreements a ON a.id=?3`;
@@ -434,6 +452,9 @@ const linesJson = (agreement: string) => `json((SELECT json_group_array(json_obj
   'decision',(SELECT decision FROM share_agreement_acceptances c WHERE c.agreement_id=l.agreement_id AND c.account_id=l.account_id)))
   FROM (SELECT * FROM share_agreement_lines WHERE agreement_id=${agreement} ORDER BY percent DESC, account_id) l JOIN accounts a ON a.internal_id=l.account_id))`;
 
+/** The viewer's line moving down in a pending version: {from, to}, or NULL. */
+const myChange = (agreement: string) => `json((SELECT json_object('from',x.was,'to',x.becomes) FROM (${lowered(agreement)}) x WHERE x.account_id=${me}))`;
+
 const linkable = `(SELECT json_group_array(json(item)) FROM (SELECT json_object('id',p.id,'title',p.title,
       'line',CASE WHEN p.owner_account_id=${me} THEN ${lineOf('p.id', me)} END,
       'milestones',json((SELECT json_group_array(json_object('id',m.id,'title',m.title)) FROM
@@ -451,9 +472,10 @@ export async function collab_board(db: AccessDatabase, hash: string | null): Pro
     (SELECT json_group_array(json(item)) FROM (SELECT json_object('projectId',p.id,'projectTitle',p.title,'owner',${nick('p.owner_account_id')},'role',t.role) item
       FROM project_team t JOIN personal_projects p ON p.id=t.project_id WHERE t.account_id=${me} AND t.status='invited' ORDER BY t.updated_at DESC)) invitations,
     (SELECT json_group_array(json(item)) FROM (SELECT json_object('projectId',p.id,'projectTitle',p.title,'owner',${nick('p.owner_account_id')},
-      'agreementId',a.id,'version',a.version,'createdAt',a.created_at,'lines',${linesJson('a.id')}) item
+      'agreementId',a.id,'version',a.version,'createdAt',a.created_at,'lines',${linesJson('a.id')},'myChange',${myChange('a.id')}) item
       FROM share_agreements a JOIN personal_projects p ON p.id=a.project_id WHERE a.status='pending'
-      AND EXISTS (SELECT 1 FROM share_agreement_lines WHERE agreement_id=a.id AND account_id=${me})
+      AND (EXISTS (SELECT 1 FROM share_agreement_lines WHERE agreement_id=a.id AND account_id=${me})
+        OR EXISTS (SELECT 1 FROM (${lowered('a.id')}) x WHERE x.account_id=${me}))
       AND NOT EXISTS (SELECT 1 FROM share_agreement_acceptances WHERE agreement_id=a.id AND account_id=${me}) ORDER BY a.created_at DESC)) pending,
     (SELECT json_group_array(json(item)) FROM (SELECT json_object('projectId',p.id,'projectTitle',p.title,'owner',${nick('p.owner_account_id')},
       'isOwner',${bool(`p.owner_account_id=${me}`)},'role',CASE WHEN p.owner_account_id=${me} THEN 'Owner' ELSE
@@ -525,9 +547,11 @@ export async function collab_team(db: AccessDatabase, hash: string | null, proje
       'latestVersion',(SELECT coalesce(max(version),0) FROM share_agreements WHERE project_id=p.id),
       'active',CASE WHEN ${insider} THEN (SELECT ${agreement('a')} FROM share_agreements a WHERE a.project_id=p.id AND a.status='active') END,
       'pending',CASE WHEN ${insider} THEN (SELECT ${agreement('a')} FROM share_agreements a WHERE a.project_id=p.id AND a.status='pending') END,
-      'myDecision',(SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM share_agreement_lines WHERE agreement_id=a.id AND account_id=${me}) THEN 'not_listed'
+      'myDecision',(SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM share_agreement_lines WHERE agreement_id=a.id AND account_id=${me})
+          AND NOT EXISTS (SELECT 1 FROM (${lowered('a.id')}) x WHERE x.account_id=${me}) THEN 'not_listed'
         ELSE coalesce((SELECT decision FROM share_agreement_acceptances WHERE agreement_id=a.id AND account_id=${me}),'needed') END
         FROM share_agreements a WHERE a.project_id=p.id AND a.status='pending'),
+      'myChange',(SELECT ${myChange('a.id')} FROM share_agreements a WHERE a.project_id=p.id AND a.status='pending'),
       'history',CASE WHEN ${insider} THEN json((SELECT json_group_array(json(${agreement('h')})) FROM
         (SELECT * FROM share_agreements WHERE project_id=p.id AND status NOT IN ('active','pending') ORDER BY version DESC) h)) ELSE json('[]') END,
       'openShareJobs',(SELECT coalesce(sum(share_percent),0) FROM job_state WHERE project_id=p.id AND share_percent IS NOT NULL

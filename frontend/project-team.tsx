@@ -143,11 +143,12 @@ export function ProjectTeam({ data, search }: { data: PageData; search: URLSearc
           <h4>Version {pending.version} is waiting for answers</h4>
           <ShareBar lines={pending.lines} />
           <AgreementTable lines={pending.lines} decisions />
+          {team.myChange && <p className="share-change"><strong>Version {pending.version} changes your share</strong> from {team.myChange.from}% to {team.myChange.to}%. It needs your answer before it can activate.</p>}
           {team.myDecision === "needed" && <div className="form-actions">
             <ActionForm action="agreement_accept" fields={{ ...fields, agreementId: pending.id, version: String(pending.version) }} primary>Accept version {pending.version}</ActionForm>
             <ActionForm action="agreement_decline" fields={{ ...fields, agreementId: pending.id, version: String(pending.version) }}>Decline</ActionForm>
           </div>}
-          <p className="hint">It becomes active when everyone listed accepts. One decline voids it.</p>
+          <p className="hint">It becomes active when everyone listed, and anyone whose share it lowers, accepts. One decline voids it.</p>
         </div>}
         {team.isOwner && <details className="disclosure" open={!active && !pending && team.team.some(member => member.status === "active")}>
           <summary>{pending ? `Replace version ${pending.version} with a new proposal` : "Propose a new version"}</summary>

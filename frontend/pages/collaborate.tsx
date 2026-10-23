@@ -76,9 +76,11 @@ function Jobs({ board, mine }: { board: Board; mine: boolean }) {
   const skills = [...new Set(board.jobs.flatMap(job => job.skills))].sort();
   const match = (job: JobSummary) => (!filters.money || job.money !== null) && (!filters.share || job.share !== null) &&
     (!filters.funded || job.byInstructor) && (!filters.skill || job.skills.includes(filters.skill));
-  const open = board.jobs.filter(job => job.state === "open");
+  // A hidden job leaves the board; its parties still find it under My jobs.
+  const listed = board.viewer === "instructor" ? board.jobs : board.jobs.filter(job => !job.hidden);
+  const open = listed.filter(job => job.state === "open");
   const shown = open.filter(match);
-  const rest = board.jobs.filter(job => job.state !== "open" && match(job));
+  const rest = listed.filter(job => job.state !== "open" && match(job));
   const toggle = (key: "money" | "share" | "funded") => setFilters({ ...filters, [key]: !filters[key] });
   return <section className="list-section" aria-labelledby="jobs-title">
     <div className="section-head"><h2 id="jobs-title">{mine ? "My jobs" : "Open jobs"}</h2>{!mine && <span className="mono">{open.length} open</span>}
@@ -163,6 +165,7 @@ function Teams({ board }: { board: Board }) {
       <div className="section-head"><h2 id="pending-title">Waiting for your answer</h2><span className="mono">{board.pending.length}</span></div>
       <ul className="team-list">{board.pending.map(item => <li key={item.agreementId} className="team-item">
         <p><strong>{item.owner}</strong> proposed version {item.version} of the share agreement for <a href={`/projects/${item.projectId}#team`}>{item.projectTitle}</a>.</p>
+        {item.myChange && <p className="share-change"><strong>Version {item.version} changes your share</strong> from {item.myChange.from}% to {item.myChange.to}%. It needs your answer before it can activate.</p>}
         <ShareBar lines={item.lines} />
         <AgreementTable lines={item.lines} decisions />
         <div className="form-actions">

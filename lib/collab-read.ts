@@ -8,7 +8,7 @@ export type JobSummary = {
   state: JobState; hidden: boolean; createdAt: string; claimant: string | null; claimedAt: string | null;
   deliveredAt: string | null; confirmed: boolean; isPoster: boolean; isClaimant: boolean;
 };
-export type EventDetail = { url?: string; note?: string | null; tier?: number; amount?: number | null; share?: number | null;
+export type EventDetail = { url?: string; note?: string | null; tier?: number; amount?: number | null; share?: number | null; shortfall?: number | null;
   failed?: string[]; reason?: string | null; outcome?: string; on?: string; round?: number; at?: string };
 export type JobEvent = { kind: string; actorKind: "member" | "instructor" | "system"; actor: string | null; at: string; detail: EventDetail | null };
 export type JobDetail = JobSummary & {
@@ -22,7 +22,8 @@ export type JobDetail = JobSummary & {
 export type LinkableProject = { id: string; title: string; line: number | null; milestones: { id: string; title: string }[] };
 export type AgreementLineView = { nickname: string; role: string; percent: number; brings: string | null; decision: "accepted" | "declined" | null };
 export type Invitation = { projectId: string; projectTitle: string; owner: string; role: string };
-export type PendingAgreement = { projectId: string; projectTitle: string; owner: string; agreementId: string; version: number; createdAt: string; lines: AgreementLineView[] };
+export type ShareChange = { from: number; to: number };
+export type PendingAgreement = { projectId: string; projectTitle: string; owner: string; agreementId: string; version: number; createdAt: string; lines: AgreementLineView[]; myChange: ShareChange | null };
 export type TeamMembership = { projectId: string; projectTitle: string; owner: string; isOwner: boolean; role: string; percent: number | null;
   activeVersion: number | null; pendingVersion: number | null; teamSize: number };
 export type Board = { viewer: "member" | "instructor"; instructorNickname: string; completed: number; activeClaims: number;
@@ -32,7 +33,7 @@ export type Agreement = { id: string; version: number; status: "pending" | "acti
   jobId: string | null; jobTitle: string | null; createdAt: string; activatedAt: string | null; closedAt: string | null; lines: AgreementLineView[] };
 export type Team = { projectId: string; owner: string; isOwner: boolean; insider: boolean; myStatus: "invited" | "active" | null; myRole: string | null;
   team: { nickname: string; role: string; status: "invited" | "active"; completed: number }[]; candidates: string[] | null;
-  latestVersion: number; active: Agreement | null; pending: Agreement | null; myDecision: "needed" | "accepted" | "declined" | "not_listed" | null;
+  latestVersion: number; active: Agreement | null; pending: Agreement | null; myDecision: "needed" | "accepted" | "declined" | "not_listed" | null; myChange: ShareChange | null;
   history: Agreement[]; openShareJobs: number };
 
 function fail(): never { throw new Error("Collaborate unavailable"); }
@@ -63,7 +64,7 @@ function detail(value: unknown): EventDetail | null {
   if (v.note !== undefined) out.note = opt(v.note, s => str(s, 1000));
   if (v.reason !== undefined) out.reason = opt(v.reason, s => str(s, 1000));
   for (const key of ["tier", "round"] as const) if (v[key] !== undefined && v[key] !== null) out[key] = int(0, 100)(v[key]);
-  for (const key of ["amount", "share"] as const) if (v[key] !== undefined) out[key] = opt(v[key], int(0, 1_000_000));
+  for (const key of ["amount", "share", "shortfall"] as const) if (v[key] !== undefined) out[key] = opt(v[key], int(0, 1_000_000));
   if (v.failed !== undefined) out.failed = list(v.failed, s => str(s, 200), 10);
   if (v.outcome !== undefined) out.outcome = one(["accepted", "paid", "open", "cancelled"])(v.outcome);
   if (v.on !== undefined) out.on = str(v.on, 10);
@@ -108,11 +109,15 @@ export function readBoard(value: any): Board {
     invitations: list(value.invitations, i => { const v = obj(i); return { projectId: id(v.projectId), projectTitle: str(v.projectTitle, 80),
       owner: name(v.owner), role: str(v.role, 40) }; }),
     pending: list(value.pending, p => { const v = obj(p); return { projectId: id(v.projectId), projectTitle: str(v.projectTitle, 80), owner: name(v.owner),
-      agreementId: id(v.agreementId), version: int(1, 1_000_000)(v.version), createdAt: time(v.createdAt), lines: list(v.lines, line, 9) }; }),
+      agreementId: id(v.agreementId), version: int(1, 1_000_000)(v.version), createdAt: time(v.createdAt), lines: list(v.lines, line, 9), myChange: opt(v.myChange, shareChange) }; }),
     teams: list(value.teams, t => { const v = obj(t); return { projectId: id(v.projectId), projectTitle: str(v.projectTitle, 80), owner: name(v.owner),
       isOwner: bool(v.isOwner), role: str(v.role, 40), percent: opt(v.percent, int(0, 100)), activeVersion: opt(v.activeVersion, int(1, 1_000_000)),
       pendingVersion: opt(v.pendingVersion, int(1, 1_000_000)), teamSize: int(1, 100)(v.teamSize) }; }),
   };
+}
+function shareChange(value: unknown): ShareChange {
+  const v = obj(value);
+  return { from: int(1, 100)(v.from), to: int(0, 99)(v.to) };
 }
 function agreement(value: unknown): Agreement {
   const v = obj(value);
@@ -128,6 +133,6 @@ export function readTeam(value: any): Team {
       completed: int(0, 100_000)(x.completed) }; }, 20),
     candidates: opt(v.candidates, c => list(c, name, 20)), latestVersion: int(0, 1_000_000)(v.latestVersion),
     active: opt(v.active, agreement), pending: opt(v.pending, agreement),
-    myDecision: opt(v.myDecision, one(["needed", "accepted", "declined", "not_listed"] as const)),
+    myDecision: opt(v.myDecision, one(["needed", "accepted", "declined", "not_listed"] as const)), myChange: opt(v.myChange, shareChange),
     history: list(v.history, agreement, 1000), openShareJobs: int(0, 10_000)(v.openShareJobs) };
 }
