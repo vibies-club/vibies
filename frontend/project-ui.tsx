@@ -1,6 +1,7 @@
 import { MILESTONE_BLOCKED_NOTE_LIMIT, MILESTONE_TITLE_LIMIT } from "../lib/project-core";
 import type { ProjectDetails } from "../lib/project-core";
 import type { Project, ProjectMilestone } from "../lib/project-read";
+import { Arrow, EmptyState, HexBadge, MessageBanner, Progress } from "./ui";
 
 const messages: Record<string, string> = {
   created: "Draft saved. Review the details before you publish.",
@@ -30,7 +31,7 @@ const messages: Record<string, string> = {
 };
 
 export function ProjectMessage({ message }: { message?: string }) {
-  return message && Object.hasOwn(messages, message) ? <p role="status">{messages[message]}</p> : null;
+  return message && Object.hasOwn(messages, message) ? <MessageBanner>{messages[message]}</MessageBanner> : null;
 }
 
 export function ProjectFields({ details }: { details?: ProjectDetails }) {
@@ -50,17 +51,46 @@ export function ProjectFields({ details }: { details?: ProjectDetails }) {
   </>;
 }
 
-export function SharedDetails({ project }: { project: ProjectDetails & { nickname: string } }) {
-  return <><p>By {project.nickname}</p><p className="project-summary">{project.summary}</p>
-    {project.demoUrl && <p><a href={project.demoUrl} rel="noreferrer" referrerPolicy="no-referrer">Open demo</a></p>}</>;
+export function DemoLink({ url, primary }: { url: string | null; primary?: boolean }) {
+  return url ? <a className={primary ? "button primary" : "button"} href={url} rel="noreferrer" referrerPolicy="no-referrer">Open demo<Arrow /></a> : null;
+}
+
+/** Status words for a product. Community lists only carry live products, so they have no states. */
+export function ProductStatus({ project }: { project: Pick<Project, "publication" | "connection" | "moderation"> }) {
+  if (!project.publication) return null;
+  const live = project.publication === "Published" && project.connection === "Connected" && project.moderation === "Visible";
+  return <span className="badges">
+    {live ? <HexBadge tone="strong">Live</HexBadge> : <HexBadge tone={project.publication === "Draft" ? "muted" : "plain"}>{project.publication}</HexBadge>}
+    {project.connection === "Disconnected" && <HexBadge>Disconnected</HexBadge>}
+    {project.moderation === "Hidden" && <HexBadge>Hidden</HexBadge>}
+  </span>;
+}
+
+/** A clamped summary for lists; the full text lives on the product page. */
+export function SummaryPreview({ project }: { project: Pick<Project, "id" | "summary"> }) {
+  const long = project.summary.length > 160 || project.summary.split("\n").length > 3;
+  return <>
+    <p className={long ? "summary is-clamped" : "summary"}>{project.summary}</p>
+    {long && <a className="text-link" href={`/projects/${project.id}`}>Read more</a>}
+  </>;
 }
 
 export function RoadmapProgress({ project }: { project: Pick<Project, "progressPercentage"> }) {
-  return project.progressPercentage === null ? null : <p className="roadmap-summary">{project.progressPercentage}% complete</p>;
+  return project.progressPercentage === null ? <p className="mono quiet">No roadmap yet</p> :
+    <Progress value={project.progressPercentage} label="Roadmap progress" />;
 }
 
-function milestoneStatus(milestone: ProjectMilestone) {
-  return milestone.completed ? "Complete" : milestone.blockedNote ? "Blocked" : "Incomplete";
+function milestoneStatus(milestone: ProjectMilestone, next: boolean) {
+  return milestone.completed ? "Done" : milestone.blockedNote ? "Blocked" : next ? "Next up" : "Planned";
+}
+
+function MilestoneNode({ milestone, next }: { milestone: ProjectMilestone; next: boolean }) {
+  return <svg className="milestone-node" viewBox="0 0 34 30" width="34" height="30" aria-hidden="true">
+    <polygon points="9,1.5 25,1.5 32.5,15 25,28.5 9,28.5 1.5,15" />
+    {milestone.completed ? <path d="m11 15.5 4 4 8-8.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /> :
+      milestone.blockedNote ? <path d="M17 9v7m0 4v.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /> :
+      next ? <polygon className="node-dot" points="13.5,10 20.5,10 24,15 20.5,20 13.5,20 10,15" /> : null}
+  </svg>;
 }
 
 function RoadmapHiddenFields({ project, milestone, action }: {
@@ -80,18 +110,15 @@ function MilestoneEditor({ project, milestone }: { project: Project; milestone: 
   const titleId = `milestone-title-${milestone.id}`;
   const noteId = `milestone-note-${milestone.id}`;
   const helpId = `milestone-help-${milestone.id}`;
-  return <details>
-    <summary>Edit milestone</summary>
-    <form action="/projects/action" method="post">
+  return <form action="/projects/action" method="post">
       <RoadmapHiddenFields project={project} milestone={milestone} action="milestone_edit" />
       <label htmlFor={titleId}>Milestone title</label>
       <input id={titleId} name="title" required defaultValue={milestone.title} aria-describedby={helpId} />
       {!milestone.completed && <><label htmlFor={noteId}>Blocked note (optional)</label>
         <textarea id={noteId} name="blockedNote" rows={3} defaultValue={milestone.blockedNote ?? ""} aria-describedby={helpId} /></>}
       <p id={helpId} className="hint">Title: 1 to {MILESTONE_TITLE_LIMIT} characters. {!milestone.completed && <>Note: 1 to {MILESTONE_BLOCKED_NOTE_LIMIT} characters when present. Use plain text. The note is visible to everyone who can view this project.</>}</p>
-      <button type="submit">Save</button>{" "}<a href={`/projects/${project.id}`}>Cancel</a>
-    </form>
-  </details>;
+      <div className="form-actions"><button type="submit">Save</button><a className="text-link" href={`/projects/${project.id}`}>Cancel</a></div>
+    </form>;
 }
 
 function MilestoneControls({ project, milestone, index, total }: {
@@ -100,59 +127,72 @@ function MilestoneControls({ project, milestone, index, total }: {
   index: number;
   total: number;
 }) {
-  const completeId = `milestone-complete-${milestone.id}`;
+  const toggle = milestone.completed ? "Mark not done" : "Mark done";
   return <div className="roadmap-controls">
     <form action="/projects/action" method="post">
       <RoadmapHiddenFields project={project} milestone={milestone} action="milestone_complete" />
-      <label htmlFor={completeId}><input id={completeId} type="checkbox" name="completed" value="yes" defaultChecked={milestone.completed} /> Complete</label>{" "}
-      <button type="submit">Save completion</button>
+      <input type="hidden" name="completed" value={milestone.completed ? "no" : "yes"} />
+      <button type="submit" className="small" aria-label={`${toggle}: ${milestone.title}`}>{toggle}</button>
     </form>
+    <details className="disclosure milestone-more">
+    <summary>Edit, move or delete</summary>
     <MilestoneEditor project={project} milestone={milestone} />
     <div className="roadmap-order">
       <form action="/projects/action" method="post">
         <RoadmapHiddenFields project={project} milestone={milestone} action="milestone_move" />
         <input type="hidden" name="direction" value="up" />
-        <button type="submit" disabled={index === 0}>Move up</button>
+        <button type="submit" className="small" disabled={index === 0}>Move up</button>
       </form>{" "}
       <form action="/projects/action" method="post">
         <RoadmapHiddenFields project={project} milestone={milestone} action="milestone_move" />
         <input type="hidden" name="direction" value="down" />
-        <button type="submit" disabled={index === total - 1}>Move down</button>
+        <button type="submit" className="small" disabled={index === total - 1}>Move down</button>
       </form>
     </div>
-    <details>
-      <summary>Delete milestone</summary>
+    <details className="disclosure">
+      <summary>Delete</summary>
       <p>Delete “{milestone.title}”?</p>
       <form action="/projects/action" method="post">
         <RoadmapHiddenFields project={project} milestone={milestone} action="milestone_delete" />
-        <label className="confirmation"><input type="checkbox" name="confirm" value="yes" required /> I confirm that I want to delete this milestone.</label>{" "}
-        <button type="submit">Delete milestone</button>{" "}<a href={`/projects/${project.id}`}>Cancel</a>
+        <label className="confirmation check"><input type="checkbox" name="confirm" value="yes" required /> I confirm that I want to delete this milestone.</label>
+        <div className="form-actions"><button type="submit">Delete milestone</button><a className="text-link" href={`/projects/${project.id}`}>Cancel</a></div>
       </form>
+    </details>
     </details>
   </div>;
 }
 
-export function ProjectRoadmap({ project }: { project: Project }) {
+export function ProjectRoadmap({ project, quiet }: { project: Project; quiet?: boolean }) {
   if (!project.roadmapAvailable || !project.roadmap) return null;
   const { roadmap } = project;
   const addTitleId = "milestone-title-new";
   const addNoteId = "milestone-note-new";
   const addHelpId = "milestone-help-new";
-  return <section className="roadmap" aria-labelledby="roadmap-title">
-    <h2 id="roadmap-title">Roadmap</h2>
-    {roadmap.totalCount === 0 ? <p>No milestones yet.</p> : <>
-      <p><progress max={roadmap.totalCount} value={roadmap.completedCount} aria-label={`${roadmap.percentage}% complete`} /></p>
-      <p>{roadmap.completedCount} of {roadmap.totalCount} complete, {roadmap.percentage}%.</p>
-      <ol>
-        {roadmap.milestones.map((milestone, index) => <li key={milestone.id} className="roadmap-milestone">
-          <h3>{milestone.title}</h3>
-          <p><strong>Status:</strong> {milestoneStatus(milestone)}</p>
-          {milestone.blockedNote && <p><strong>Blocked note:</strong> {milestone.blockedNote}</p>}
-          {project.isOwner && <MilestoneControls project={project} milestone={milestone} index={index} total={roadmap.totalCount} />}
-        </li>)}
+  const nextId = roadmap.milestones.find(milestone => !milestone.completed)?.id;
+  return <section className="card roadmap" aria-labelledby="roadmap-title">
+    <div className="card-bar"><h2 id="roadmap-title">Roadmap</h2>{roadmap.totalCount > 0 && <span className="card-meta">{roadmap.completedCount} of {roadmap.totalCount} done</span>}</div>
+    <div className="card-body">
+    {roadmap.totalCount === 0 ? (project.isOwner ?
+      <EmptyState href="#milestone-title-new" action="Add a milestone" quiet={quiet}>Add your first milestone so classmates can follow your progress.</EmptyState> :
+      <p className="quiet">No milestones yet.</p>) : <>
+      <Progress value={roadmap.percentage ?? 0} label="Roadmap progress" detail={`${roadmap.percentage}% complete`} />
+      <ol className="milestones">
+        {roadmap.milestones.map((milestone, index) => {
+          const next = milestone.id === nextId;
+          return <li key={milestone.id} className={`milestone${milestone.completed ? " is-done" : ""}${next ? " is-next" : ""}`}>
+            <MilestoneNode milestone={milestone} next={next} />
+            <div className="milestone-body">
+              <h3>{milestone.title}</h3>
+              <p className="milestone-state">{milestoneStatus(milestone, next)}</p>
+              {milestone.blockedNote && <p className="blocked-note"><span className="mono">Blocked note</span> {milestone.blockedNote}</p>}
+              {project.isOwner && <MilestoneControls project={project} milestone={milestone} index={index} total={roadmap.totalCount} />}
+            </div>
+          </li>;
+        })}
       </ol>
     </>}
     {project.isOwner && <form action="/projects/action" method="post" className="roadmap-add">
+      <h3>Add a milestone</h3>
       <RoadmapHiddenFields project={project} action="milestone_add" />
       <label htmlFor={addTitleId}>Milestone title</label>
       <input id={addTitleId} name="title" required aria-describedby={addHelpId} />
@@ -162,11 +202,12 @@ export function ProjectRoadmap({ project }: { project: Project }) {
       {roadmap.totalCount >= 20 && <p role="status">This roadmap has the maximum of 20 milestones.</p>}
       <button type="submit" disabled={roadmap.totalCount >= 20}>Add milestone</button>
     </form>}
+    </div>
   </section>;
 }
 
-export function ProjectAction({ id, action, version, children }: { id: string; action: string; version?: string; children: React.ReactNode }) {
-  return <form action="/projects/action" method="post"><input type="hidden" name="id" value={id} />
+export function ProjectAction({ id, action, version, primary, children }: { id: string; action: string; version?: string; primary?: boolean; children: React.ReactNode }) {
+  return <form action="/projects/action" method="post" className="inline-form"><input type="hidden" name="id" value={id} />
     {version && <input type="hidden" name="version" value={version} />}
-    <button name="action" value={action}>{children}</button></form>;
+    <button name="action" value={action} className={primary ? "primary" : undefined}>{children}</button></form>;
 }

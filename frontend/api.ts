@@ -1,11 +1,13 @@
 import type { PageData } from "./contracts";
 
-const privatePaths = new Set(["/welcome", "/wiki", "/admin/members", "/projects", "/projects/connect"]);
+const privatePaths = new Set(["/welcome", "/wiki", "/admin/members", "/admin/gates", "/course", "/collaborate", "/projects", "/projects/connect"]);
+const sessionPath = /^\/course\/([1-9]|[12]\d|30)$/;
+const collaboratePath = /^\/collaborate\/(jobs|ideas)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const projectPath = /^\/projects\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const publicPaths = new Set(["/", "/demo", "/errors", "/sign-in", "/access-denied"]);
 
 export function privateReturnPath(value: string | null): string | null {
-  return value && (privatePaths.has(value) || projectPath.test(value)) ? value : null;
+  return value && (privatePaths.has(value) || projectPath.test(value) || sessionPath.test(value) || collaboratePath.test(value)) ? value : null;
 }
 
 export function isPagePath(path: string): boolean {
