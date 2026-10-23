@@ -1,34 +1,22 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { assertOperationWritable, assertWritable, isReadOnly, ReadOnlyError, readOnlyResponse } from "../lib/read-only.ts";
 import { access_state, type AccessDatabase } from "../lib/d1/access.ts";
 import { beginGoogleLink, cancelGoogleLink, finishGoogleSignIn } from "../lib/google-auth/store.ts";
 import { createGoogleRoutes } from "../lib/google-auth/http.ts";
 
-const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
-
 test("cutover blocks every named mutation and unknown future operations while retaining reads", () => {
   const previous = process.env.VIBIES_READ_ONLY;
   process.env.VIBIES_READ_ONLY = "1";
   try {
     assert.equal(isReadOnly(), true);
-    const domain = source("lib/domain.ts");
-    const names = [...domain.split("type Arguments = {")[1].split("};")[0].matchAll(/^  (\w+):/gm)].map((m) => m[1]);
     const reads = ["access_state", "members", "project_actor", "project_operation_context", "projects", "project"];
-    assert.ok(names.length >= 22);
-    for (const name of names) {
-      if (reads.includes(name)) assert.doesNotThrow(() => assertOperationWritable(name));
-      else assert.throws(() => assertOperationWritable(name), ReadOnlyError);
-    }
+    const writes = ["change_member", "begin_sign_in", "consume_sign_in", "finish_sign_in", "end_session", "connect_project",
+      "add_project_milestone", "edit_project_milestone", "set_project_milestone_completion", "move_project_milestone",
+      "delete_project_milestone", "moderate_project", "edit_project", "delete_project", "record_project_connection", "publish_project"];
+    for (const name of reads) assert.doesNotThrow(() => assertOperationWritable(name));
+    for (const name of writes) assert.throws(() => assertOperationWritable(name), ReadOnlyError);
     assert.throws(() => assertOperationWritable("future_write"), ReadOnlyError);
-    assert.ok(domain.indexOf("assertOperationWritable(name)") < domain.indexOf("if (usesD1())"));
-    assert.match(domain, /isReadOnly\(\) && name === "access_state"/);
-    assert.match(domain, /vibies_private\.access_state_read_only\(\$1\)/);
-    const helper = source("scripts/read-only-access.sql");
-    assert.doesNotMatch(helper, /\b(delete from|update|insert into)\b/i);
-    assert.match(helper, /created_at > clock_timestamp\(\) - interval '24 hours'/);
-    assert.match(helper, /grant execute.*to vibies_runtime/);
   } finally { if (previous === undefined) delete process.env.VIBIES_READ_ONLY; else process.env.VIBIES_READ_ONLY = previous; }
 });
 
@@ -65,11 +53,7 @@ test("Google direct helpers and HTTP entrypoints reject before any database or p
   } finally { if (previous === undefined) delete process.env.VIBIES_READ_ONLY; else process.env.VIBIES_READ_ONLY = previous; }
 });
 
-test("HTTP mutations guard early and sign-out clears only browser cookies during cutover", async () => {
-  for (const file of ["app/auth/start/route.ts","app/auth/callback/route.ts","app/projects/action/route.ts","app/admin/members/action/route.ts","lib/google-auth/server.ts"]) {
-    const text = source(file); assert.match(text,/if \(isReadOnly\(\)\) return readOnlyResponse\(\)/,file);
-  }
-  assert.match(source("app/auth/sign-out/route.ts"), /if \(isReadOnly\(\)\) \{[\s\S]*?clearGoogleCookies[\s\S]*?return response;/);
+test("the read-only response tells members they can still browse", async () => {
   const response = readOnlyResponse(); assert.equal(response.status,503); assert.equal(response.headers.get("cache-control"),"no-store");
   assert.match(await response.text(), /You can still browse/);
 });

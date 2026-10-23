@@ -15,21 +15,3 @@ export function demoState(data: unknown, error: unknown): DemoState {
   ) return { kind: "error" };
   return { kind: "ready", project: { id: data.id, title: data.title, summary: data.summary } };
 }
-
-export function supabaseConfig(url: string | undefined, key: string | undefined) {
-  const missing = [
-    !url?.trim() && "NEXT_PUBLIC_SUPABASE_URL",
-    !key?.trim() && "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-  ].filter((name): name is string => Boolean(name));
-  if (missing.length) return { kind: "configuration" as const, missing };
-  try {
-    const address = new URL(url!);
-    if (address.protocol !== "https:" || address.username || address.password ||
-        !/^sb_publishable_[A-Za-z0-9_-]+$/.test(key!)) {
-      return { kind: "configuration" as const, missing: [] };
-    }
-  } catch {
-    return { kind: "configuration" as const, missing: [] };
-  }
-  return { kind: "configured" as const, url: url!, key: key! };
-}
