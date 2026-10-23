@@ -11,7 +11,7 @@ export function readOnlyResponse() {
   });
 }
 // Unknown operations fail closed, including future mutations.
-export const readOnlyOperations = ["access_state", "members", "project_actor", "project_operation_context", "projects", "project"] as const;
+export const readOnlyOperations = ["access_state", "members", "project_actor", "project_operation_context", "projects", "project", "gates_mine", "gates_board"] as const;
 export function assertOperationWritable(name: string) {
   if (!(readOnlyOperations as readonly string[]).includes(name)) assertWritable();
 }
