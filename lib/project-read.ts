@@ -16,7 +16,9 @@ export type ProjectRoadmap = {
 
 export type Project = ProjectDetails & { id: string; nickname: string; isOwner: boolean;
   publication?: string; connection?: string; moderation?: string; lastCheckedAt?: string | null; version?: string;
-  roadmapAvailable: boolean; roadmap?: ProjectRoadmap; progressPercentage: number | null };
+  roadmapAvailable: boolean; roadmap?: ProjectRoadmap; progressPercentage: number | null;
+  /** Only on the owner's list: the first milestone that is not done. */
+  nextMilestone?: string | null };
 
 function readProgress(value: unknown): number | null {
   if (value === undefined || value === null) return null;
@@ -69,6 +71,10 @@ export function readProject(value: any): Project {
     if (value.roadmap === undefined) throw new Error("Project unavailable");
     result.roadmap = readRoadmap(value.roadmap);
     if (progressPercentage !== null && progressPercentage !== result.roadmap.percentage) throw new Error("Project unavailable");
+  }
+  if (value.nextMilestone !== undefined) {
+    if (value.nextMilestone !== null && milestoneDetails(value.nextMilestone, null)?.title !== value.nextMilestone) throw new Error("Project unavailable");
+    result.nextMilestone = value.nextMilestone;
   }
   if (value.version !== undefined) {
     if (!projectVersion(value.version)) throw new Error("Project unavailable");

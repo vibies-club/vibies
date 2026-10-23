@@ -13,7 +13,7 @@ export async function projectAction(request: Request, services: Services) {
     if (typeof form === "number") return safeError(form);
     const action = form.get("action");
     if (!["connect", "publish", "check", "edit", "delete", "hide", "restore", "milestone_add", "milestone_edit",
-      "milestone_complete", "milestone_move", "milestone_delete"].includes(action ?? "")) return safeError(400);
+      "milestone_complete", "milestone_move", "milestone_delete", "seed_course_roadmap"].includes(action ?? "")) return safeError(400);
     if (form.has("kind")) return safeError(400);
     if (action === "connect") {
       const actor = await projectActor(hash);
@@ -31,15 +31,17 @@ export async function projectAction(request: Request, services: Services) {
     }
     const id = form.get("id");
     if (!projectId(id)) return safeError(404);
-    if (["milestone_add", "milestone_edit", "milestone_complete", "milestone_move", "milestone_delete"].includes(action ?? "")) {
+    if (["milestone_add", "milestone_edit", "milestone_complete", "milestone_move", "milestone_delete", "seed_course_roadmap"].includes(action ?? "")) {
       const context = await projectActor(hash, id) as ProjectContext | null;
       if (!context) return safeError(403);
       const version = form.get("version");
       if (!projectVersion(version)) return safeError(400);
       const milestoneId = form.get("milestoneId");
-      if (action !== "milestone_add" && !projectId(milestoneId)) return safeError(404);
+      if (action !== "milestone_add" && action !== "seed_course_roadmap" && !projectId(milestoneId)) return safeError(404);
       let result;
-      if (action === "milestone_add" || action === "milestone_edit") {
+      if (action === "seed_course_roadmap") {
+        result = await domainOperation("seed_project_roadmap", hash, id, version);
+      } else if (action === "milestone_add" || action === "milestone_edit") {
         const details = milestoneDetails(form.get("title"), form.get("blockedNote") ?? null);
         if (!details) return go(`/projects/${id}?message=invalid`);
         const value = action === "milestone_add"
@@ -69,6 +71,8 @@ export async function projectAction(request: Request, services: Services) {
         : result.kind === "moved" ? "milestone_moved"
         : result.kind === "unchanged" ? "milestone_unchanged"
         : result.kind === "deleted" ? "milestone_deleted"
+        : result.kind === "seeded" ? "roadmap_seeded"
+        : result.kind === "not_empty" ? "roadmap_not_empty"
         : result.kind === "full" ? "roadmap_full"
         : result.kind === "stale" ? "stale"
         : "invalid";

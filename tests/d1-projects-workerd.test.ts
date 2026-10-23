@@ -121,6 +121,29 @@ test('project operations preserve atomicity and authorization on local D1/worker
       await binding.prepare("UPDATE accounts SET status='approved' WHERE github_id='1'").run();
     });
 
+    await t.test('course roadmap seeds atomically, in order, only into an empty owned roadmap',async()=> {
+      await reset();const id=await create();
+      for(const user of [2,4,5,99]) assert.equal((await api.seed_project_roadmap(db,hash(user),id,'1')).kind,'forbidden');
+      assert.equal((await api.seed_project_roadmap(db,hash(1),id,'2')).kind,'stale');
+      await binding.prepare("CREATE TRIGGER fail_seed BEFORE INSERT ON project_milestones WHEN NEW.position=6 BEGIN SELECT RAISE(ABORT,'synthetic seed failure'); END").run();
+      await assert.rejects(api.seed_project_roadmap(db,hash(1),id,'1'),/synthetic seed failure/);
+      assert.equal((await roadmap(id)).length,0);assert.equal((await stored(id))?.exactVersion,'1');
+      await binding.prepare('DROP TRIGGER fail_seed').run();
+      const both=await Promise.all([api.seed_project_roadmap(db,hash(1),id,'1'),api.seed_project_roadmap(db,hash(1),id,'1')]);
+      assert.deepEqual(both.map(row=>row.kind).sort(),['seeded','stale']);
+      assert.deepEqual((await roadmap(id)).map(row=>[row.title,row.position,row.completed]),
+        ['Core screen','Works on demo data','Data and sign-in','3 real users','Polish and SEO','Demo Day'].map((title,n)=>[title,n+1,0]));
+      assert.equal((await stored(id))?.exactVersion,'2');
+      assert.equal((await api.seed_project_roadmap(db,hash(1),id,'2')).kind,'not_empty');
+      assert.equal((await roadmap(id)).length,6);
+      const mine=(await api.projects(db,hash(1))).mine!;
+      assert.equal(mine[0].nextMilestone,'Core screen');assert.equal(mine[0].progressPercentage,0);
+      const other=await create();
+      await api.add_project_milestone(db,hash(1),other,'1','Own step');
+      assert.equal((await api.seed_project_roadmap(db,hash(1),other,'2')).kind,'not_empty');
+      assert.equal((await roadmap(other)).length,1);
+    });
+
     await t.test('owner-only mutations, reads and moderation respect scope and expiration',async()=> {
       await reset();const id=await create();
       await api.add_project_milestone(db,hash(1),id,'1','First','Waiting');

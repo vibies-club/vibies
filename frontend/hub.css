@@ -151,24 +151,51 @@ html:has(.app) { background: var(--ground); scrollbar-color: var(--comb-line) va
 .app .summary.is-clamped { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 .app .summary + .text-link { margin-top: -10px; }
 .app .by { color: var(--ink-2); }
+.next-action { display: grid; justify-items: start; gap: 10px; padding: 14px 16px; border: 1px dashed var(--comb-line); border-radius: var(--radius-field); background: var(--cell-fill); }
+.next-action p { font-weight: 600; }
+.seed-roadmap { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; }
+.community-list { display: grid; padding: 0; list-style: none; border: 1px solid var(--rule-warm); border-radius: var(--radius-card); background: var(--paper); box-shadow: var(--shadow-raised); }
+.community-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 240px); gap: 10px 32px; align-items: start; padding: clamp(16px, 2.2vw, 22px) clamp(18px, 2.4vw, 26px); }
+.community-row + .community-row { border-top: 1px solid var(--rule-soft); }
+.community-main { display: grid; gap: 6px; min-width: 0; }
+.community-main h3 { display: inline; font-size: 20px; line-height: 1.2; font-weight: 800; letter-spacing: -.015em; overflow-wrap: anywhere; }
+.community-main h3 a { text-decoration: none; }
+.community-main h3 a:hover { text-decoration: underline; }
+.community-main .summary + .text-link { margin-top: -6px; min-height: 32px; }
+.community-meta { display: grid; justify-items: start; gap: 4px; padding-top: 4px; }
+.community-meta .progress { width: 100%; }
 
 /* Product page */
 .project-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); gap: var(--space-md); align-items: start; }
 .project-main, .project-side { display: grid; gap: var(--space-md); min-width: 0; }
 .project-about .summary { color: var(--ink); font-size: 18px; line-height: 1.55; }
 .project-side .card-body > p { overflow-wrap: anywhere; }
+.next-step { display: grid; justify-items: start; gap: 10px; padding: clamp(18px, 2.6vw, 26px); border: 1.5px solid var(--honey-edge); border-radius: var(--radius-card); background: var(--cell-fill); box-shadow: var(--shadow-raised); }
+.next-step h2 { font-size: var(--text-h3); font-weight: 800; letter-spacing: -.01em; }
+.next-step p { max-width: 60ch; }
+.owner-settings .card-body { gap: 8px; }
+.owner-settings .form-actions { margin-bottom: 4px; }
+.roadmap-empty { display: grid; justify-items: start; gap: 14px; }
+.roadmap-empty > p { max-width: 52ch; }
+.course-steps { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; list-style: none; counter-reset: course; }
+.course-steps li { counter-increment: course; padding: 4px 10px; border: 1px dashed var(--comb-line); border-radius: var(--radius-soft); background: var(--paper); font: 500 13px/1.4 var(--mono); }
+.course-steps li::before { content: counter(course) " "; color: var(--amber-ink); font-weight: 700; }
 .milestones { display: grid; padding: 0; list-style: none; }
 .milestone { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 14px; padding: 14px 0; }
 .milestone:not(:last-child)::before { content: ""; position: absolute; top: 46px; bottom: -12px; left: 16.2px; border-left: 1.6px solid var(--comb-line); }
 .milestone-node { color: var(--amber-ink); overflow: visible; }
 .milestone-node polygon:first-child { fill: var(--paper); stroke: var(--comb-line); stroke-width: 1.6; }
+.milestone.is-done:not(:last-child)::before { border-left-color: var(--amber); }
 .milestone.is-done .milestone-node polygon:first-child { fill: var(--cell-fill); stroke: var(--amber); }
+.milestone.is-blocked .milestone-node polygon:first-child { stroke: var(--amber-ink); stroke-dasharray: 4 3; }
 .milestone.is-next .milestone-node polygon:first-child { fill: var(--cell-fill); stroke: var(--amber); stroke-width: 2.6; }
 .milestone-node .node-dot { fill: var(--honey); stroke: var(--amber-ink); stroke-width: 1.2; }
 .milestone-body { display: grid; gap: 4px; min-width: 0; padding-top: 3px; }
 .milestone-body h3 { font-size: 18px; line-height: 1.25; font-weight: 800; letter-spacing: -.01em; overflow-wrap: anywhere; }
 .milestone.is-done h3 { color: var(--ink-2); }
 .milestone-state { color: var(--ink-2); font: 500 13px/1.3 var(--mono); }
+.milestone-state .step-no { margin-right: 4px; padding: 1px 6px; border: 1px solid var(--rule-soft); border-radius: var(--radius-soft); color: var(--ink-2); font-weight: 500; }
+.milestone.is-blocked .milestone-state { color: var(--amber-ink); font-weight: 700; }
 .milestone.is-next .milestone-state { color: var(--amber-ink); font-weight: 700; }
 .blocked-note { max-width: 60ch; padding: 8px 12px; border: 1px dashed var(--comb-line); border-radius: var(--radius-field); background: var(--cell-fill); overflow-wrap: anywhere; }
 .blocked-note .mono { margin-right: 6px; color: var(--amber-ink); font-weight: 700; }
@@ -216,6 +243,14 @@ html:has(.app) { background: var(--ground); scrollbar-color: var(--comb-line) va
 .step > div { display: grid; justify-items: start; gap: 10px; min-width: 0; }
 .step h2 { font-size: var(--text-h2); line-height: 1.15; font-weight: 800; letter-spacing: -.02em; }
 .step-cell { width: 58px; }
+.step.is-current { border: 1.5px solid var(--honey-edge); box-shadow: var(--shadow-card); }
+.step.is-current .step-cell polygon { fill: var(--honey); stroke: var(--amber-ink); }
+.step.is-current .step-cell .mono { color: var(--ink); }
+.step.is-done, .step.is-later { box-shadow: none; }
+.step.is-done h2, .step.is-later h2 { font-size: var(--text-h3); }
+.step.is-later { background: rgb(255 252 243 / .7); border-style: dashed; }
+.step.is-later .step-cell polygon { stroke: var(--comb-line); }
+.step select { max-width: 560px; }
 .step form { margin: 0; }
 
 /* Members */
@@ -287,6 +322,7 @@ html:has(.app) { background: var(--ground); scrollbar-color: var(--comb-line) va
   .wiki-notes { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   .wiki-notes dd { margin-bottom: 10px; }
   .step { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .community-row { grid-template-columns: minmax(0, 1fr); }
   .step-cell { width: 48px; }
   .app .privacy-note { align-items: flex-start; }
   .privacy-cell { width: 44px; }
