@@ -3,7 +3,22 @@
 [Documentation home](../README.md) · [Decisions](DECISIONS.md) ·
 [Roadmap](ROADMAP.md)
 
-**Updated:** 2026-09-16
+**Updated:** 2026-10-23
+
+## State on 2026-10-23
+
+- No open PRs. Merged today: #63 (no required review, D-021), #59 (sign-in in
+  the daylight design), #54 (`/errors` demo and its home page section), and
+  #36 (protected `/wiki` command reference, D-022).
+- Closed without merging, branches kept: #33 (Error Library schema; its old
+  snapshots would have revoked Roadmap grants in Production) and #62
+  (Cloudflare migration; it changed the live site and added runtime
+  dependencies).
+- Production on Vercel serves the merged main. Live checks: the home page,
+  `/errors`, and `/sign-in` load; "Continue with GitHub" reaches GitHub with the
+  Production callback; signed-out `/wiki` returns to sign-in.
+- Production has 7 approved Members, all onboarded, and 7 published Personal
+  Projects. One Member place is free.
 
 ## Repository setup
 
