@@ -3,6 +3,7 @@ import { validToken } from '../lib/access-core';
 import { demoState } from '../lib/demo';
 import { readProject } from '../lib/project-read';
 import { projectId } from '../lib/project-core';
+import { wikiEntries } from '../lib/wiki';
 import { privatePath, type Services, type Env } from './services';
 export async function page(request:Request,s:Services,env:Env) {
   const url=new URL(request.url),path=url.searchParams.get('path');
@@ -31,6 +32,7 @@ export async function page(request:Request,s:Services,env:Env) {
     }
     if(!data.redirect){
       const hash=await s.sessionHash();
+      if(path==='/wiki')data.wiki=wikiEntries;
       if(path==='/demo')data.demo=demoState(await(await s.database()).prepare('SELECT id,title,summary FROM demo_projects WHERE id=1').first(),null);
       if(path==='/welcome'&&s.googleEnabled&&hash){
         const row=await(await s.database()).prepare(`SELECT EXISTS(SELECT 1 FROM google_identity_map m JOIN google_accounts g ON g.userId=m.user_id WHERE m.github_id=s.github_id) linked,(s.auth_provider='github' AND julianday(s.created_at)>julianday('now','-5 minutes')) canLink FROM sessions s WHERE s.session_hash=? AND julianday(s.created_at)>julianday('now','-24 hours')`).bind(hash).first<{linked:number;canLink:number}>();

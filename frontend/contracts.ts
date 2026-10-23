@@ -1,3 +1,4 @@
+import type { WikiEntry } from "../lib/wiki-filter";
 import type { Access } from "../lib/access-core";
 import type { MemberAccount } from "../lib/d1/access";
 import type { DemoState } from "../lib/demo";
@@ -17,5 +18,6 @@ export type PageData = {
   members?: { activeCount: number; accounts: MemberAccount[] };
   projects?: { mine: Project[]; community: Project[] };
   project?: { kind: "ok"; project: Project } | { kind: "missing" };
+  wiki?: WikiEntry[];
   connect?: { install: string | null; repositories: RepositoryChoice[]; status?: string };
 };

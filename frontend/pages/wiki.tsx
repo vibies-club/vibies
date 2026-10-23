@@ -1,13 +1,15 @@
 import type { PageData } from "../contracts";
 import { AccessShell, Retry } from "../access-shell";
 import { CopyCommand } from "../../app/wiki/copy-command";
-import { filterWiki, wikiTopics } from "../../lib/wiki";
+import { filterEntries } from "../../lib/wiki-filter";
 
 export function WikiPage({ data, search }: { data: PageData; search: URLSearchParams }) {
   if (data.kind === "error" || data.access.kind === "error") return <AccessShell data={data}><Retry href="/wiki" /></AccessShell>;
   const query = (search.get("q") ?? "").trim().slice(0, 200);
   const topic = (search.get("topic") ?? "").trim().slice(0, 60);
-  const entries = filterWiki(query, topic);
+  const all = data.wiki ?? [];
+  const wikiTopics = [...new Set(all.map(entry => entry.topic))];
+  const entries = filterEntries(all, query, topic);
   const filtered = Boolean(query || topic);
 
   return <AccessShell data={data}><section className="wiki">

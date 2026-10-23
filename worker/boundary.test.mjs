@@ -25,6 +25,7 @@ test('Worker HTTP boundary uses local D1 authorization and native routes',async 
   });
   await t.test('anonymous redirects and safe return cookie',async()=>{
    const response=await get('/api/page?path=/projects');const data=await response.json();assert.equal(data.redirect,'/sign-in?message=expired');assert.match(response.headers.get('set-cookie'),/__Host-vibies-return=%2Fprojects/);assert.match(response.headers.get('cache-control'),/no-store/);
+   const wiki=await(await get('/api/page?path=/wiki')).json();assert.equal(wiki.redirect,'/sign-in?message=expired');assert.equal(wiki.wiki,undefined);
    const bootstrap=await get('/auth/browser?returnTo=https://evil.test');assert.equal(bootstrap.status,303);assert.doesNotMatch(bootstrap.headers.get('set-cookie'),/vibies-return/);
   });
   await db.prepare("UPDATE community SET instructor_github_id='1',instructor_nickname='Tutor',instructor_nickname_key='tutor'").run();
@@ -34,6 +35,7 @@ test('Worker HTTP boundary uses local D1 authorization and native routes',async 
    assert.equal((await(await get('/api/page?path=/projects',3)).json()).redirect,'/access-denied');
    assert.equal((await(await get('/api/page?path=/admin/members',2)).json()).members,undefined);
    const instructor=await(await get('/api/page?path=/admin/members',1)).json();assert.equal(instructor.members.accounts.length,3);assert.equal(instructor.members.accounts[0].internal_id,undefined);
+   assert.equal((await(await get('/api/page?path=/wiki',3)).json()).wiki,undefined);assert.ok((await(await get('/api/page?path=/wiki',2)).json()).wiki.length>0);
    const member=await(await get('/api/page?path=/projects',2)).json();assert.deepEqual(member.projects,{mine:[],community:[]});
   });
   await t.test('method, origin, route and form restrictions',async()=>{

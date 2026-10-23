@@ -85,7 +85,8 @@ export function App() {
   }, []);
 
   if (!isPagePath(path)) return <AccessShell data={unavailableData}><section><h1>Page not found</h1><a href="/">Go home</a></section></AccessShell>;
-  const content = path === "/" ? <HomePage data={data ?? unavailableData} search={search} /> :
+  // ponytail: home and the errors demo need no account data, so they render without waiting.
+  const content = path === "/" || path === "/errors" ? <Page data={data ?? unavailableData} /> :
     data === null ? <AccessShell data={unavailableData}><section role="status" aria-live="polite" aria-busy="true"><h1>Checking your access</h1><p>Please wait.</p></section></AccessShell> :
     data.kind === "error" || data.access.kind === "error" ? <AccessShell data={unavailableData}><Retry href={`${path}${window.location.search}`} /></AccessShell> : <Page data={data} />;
   return <>
