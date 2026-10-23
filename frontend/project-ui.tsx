@@ -1,6 +1,6 @@
-import { MILESTONE_BLOCKED_NOTE_LIMIT, MILESTONE_TITLE_LIMIT } from "../../lib/project-core";
-import type { ProjectDetails } from "../../lib/project-core";
-import type { Project, ProjectMilestone } from "../../lib/projects";
+import { MILESTONE_BLOCKED_NOTE_LIMIT, MILESTONE_TITLE_LIMIT } from "../lib/project-core";
+import type { ProjectDetails } from "../lib/project-core";
+import type { Project, ProjectMilestone } from "../lib/project-read";
 
 const messages: Record<string, string> = {
   created: "Draft saved. Review the details before you publish.",

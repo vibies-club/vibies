@@ -1,6 +1,6 @@
 import type { PageData } from "../contracts";
 import { AccessShell, Retry } from "../access-shell";
-import { ProjectFields, ProjectMessage } from "../../app/projects/project-ui";
+import { ProjectFields, ProjectMessage } from "../project-ui";
 
 type PageProps = { data: PageData; search: URLSearchParams };
 

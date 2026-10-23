@@ -1,6 +1,6 @@
 import type { PageData } from "../contracts";
-import { ErrorsScreen } from "../../app/errors/errors-screen";
-import "../../app/errors/errors.css";
+import { ErrorsScreen } from "../errors-screen";
+import "../errors.css";
 
 // The demo needs no account data, so the app renders it before the page API answers.
 export function ErrorsPage({ search }: { data: PageData; search: URLSearchParams }) {

@@ -1,8 +1,10 @@
 # D1 application schema
 
-`migrations/` is the ordered D1 migration history. The PostgreSQL files under
-`supabase/` remain unchanged as the source and rollback reference. Run the
-isolated schema checks with Node 24:
+`migrations/` is the ordered D1 migration history and the only database schema
+for production (`vibies-production`). It was ported from the retired PostgreSQL
+schema ([D-033](../docs/DECISIONS.md#d-033-retire-vercel-and-supabase)). Applied
+migrations never change; add a new numbered file instead. Run the isolated
+schema checks with Node 24:
 
 ```sh
 node --test tests/d1-schema.test.mjs

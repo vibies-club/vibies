@@ -6,12 +6,12 @@ Vibies is a private community where beginners build and share real projects, wit
 
 ## Stack and commands
 
-The app root is the repository root. The stack is Node.js 24, npm, Next.js 16 App Router, React 19, TypeScript, Supabase PostgreSQL, and direct GitHub OAuth.
+The app root is the repository root. The stack is Node.js 24, npm, React 19 with Vite (`frontend/`), TypeScript, one Cloudflare Worker (`worker/`), Cloudflare D1 (`d1/migrations/`), direct GitHub OAuth, and Google sign-in. Production is the `vibies-production` Worker at https://vibies.club.
 
-- Development: `npm run dev`.
-- Build: `npm run build`.
+- Development: `npm run dev:cloudflare`.
+- Build: `npm run build:cloudflare` (production: `npm run build:cloudflare:production`).
 - Static checks: `npm run typecheck`.
-- Offline tests: `npm test`.
+- Offline tests: `npm test`, `npm run test:d1`, and `npm run test:worker`.
 - Lint: no lint script is configured. Do not report typecheck as a lint result.
 
 Use [the database deployment guide](docs/DATABASE-DEPLOYMENT.md) for migration checks and [CONTRIBUTING.md](CONTRIBUTING.md) for the required CI gates.
@@ -36,7 +36,7 @@ When the user picks a new design direction through a comp, update DESIGN.md in t
 > 5. Plan review. Spawn `plan_reviewer` fresh, with no conversation history (`fork_turns: "none"`), giving it only the issue, the plan path, and the docs to read. Revise the plan from its findings. Save its raw output verbatim to `notes/reviews/plan-<issue>.md`, never a summary.
 > 6. Build. Create a branch. Use `explorer` to gather context and `worker` agents for bounded parts. For UI work, start comp-first: use `$impeccable` with `imagegen` to make 3 concepts, show them to me, and build the one I pick.
 > 7. Prove. Run the build. For UI, take Playwright screenshots at 390, 768, 1280, and 1440 pixels wide into `notes/shots/<issue>/`, open every screenshot and look at it, fix what is wrong, and run `$impeccable critique` and `$impeccable polish`. On macOS the browser often cannot start inside the Codex sandbox: when that happens, ask me to approve running Playwright outside the sandbox. Never skip the visual check silently, and never say the UI is done without having looked at the screenshots.
-> 8. Pull request. Open it with the issue number, the screenshot paths, and the Vercel preview link (it appears on the pull request a minute after the push; if there is none, say so). Commit only assets the app uses.
+> 8. Pull request. Open it with the issue number, the screenshot paths, and the Cloudflare preview link (the preview workflow posts it on the pull request after the push; if there is none, say so). Commit only assets the app uses.
 > 9. PR review. Spawn a new `pr_reviewer` for each round, fresh, with no conversation history (`fork_turns: "none"`), giving it only the issue, the plan path, the diff command, and the screenshot paths. Fix every blocker and major finding. At most two rounds. Save each reviewer's raw output verbatim to `notes/reviews/pr-<number>-r<round>.md`, never a summary.
 > 10. Merge. Follow the merge choice recorded in this file: either you merge after a `ship` verdict and tell me, or you tell me the PR is ready with a three-line summary and I merge.
 >

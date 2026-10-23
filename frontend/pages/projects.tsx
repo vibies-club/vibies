@@ -1,6 +1,6 @@
 import type { PageData } from "../contracts";
 import { AccessShell, Retry } from "../access-shell";
-import { ProjectMessage, RoadmapProgress, SharedDetails } from "../../app/projects/project-ui";
+import { ProjectMessage, RoadmapProgress, SharedDetails } from "../project-ui";
 
 type PageProps = { data: PageData; search: URLSearchParams };
 

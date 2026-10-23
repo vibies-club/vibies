@@ -1,7 +1,7 @@
 import { readOnlyResponse } from "../lib/read-only";
 import { go, safeError, type Services } from "./services";
 import { milestoneDetails, projectDetails, projectForm, projectId, projectVersion, repositoryId } from "../lib/project-core";
-import type { ProjectContext } from "../lib/projects";
+import type { ProjectContext } from "../lib/project-read";
 export async function projectAction(request: Request, services: Services) {
   const { allowedPost, domainOperation, accessState, sessionHash, projectActor, verifyProject, readOnly } = services;
   if (!allowedPost(request)) return safeError(403);

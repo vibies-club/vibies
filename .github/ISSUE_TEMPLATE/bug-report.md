@@ -10,8 +10,8 @@ assignees: ''
 
 ## Where
 
-Production, staging (https://vibies-staging.vercel.app), or local, and the
-commit or deployment if you know it.
+Production (https://vibies.club), staging, a PR preview, or local, and the
+commit or Worker version if you know it.
 
 ## What you expected
 

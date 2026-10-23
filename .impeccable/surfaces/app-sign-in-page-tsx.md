@@ -1,10 +1,9 @@
 ---
 version: 1
 slug: "app-sign-in-page-tsx"
-primary_target: "app/sign-in/page.tsx"
+primary_target: "frontend/pages/sign-in.tsx"
 related_targets:
-  - "app/sign-in/sign-in-shell.tsx"
-  - "app/sign-in/sign-in.css"
+  - "frontend/sign-in.css"
 ---
 
 # Vibies sign-in

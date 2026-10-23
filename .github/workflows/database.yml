@@ -21,29 +21,18 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: Test migration guards
-        run: node --test tests/migrations.test.mjs tests/migration-scope.test.mjs
-      - name: Check snapshots and migration history
-        env:
-          MIGRATION_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: npm run check:migrations -- --base "$MIGRATION_BASE"
-      - name: Classify migration proof
-        id: migration-scope
+      - name: Keep applied D1 migrations unchanged
+        if: github.event_name == 'pull_request'
         env:
           MIGRATION_BASE: ${{ github.event.pull_request.base.sha }}
-          MIGRATION_HEAD: ${{ github.event.pull_request.head.sha }}
-        run: node scripts/migration-scope.mjs
-      - uses: supabase/setup-cli@v1
-        if: steps.migration-scope.outputs.full == 'true'
-        with:
-          version: 2.109.1
-      - name: Start the disposable local database
-        id: database-start
-        if: steps.migration-scope.outputs.full == 'true'
-        run: supabase db start
-      - name: Prove the full migration chain
-        if: steps.migration-scope.outputs.full == 'true'
-        run: npm run check:database-migrations
-      - name: Remove the disposable local database
-        if: always() && (steps.database-start.outcome == 'success' || steps.database-start.outcome == 'failure')
-        run: supabase stop --no-backup
+        run: |
+          changed=$(git diff --name-only --diff-filter=DMRT "$MIGRATION_BASE" HEAD -- d1/migrations)
+          if [ -n "$changed" ]; then
+            echo "Applied D1 migrations must stay unchanged. Add a new numbered migration instead:"
+            echo "$changed"
+            exit 1
+          fi
+      - name: Check the D1 schema
+        run: node --test tests/d1-schema.test.mjs
+      - name: Apply every D1 migration to a fresh local database
+        run: npx wrangler d1 migrations apply DB --env production --local --persist-to "$RUNNER_TEMP/d1"

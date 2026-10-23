@@ -19,8 +19,6 @@ chosen.
 - Error Library: rebuild issue #31 as one new migration, merged directly ahead
   of the issue #27 app PR that uses it. Closed PR #33 and its branch hold the
   earlier schema work.
-- Cloudflare move (issue #61): when the move is chosen, reopen PR #62, rebase
-  it, and split its live-site style changes into their own PR.
 - Run the first staging Preview PR selection on an eligible PR and record its
   receipt in the [deployment guide](DATABASE-DEPLOYMENT.md#reusable-staging).
 - Manual Sync, deliberate owner Disconnect, and Archive actions remain outside

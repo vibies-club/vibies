@@ -32,22 +32,15 @@ Database changes also follow the migration checks and rollout order in
 ## The three required checks
 
 Every PR reports `app-check`, `migration-check`, and `links`. `app-check` runs
-typecheck, offline and read-only-barrier tests, the database suites on isolated
-Postgres, D1/workerd and Google security tests, synthetic migration and encrypted
-export roundtrips, PostgreSQL/D1 parity, both production builds, and the
-built-server HTTP checks. The encrypted roundtrip uses a separate disposable
-PostgreSQL service and its own temporary database. `migration-check` runs the
-snapshot and history guards on every PR, plus the full disposable Supabase
-proof unless every changed file is on the fast list that the
-[deployment guide](docs/DATABASE-DEPLOYMENT.md#local-and-ci-checks) owns.
-`links` checks every local Markdown link and anchor. Main always gets the full
-migration proof. Make a red check green before you ask for review.
+typecheck, `npm test`, the D1 and Google security suites (`npm run test:d1`),
+the Worker boundary tests (`npm run test:worker`), and the Cloudflare build.
+`migration-check` rejects any change to an applied file in `d1/migrations`,
+runs the D1 schema tests, and applies every migration to a fresh local D1
+database. The [deployment guide](docs/DATABASE-DEPLOYMENT.md#local-and-ci-checks)
+owns the details. `links` checks every local Markdown link and anchor. Make a
+red check green before you ask for review.
 
 ## Hosted proof on staging
-
-Issue #61 implements a Cloudflare replacement for shared staging. It is pending
-Instructor merge and successful hosted **Preview PR** and **Clear** runs. The
-historical Vercel/Supabase staging receipts do not prove the replacement live.
 
 The Instructor runs the manual **staging** workflow from current `main`. An
 eligible PR is open, non-draft, from this repository into `main`, contains
@@ -66,19 +59,18 @@ D1 schema digest, migration digest, Worker version, database binding, and a
 fresh no-store identity response to agree. Quote that receipt for hosted claims.
 The synthetic staging Worker has no OAuth or GitHub App secrets. Its identity
 receipt alone does not prove authenticated Member flows; those require a
-separately authorized environment and explicit evidence. Setup, failure handling,
-and historical rollback context live in
-[Reusable staging](docs/DATABASE-DEPLOYMENT.md#reusable-staging).
+separately authorized environment and explicit evidence. Setup and failure
+handling live in [Reusable staging](docs/DATABASE-DEPLOYMENT.md#reusable-staging).
 
 ## After merge
 
-Until the Instructor authorizes and verifies the Cloudflare cutover, retain the
-existing Supabase/Vercel production deployment and rollback configuration.
-Issue #61's local builds and synthetic tests do not switch live traffic. After
-the trusted staging workflow reaches main, record hosted Preview PR and Clear
-receipts before describing it as operational. Production D1 import,
-reconciliation, activation, and traffic cutover require their own receipts.
-Keep your issue open until every post-merge receipt it asks for is recorded.
+Production is the Cloudflare Worker `vibies-production` at https://vibies.club
+with the D1 database `vibies-production`. Cloudflare deploys every merge to
+`main` automatically, so a PR with a new D1 migration needs that migration
+applied to production before merge, as
+[Deploy main](docs/DATABASE-DEPLOYMENT.md#deploy-main) describes. Record the
+receipt after the deploy. Keep your issue open until every post-merge receipt it asks for is
+recorded.
 
 ## Writing rules
 

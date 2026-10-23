@@ -5,7 +5,7 @@ import { readOnlyOperations } from '../lib/read-only';
 import { repositoryId, projectVersion } from '../lib/project-core';
 import { verifyRepository } from '../lib/project-github';
 import { readCookies, cookie } from '../lib/google-auth/cookies';
-import type { ProjectContext } from '../lib/projects';
+import type { ProjectContext } from '../lib/project-read';
 import type { GoogleCoordinator } from './google-coordinator';
 export interface Env {
   GOOGLE_COORDINATOR?: DurableObjectNamespace<GoogleCoordinator>;

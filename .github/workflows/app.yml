@@ -12,29 +12,6 @@ jobs:
   app-check:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_HOST_AUTH_METHOD: trust
-          POSTGRES_DB: vibies_access_test
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-      postgres-migration:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_HOST_AUTH_METHOD: trust
-          POSTGRES_DB: vibies_access_test
-        ports: ["60584:5432"]
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -48,44 +25,5 @@ jobs:
         run: npm run test:d1
       - name: Check static Worker HTTP boundary
         run: npm run test:worker
-      - name: Rehearse synthetic D1 migration
-        run: npm run test:migration
-      - name: Rehearse encrypted PostgreSQL export into D1
-        run: node --test tests/migration-encryption-postgres.test.mjs
-        env:
-          VIBIES_MIGRATION_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:60584/vibies_access_test
-      - run: npm run test:access
-        env:
-          VIBIES_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/vibies_access_test
-      - run: npm run test:projects
-        env:
-          VIBIES_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/vibies_access_test
-      - name: Compare D1 project behavior with PostgreSQL
-        run: node --test tests/d1-projects-postgres.test.ts
-        env:
-          VIBIES_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/vibies_access_test
       - name: Build Cloudflare Worker
         run: npm run build:cloudflare
-      - run: npm run build
-      - name: Check access through the built server
-        env:
-          VIBIES_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/vibies_access_web_test
-          VIBIES_TEST_APP_ORIGIN: http://127.0.0.1:3105
-          VIBIES_APP_ORIGIN: http://127.0.0.1:3105
-          VIBIES_DATABASE_URL: postgresql://vibies_web_test@127.0.0.1:5432/vibies_access_web_test
-          VIBIES_GITHUB_CLIENT_ID: fixture-client
-          VIBIES_GITHUB_CLIENT_SECRET: fixture-secret
-          PORT: 3105
-        run: |
-          node --input-type=module <<'JS'
-          import postgres from 'postgres';
-          const sql = postgres('postgresql://postgres@127.0.0.1:5432/postgres');
-          try { await sql.unsafe('create database vibies_access_web_test'); }
-          finally { await sql.end(); }
-          JS
-          npm run check:access-web -- --prepare
-          NODE_ENV=production node --import ./tests/project-provider-hook.mjs node_modules/next/dist/bin/next start --hostname 127.0.0.1 &
-          server_pid=$!
-          trap 'kill "$server_pid"' EXIT
-          curl --fail --silent --output /dev/null --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:3105/demo
-          npm run check:access-web
