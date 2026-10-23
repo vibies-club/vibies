@@ -1,0 +1,109 @@
+/* Course timeline and session pages. Phone first; shared tokens live in globals.css. */
+.app .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.app .button.small { min-height: 44px; padding: 8px 14px; font-size: 14px; }
+
+/* Timeline */
+.phases { display: grid; gap: var(--space-lg); max-width: 860px; }
+.phase { display: grid; gap: 6px; }
+.phase-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding-bottom: 8px; border-bottom: 1px solid var(--rule-warm); }
+.phase-head h2 { font-size: var(--text-h2); line-height: 1.15; font-weight: 800; letter-spacing: -.02em; }
+.phase-head .mono { color: var(--amber-ink); }
+.timeline { display: grid; margin: 0; padding: 0; list-style: none; }
+.timeline-row { position: relative; }
+.timeline-row:not(:last-child)::before { content: ""; position: absolute; top: 46px; bottom: -8px; left: 22px; border-left: 1.6px solid var(--comb-line); }
+.timeline-row > a { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 14px; min-height: 60px; padding: 8px 10px 8px 0; border-radius: var(--radius-button); text-decoration: none; }
+.timeline-node { overflow: visible; }
+.timeline-node polygon { fill: var(--paper); stroke: var(--comb-line); stroke-width: 1.6; stroke-dasharray: 4 3; }
+.timeline-node text { fill: var(--ink-2); font: 600 14px/1 var(--mono); }
+.is-done .timeline-node polygon { fill: var(--cell-fill); stroke: var(--amber); stroke-dasharray: none; }
+.is-done .timeline-node text { fill: var(--amber-ink); font-size: 16px; }
+.is-next .timeline-node polygon { fill: var(--honey); stroke: var(--amber-ink); stroke-width: 2.2; stroke-dasharray: none; }
+.is-next .timeline-node text { fill: var(--ink); font-weight: 800; }
+.timeline-body { display: grid; gap: 2px; min-width: 0; }
+.timeline-meta { color: var(--ink-2); }
+.timeline-title { font-size: 18px; line-height: 1.25; font-weight: 700; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.is-done .timeline-title { color: var(--ink-2); font-weight: 600; }
+.timeline-goal { max-width: 56ch; color: var(--ink-2); }
+.timeline-row.is-next > a { margin: 6px 0; padding: 14px 16px 14px 12px; grid-template-columns: 44px minmax(0, 1fr); border: 1px solid var(--honey-edge); background: var(--paper); box-shadow: var(--shadow-raised); }
+.timeline-row.is-next > a .hex-badge { grid-column: 2; justify-self: start; }
+.timeline-row.is-next::before { left: 34px; }
+.is-next .timeline-meta { color: var(--amber-ink); font-weight: 700; }
+.is-next .timeline-title { font-size: clamp(20px, 2vw, 24px); font-weight: 800; }
+@media (hover: hover) and (pointer: fine) {
+  .timeline-row:not(.is-next) > a:hover { background: var(--cell-fill); }
+  .timeline-row > a:hover .timeline-title { text-decoration: underline; text-decoration-color: var(--amber); }
+}
+
+/* Session */
+.session-head { display: flex; align-items: flex-start; gap: clamp(16px, 2.4vw, 28px); margin-bottom: var(--space-lg); }
+.session-intro { display: grid; justify-items: start; gap: 12px; min-width: 0; }
+.session-meta { color: var(--amber-ink); }
+.session-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: var(--space-md); align-items: start; }
+.prompt-list { display: grid; padding: 0; list-style: none; }
+.prompt-list li { display: grid; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--rule-soft); }
+.prompt-list li:last-child, .session-grid .gate-list li:last-child { border-bottom: 0; }
+.prompt-label { font-weight: 700; overflow-wrap: anywhere; }
+.prompt-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.prompt-status { color: var(--amber-ink); }
+.session-pager { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); margin-top: var(--space-lg); }
+.pager-link { display: grid; gap: 4px; min-height: 44px; padding: 14px 18px; border: 1px solid var(--rule-warm); border-radius: var(--radius-card); background: var(--paper); font-weight: 700; text-decoration: none; overflow-wrap: anywhere; }
+.pager-link .mono { color: var(--amber-ink); }
+.pager-link.is-next { grid-column: 2; text-align: right; }
+@media (hover: hover) and (pointer: fine) {
+  .pager-link:hover { background: var(--cell-fill); border-color: var(--honey-edge); }
+}
+
+@media (max-width: 900px) {
+  .session-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 767px) {
+  .session-head { flex-direction: column; gap: 12px; }
+  .session-pager { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .pager-link.is-next { grid-column: 1; text-align: left; }
+  .session-pager > span:empty { display: none; }
+}
+.timeline-row { scroll-margin-top: 96px; }
+
+/* Gate rows on the session page and the Gates panel */
+.gate-rows li.gate-row { display: grid; gap: 8px; justify-content: stretch; }
+.gate-row-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.gate-row-head .hex-badge { margin-top: 2px; }
+.gate-details { display: grid; justify-items: start; gap: 2px; }
+.gate-note { color: var(--ink-2); font-size: var(--text-small); white-space: pre-wrap; overflow-wrap: anywhere; }
+.gate-flag { max-width: 60ch; padding: 8px 12px; border: 1px dashed var(--comb-line); border-radius: var(--radius-field); background: var(--cell-fill); white-space: pre-wrap; overflow-wrap: anywhere; }
+.gate-flag .mono { margin-right: 6px; color: var(--amber-ink); font-weight: 700; }
+.gate-details .text-link { min-height: 36px; font-size: var(--text-small); }
+.gate-mark > summary { list-style: none; width: fit-content; cursor: pointer; }
+.gate-mark > summary::-webkit-details-marker { display: none; }
+.gate-mark[open] > summary { background: var(--cell-fill); }
+.gate-mark .stack-form { margin-top: 8px; padding: 4px 0 4px 14px; border-left: 2px solid var(--rule-warm); }
+.gate-mark .stack-form button { margin-top: 10px; }
+.session-gate .card-body > .text-link, .session-gate .card-body > .hint { margin-top: 4px; }
+
+/* Gates board: a grid on wide screens, a list per member on phones */
+.board-scroll { max-width: 100%; overflow-x: auto; border: 1px solid var(--rule-warm); border-radius: var(--radius-card); background: var(--paper); box-shadow: var(--shadow-card); }
+.board { width: 100%; border-collapse: collapse; font: 500 13px/1.2 var(--mono); }
+.board th, .board td { padding: 6px; border-bottom: 1px solid var(--rule-soft); text-align: center; }
+.board thead th { background: var(--cell-fill); color: var(--amber-ink); font-weight: 700; }
+.board thead a { text-decoration: none; }
+.board thead a:hover { text-decoration: underline; }
+.board tbody th { position: sticky; left: 0; z-index: 1; min-width: 120px; max-width: 180px; padding-inline: 14px; background: var(--paper); font: 700 15px/1.3 var(--sans); text-align: left; overflow-wrap: anywhere; }
+.board tr:last-child > * { border-bottom: 0; }
+.app .board-cell { position: relative; min-width: 50px; min-height: 40px; padding: 4px 8px; font: 600 13px/1 var(--mono); border-color: var(--rule-warm); }
+.app .board-cell.is-empty { border-style: dashed; color: var(--ink-2); background: var(--paper); }
+.app .board-cell.is-partial { background: var(--cell-fill); }
+.app .board-cell.is-complete { background: var(--honey); border-color: var(--honey-edge); }
+.app .board-cell.is-flagged { background: var(--paper); border: 2px solid var(--amber-ink); color: var(--amber-ink); }
+.app :is(.board-cell, .board-row)[aria-pressed="true"] { outline: 3px solid var(--amber-ink); outline-offset: 2px; }
+.board-flag { position: absolute; top: -7px; right: -7px; display: grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--amber-ink); color: var(--paper); font-size: 11px; }
+.board-list { display: none; gap: var(--space-md); padding: 0; list-style: none; }
+.board-list-cells { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; padding: 14px; list-style: none; }
+.app .board-row { position: relative; display: grid; gap: 2px; width: 100%; min-height: 56px; padding: 6px 4px; border-color: var(--rule-warm); }
+.app .board-row .mono:first-child { color: var(--ink-2); font-size: 12px; }
+.app .board-row .mono:nth-child(2) { font-size: 15px; font-weight: 700; }
+#gate-panel { margin-top: var(--space-md); scroll-margin-top: 96px; }
+.gate-panel .link-button { justify-self: start; }
+@media (max-width: 767px) {
+  .board-scroll { display: none; }
+  .board-list { display: grid; }
+}

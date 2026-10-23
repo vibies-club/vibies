@@ -3,10 +3,13 @@ import { page } from './page';
 import { auth } from './auth';
 import { projectAction } from './project-action';
 import { memberAction } from './member-action';
+import { courseFile } from './course';
+import { gateAction } from './gate-action';
+import { collaborateAction } from './collaborate-action';
 export { GoogleCoordinator } from './google-coordinator';
 
 export type WorkerEnv=Env & {ASSETS?:{fetch(request:Request):Promise<Response>}};
-const methods:Record<string,string>={'/api/page':'GET','/auth/browser':'GET','/auth/start':'POST','/auth/callback':'GET','/auth/sign-out':'POST','/auth/google/start':'POST','/auth/google/link':'POST','/auth/google/provider/callback/google':'GET','/projects/action':'POST','/admin/members/action':'POST'};
+const methods:Record<string,string>={'/api/page':'GET','/auth/browser':'GET','/auth/start':'POST','/auth/callback':'GET','/auth/sign-out':'POST','/auth/google/start':'POST','/auth/google/link':'POST','/auth/google/provider/callback/google':'GET','/projects/action':'POST','/admin/members/action':'POST','/course/action':'POST','/collaborate/action':'POST'};
 async function handle(request:Request,env:WorkerEnv):Promise<Response>{
   const url=new URL(request.url),path=url.pathname;
   // ponytail: production answers on one origin; workers.dev and www only redirect there.
@@ -19,8 +22,11 @@ async function handle(request:Request,env:WorkerEnv):Promise<Response>{
       if(path==='/api/page')return await page(request,s,env);
       if(path.startsWith('/auth/'))return await auth(request,s,env,path);
       if(path==='/projects/action')return await projectAction(request,s);
+      if(path==='/course/action')return await gateAction(request,s,env);
+      if(path==='/collaborate/action')return await collaborateAction(request,s);
       return await memberAction(request,s);
     }
+    if(path.startsWith('/course-files/'))return await courseFile(request,createServices(request,env),env,path);
     if(['/','/demo','/errors','/sign-in','/access-denied'].includes(path)||privatePath(path)){
       if(request.method!=='GET'&&request.method!=='HEAD')return new Response('Method not allowed',{status:405,headers:{Allow:'GET, HEAD'}});
       if(env.ASSETS)return env.ASSETS.fetch(new Request(new URL(path==='/'?'/index.html':'/shell.html',url),request));

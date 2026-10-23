@@ -2,6 +2,8 @@ export const PROJECT_BODY_LIMIT = 32_768;
 export type ProjectDetails = { title: string; summary: string; demoUrl: string | null };
 export const MILESTONE_TITLE_LIMIT = 80;
 export const MILESTONE_BLOCKED_NOTE_LIMIT = 500;
+/** The course roadmap a member can seed into an empty product roadmap, in order. */
+export const COURSE_ROADMAP = ["Core screen", "Works on demo data", "Data and sign-in", "3 real users", "Polish and SEO", "Demo Day"] as const;
 
 export function projectDetails(title: unknown, summary: unknown, demoUrl: unknown): ProjectDetails | null {
   if (typeof title !== "string" || typeof summary !== "string" || typeof demoUrl !== "string") return null;

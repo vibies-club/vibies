@@ -5,6 +5,8 @@ import { readProject } from '../lib/project-read';
 import { projectId } from '../lib/project-core';
 import { wikiEntries } from '../lib/wiki';
 import { privatePath, type Services, type Env } from './services';
+import { coursePage } from './course';
+import { collabPage } from './page-collab';
 export async function page(request:Request,s:Services,env:Env) {
   const url=new URL(request.url),path=url.searchParams.get('path');
   const valid=path&&(['/','/demo','/errors','/sign-in','/access-denied'].includes(path)||privatePath(path));
@@ -27,25 +29,36 @@ export async function page(request:Request,s:Services,env:Env) {
     if(privatePath(path)) {
       if(data.access.kind==='signed_out') {data.redirect='/sign-in?message=expired';}
       else if(data.access.kind==='denied')data.redirect='/access-denied';
-      else if(path==='/admin/members'&&data.access.kind!=='instructor')data.redirect='/welcome';
+      else if((path==='/admin/members'||path==='/admin/gates')&&data.access.kind!=='instructor')data.redirect='/welcome';
       else if(path==='/projects/connect'&&data.access.kind==='instructor')data.redirect='/projects';
     }
     if(!data.redirect){
       const hash=await s.sessionHash();
       if(path==='/wiki')data.wiki=wikiEntries;
+      await coursePage(path,data,env,s,hash);
       if(path==='/demo')data.demo=demoState(await(await s.database()).prepare('SELECT id,title,summary FROM demo_projects WHERE id=1').first(),null);
       if(path==='/welcome'&&s.googleEnabled&&hash){
         const row=await(await s.database()).prepare(`SELECT EXISTS(SELECT 1 FROM google_identity_map m JOIN google_accounts g ON g.userId=m.user_id WHERE m.github_id=s.github_id) linked,(s.auth_provider='github' AND julianday(s.created_at)>julianday('now','-5 minutes')) canLink FROM sessions s WHERE s.session_hash=? AND julianday(s.created_at)>julianday('now','-24 hours')`).bind(hash).first<{linked:number;canLink:number}>();
         if(row)data.linking={linked:row.linked===1,canLink:row.canLink===1};
       }
-      if(path==='/admin/members'){
+      const readMembers=async()=>{
         const v=await s.domainOperation('members',hash);
         if(v.kind!=='ok'||!Number.isInteger(v.activeCount)||v.activeCount<0||v.activeCount>8||!Array.isArray(v.accounts)||!v.accounts.every((a:any)=>a&&typeof a.githubId==='string'&&/^[1-9]\d{0,19}$/.test(a.githubId)&&typeof a.username==='string'&&(a.nickname===null||typeof a.nickname==='string')&&['unapproved','approved','revoked'].includes(a.status)))throw new Error('Unavailable');
-        data.members={activeCount:v.activeCount,accounts:v.accounts.map((a:any)=>({githubId:a.githubId,username:a.username,nickname:a.nickname,status:a.status}))};
-      }
-      if(path==='/projects'){
+        return {activeCount:v.activeCount,accounts:v.accounts.map((a:any)=>({githubId:a.githubId,username:a.username,nickname:a.nickname,status:a.status}))};
+      };
+      const readProjects=async()=>{
         const v=await s.domainOperation('projects',hash);if(v.kind!=='ok'||!Array.isArray(v.mine)||!Array.isArray(v.community))throw new Error('Unavailable');
-        data.projects={mine:v.mine.map(readProject),community:v.community.map(readProject)};
+        return {mine:v.mine.map(readProject),community:v.community.map(readProject)};
+      };
+      if(path==='/admin/members')data.members=await readMembers();
+      if(path==='/projects')data.projects=await readProjects();
+      if(path==='/welcome'){
+        // Home extras reuse existing reads. A failed read only leaves its card in a fallback state.
+        if(data.access.kind==='instructor')try{data.members=await readMembers();}catch{}
+        try{data.projects=await readProjects();}catch{}
+        // The first product's roadmap only comes with the single-project read.
+        const first=data.projects?.mine[0];
+        if(first)try{const p=await s.domainOperation('project',hash,first.id);if(p.kind==='ok')data.project={kind:'ok',project:readProject(p.project)};}catch{}
       }
       if(path.startsWith('/projects/')&&projectId(path.slice(10))){
         const v=await s.domainOperation('project',hash,path.slice(10));
@@ -61,8 +74,9 @@ export async function page(request:Request,s:Services,env:Env) {
           if(!actor)data.connect.status='error';else {const v=await s.verifyProject(actor);if(v.kind==='verified')data.connect.repositories=v.repositories??[];else data.connect.status=v.kind;}
         }
       }
+      await collabPage(path,data,s,hash);
     }
-  }catch { data.kind='error';delete data.members;delete data.projects;delete data.project;delete data.linking;delete data.connect;delete data.demo; }
+  }catch { data.kind='error';delete data.members;delete data.projects;delete data.project;delete data.linking;delete data.connect;delete data.demo;delete data.course;delete data.session;delete data.gates;delete data.gateBoard;delete data.collab;delete data.job;delete data.team;delete data.ideas;delete data.idea;delete data.funding; }
   const response=Response.json(data,{status:data.kind==='error'?503:data.redirect?.startsWith('/sign-in')?401:data.redirect==='/access-denied'?403:200,headers:{'Cache-Control':'private, no-store','Vary':'Cookie','X-Content-Type-Options':'nosniff'}});
   if(data.redirect?.startsWith('/sign-in')&&privatePath(path))s.setCookie(response,'return',encodeURIComponent(path!),600);
   const returnTo=privatePath(url.searchParams.get('returnTo'));
