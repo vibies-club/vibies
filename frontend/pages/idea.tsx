@@ -22,8 +22,9 @@ export function IdeaPage({ data, search }: PageProps) {
 }
 
 /** Stage and help-wanted badges, shared by the feed and the idea page. */
-export function IdeaBadges({ idea }: { idea: Pick<IdeaSummary, "stage" | "help"> }) {
+export function IdeaBadges({ idea }: { idea: Pick<IdeaSummary, "stage" | "help" | "hidden"> }) {
   return <span className="badges">
+    {idea.hidden && <HexBadge tone="muted">Hidden</HexBadge>}
     <HexBadge tone="strong">{STAGES[idea.stage]}</HexBadge>
     {idea.help.map(item => <HexBadge key={item} tone="muted">{HELP[item]} wanted</HexBadge>)}
   </span>;
@@ -65,7 +66,6 @@ export function IdeaForm({ idea }: { idea?: IdeaDetail }) {
 function Idea({ page, message }: { page: IdeaData; message: string | null }) {
   const { idea, viewer } = page;
   const member = viewer === "member";
-  const fields = { id: idea.id };
   return <>
     <BackLink href="/collaborate#ideas">All ideas</BackLink>
     <CollabMessage message={message} />
@@ -85,17 +85,19 @@ function Idea({ page, message }: { page: IdeaData; message: string | null }) {
           </dl>
         </Card>
         <Card title="Comments" meta={`${idea.comments.length}`} className="idea-comments">
-          {idea.comments.length === 0 ? <p className="quiet">No comments yet. Ask a question or add what you know.</p> :
-            <ol className="comment-list">{idea.comments.map((comment, index) => <li key={index}>
-              <p><strong>{comment.author}</strong>{comment.byInstructor && <> <HexBadge tone="strong">Instructor</HexBadge></>} <span className="mono quiet"><Time iso={comment.at} /></span></p>
+          {idea.comments.length === 0 ? (idea.hidden ? null : <p className="quiet">No comments yet. Ask a question or add what you know.</p>) :
+            <ol className="comment-list">{idea.comments.map(comment => <li key={comment.id} className={comment.hidden ? "is-hidden" : undefined}>
+              <p><strong>{comment.author}</strong>{comment.byInstructor && <> <HexBadge tone="strong">Instructor</HexBadge></>}{comment.hidden && <> <HexBadge tone="muted">Hidden</HexBadge></>} <span className="mono quiet"><Time iso={comment.at} /></span></p>
               <p className="comment-body">{comment.body}</p>
+              {!member && <ActionForm action={comment.hidden ? "comment_restore" : "comment_hide"} fields={{ id: idea.id, commentId: comment.id }} className="comment-mod">
+                {comment.hidden ? "Restore comment" : "Hide comment"}</ActionForm>}
             </li>)}</ol>}
-          <form action="/collaborate/action" method="post" className="stack-form">
+          {idea.hidden ? <p className="hint">Comments are closed while the idea is hidden.</p> : <form action="/collaborate/action" method="post" className="stack-form">
             <input type="hidden" name="action" value="comment_post" /><input type="hidden" name="id" value={idea.id} />
             <label htmlFor="comment-body">Add a comment</label>
             <textarea id="comment-body" name="body" required rows={3} maxLength={1000} />
             <button type="submit">Post comment</button>
-          </form>
+          </form>}
         </Card>
       </div>
       <aside className="job-side" aria-label="Interest and next steps">
@@ -108,7 +110,11 @@ function Idea({ page, message }: { page: IdeaData; message: string | null }) {
               idea.isMine && idea.projectId && <InviteButton idea={idea} nickname={person.nickname} role={person.role} />}
           </li>)}</ul>}
         </Card>
-        {idea.isMine && <Card title="Manage">
+        {!member && <Card title="Moderation">
+          <p className="hint">{idea.hidden ? "Hidden from Members. The author still sees it, and comments are closed." : "Visible to the class. Hiding keeps it for the author and you."}</p>
+          <ActionForm action={idea.hidden ? "idea_restore" : "idea_hide"} fields={{ id: idea.id, version: idea.version }}>{idea.hidden ? "Restore idea" : "Hide idea"}</ActionForm>
+        </Card>}
+        {idea.isMine && !idea.hidden && <Card title="Manage">
           <details className="disclosure"><summary>{idea.projectId ? "Change the linked product" : "Turn into a product"}</summary>
             <p className="hint">Link the product you built from this idea. Interested classmates can then be invited to its team.</p>
             {idea.products && idea.products.length > 0 ? <form action="/collaborate/action" method="post" className="stack-form">
@@ -138,7 +144,8 @@ function Interest({ page }: { page: IdeaData }) {
   const { idea, viewer } = page;
   if (viewer !== "member") return null;
   let body;
-  if (idea.isMine) body = idea.projectId
+  if (idea.hidden) body = <p>The Instructor hid this idea. Only you and the Instructor can see it, and it cannot change for now.</p>;
+  else if (idea.isMine) body = idea.projectId
     ? <p>{idea.interest.some(person => !person.team) ? "Invite the interested classmates below to your product team." : "Everyone interested has an invite or a place on the team."}</p>
     : <p>When you start building, link the product so you can invite interested classmates to its team.</p>;
   else if (idea.mine) body = <>
@@ -151,7 +158,7 @@ function Interest({ page }: { page: IdeaData }) {
       <ActionForm action="idea_uninterest" fields={{ id: idea.id }}>Withdraw interest</ActionForm>
     </details>
   </>;
-  else body = <><p>Want to help? Say how. {idea.author} sees your role and note.</p><InterestForm idea={idea} primary /></>;
+  else body = <><p>Want to help? Say how. Classmates and the Instructor can see your role and note.</p><InterestForm idea={idea} primary /></>;
   return <section className="card job-next" aria-labelledby="idea-next">
     <div className="card-bar"><h2 id="idea-next">{idea.isMine ? "Your idea" : idea.mine ? "You are interested" : "I'm interested"}</h2></div>
     <div className="card-body">{body}</div>

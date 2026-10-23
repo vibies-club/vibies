@@ -144,14 +144,27 @@ test('Collaborate HTTP boundary: jobs, teams and shares are decided in SQL',asyn
    assert.equal(message(await post({action:'pledge_received',projectId:P1,pledgeId:pledge},2)),'funding_received');
    const seen=(await get('/projects/'+P1,4)).funding;assert.equal(seen.pledged,320);assert.equal(seen.received,120);assert.equal(seen.pledges.length,0);
    assert.equal((await get('/projects/'+P1,2)).funding.pledges.length,2);
+   // Moderation: the Instructor hides and restores; Members get 403; hidden ideas refuse comments.
+   const comment=await db.prepare('SELECT id FROM comments WHERE target_id=?').bind(id).first('id');
+   assert.equal((await post({action:'comment_hide',id,commentId:comment},3)).status,403);
+   assert.equal(message(await post({action:'comment_hide',id,commentId:comment},1)),'idea_comment_hidden');
+   assert.equal((await get('/collaborate/ideas/'+id,2)).idea.idea.comments.length,0);
+   assert.equal(message(await post({action:'comment_restore',id,commentId:comment},1)),'idea_comment_restored');
+   const ideaVersion=String(await db.prepare('SELECT version FROM ideas WHERE id=?').bind(id).first('version'));
+   assert.equal((await post({action:'idea_hide',id,version:ideaVersion},4)).status,403);
+   assert.equal(message(await post({action:'idea_hide',id,version:ideaVersion},1)),'idea_hidden');
+   assert.equal((await get('/collaborate/ideas/'+id,2)).idea.kind,'missing');
+   assert.equal((await get('/collaborate/ideas/'+id,3)).idea.idea.hidden,true);
+   assert.equal(message(await post({action:'comment_post',id,body:'Hello?'},4)),'idea_hidden_idea');
+   assert.equal(message(await post({action:'idea_restore',id,version:String(Number(ideaVersion)+1)},1)),'idea_restored');
   });
   await t.test('read-only blocks every Collaborate POST while reads still work',async()=>{
    await mf.setOptions({...options,bindings:{...options.bindings,VIBIES_READ_ONLY:'1'}});
    db=await mf.getD1Database('DB');
    const id=await db.prepare('SELECT id FROM jobs LIMIT 1').first('id');
    const before=await db.prepare('SELECT count(*) n FROM job_events').first('n');
-   for(const action of ['job_post','job_claim','job_deliver','job_accept','job_hide','team_invite','agreement_propose','agreement_accept','idea_post','idea_interest','comment_post','funding_set','pledge_post','pledge_withdraw'])
-    assert.equal((await post({action,id,version:'1',projectId:P1,from:'teams',...terms},action==='job_hide'?1:3)).status,503,action);
+   for(const action of ['job_post','job_claim','job_deliver','job_accept','job_hide','team_invite','agreement_propose','agreement_accept','idea_post','idea_interest','comment_post','funding_set','pledge_post','pledge_withdraw','idea_hide','comment_hide'])
+    assert.equal((await post({action,id,version:'1',projectId:P1,from:'teams',...terms},['job_hide','idea_hide','comment_hide'].includes(action)?1:3)).status,503,action);
    assert.ok((await get('/collaborate',3)).ideas.length>0);assert.equal((await get('/projects/'+P1,3)).funding.seeking,true);
    assert.equal(await db.prepare('SELECT count(*) n FROM job_events').first('n'),before);
    const board=await get('/collaborate',3);assert.equal(board.kind,'ok');assert.ok(board.collab.jobs.length>0);

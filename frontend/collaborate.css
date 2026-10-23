@@ -171,6 +171,8 @@
 .comment-list { display: grid; padding: 0; list-style: none; }
 .comment-list > li { display: grid; gap: 4px; padding: 12px 0; border-bottom: 1px solid var(--rule-soft); }
 .comment-list > li > p:first-child { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.comment-list > li.is-hidden .comment-body { color: var(--ink-2); }
+.comment-mod { justify-self: start; }
 .comment-body { max-width: 65ch; white-space: pre-wrap; overflow-wrap: anywhere; }
 .roster .hint { display: block; }
 

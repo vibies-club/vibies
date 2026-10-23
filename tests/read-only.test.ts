@@ -14,7 +14,7 @@ test("cutover blocks every named mutation and unknown future operations while re
     const writes = ["change_member", "begin_sign_in", "consume_sign_in", "finish_sign_in", "end_session", "connect_project",
       "add_project_milestone", "edit_project_milestone", "set_project_milestone_completion", "move_project_milestone",
       "delete_project_milestone", "moderate_project", "edit_project", "delete_project", "record_project_connection", "publish_project",
-      "job_post", "job_claim", "job_deliver", "job_accept", "job_paid", "job_resolve", "team_invite", "agreement_propose", "agreement_respond", "idea_post", "idea_interest", "comment_post", "funding_set", "pledge_post", "pledge_close"];
+      "job_post", "job_claim", "job_deliver", "job_accept", "job_paid", "job_resolve", "team_invite", "agreement_propose", "agreement_respond", "idea_post", "idea_interest", "comment_post", "funding_set", "pledge_post", "pledge_close", "idea_moderate", "comment_moderate"];
     for (const name of reads) assert.doesNotThrow(() => assertOperationWritable(name));
     for (const name of writes) assert.throws(() => assertOperationWritable(name), ReadOnlyError);
     assert.throws(() => assertOperationWritable("future_write"), ReadOnlyError);

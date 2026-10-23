@@ -7,7 +7,7 @@ const confirmed = new Set(["job_cancel", "job_abandon", "job_release", "job_reje
 const jobActions = new Set(["job_post", "job_edit", "job_cancel", "job_claim", "job_abandon", "job_release", "job_deliver", "job_accept",
   "job_changes", "job_reject", "job_paid", "job_receipt", "job_not_received", "job_dispute", "job_hide", "job_restore", "job_resolve"]);
 const teamActions = new Set(["team_invite", "team_accept", "team_decline", "team_leave", "team_remove", "agreement_propose", "agreement_accept", "agreement_decline"]);
-const ideaActions = new Set(["idea_post", "idea_edit", "idea_link", "idea_interest", "idea_uninterest", "comment_post"]);
+const ideaActions = new Set(["idea_post", "idea_edit", "idea_link", "idea_interest", "idea_uninterest", "comment_post", "idea_hide", "idea_restore", "comment_hide", "comment_restore"]);
 const fundingActions = new Set(["funding_set", "pledge_post", "pledge_withdraw", "pledge_received"]);
 
 /** POST /collaborate/action. Forms carry intent only; every outcome, tier and state is decided in SQL. */
@@ -98,6 +98,12 @@ export async function collaborateAction(request: Request, services: Services) {
         case "idea_link": result = await run("idea_link", id, form.get("version"), form.get("projectId") ?? ""); break;
         case "idea_interest": result = await run("idea_interest", id, form.get("role"), form.get("note")); break;
         case "comment_post": result = await run("comment_post", id, form.get("body")); break;
+        case "idea_hide": case "idea_restore": result = await run("idea_moderate", id, form.get("version"), action === "idea_hide"); break;
+        case "comment_hide": case "comment_restore": {
+          const comment = form.get("commentId");
+          if (!projectId(comment)) return safeError(404);
+          result = await run("comment_moderate", id, comment, action === "comment_hide"); break;
+        }
         default: result = await run("idea_uninterest", id);
       }
       if (result.kind === "forbidden") return safeError(403);
@@ -116,7 +122,7 @@ export async function collaborateAction(request: Request, services: Services) {
       else {
         const pledge = form.get("pledgeId");
         if (!projectId(pledge)) return safeError(404);
-        result = await run("pledge_close", pledge, action === "pledge_received" ? "received" : "withdrawn");
+        result = await run("pledge_close", project, pledge, action === "pledge_received" ? "received" : "withdrawn");
       }
       if (result.kind === "forbidden") return safeError(403);
       if (result.kind === "missing") return safeError(404);

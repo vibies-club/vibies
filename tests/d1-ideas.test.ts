@@ -5,6 +5,7 @@ import { test } from 'node:test';
 import type { AccessDatabase, D1Statement, D1Result } from '../lib/d1/access.ts';
 import * as api from '../lib/d1/ideas.ts';
 import * as collab from '../lib/d1/collaborate.ts';
+import { readFunding } from '../lib/collab-read.ts';
 import type { IdeaFields } from '../lib/collab-core.ts';
 
 const hash = (id: number) => id.toString(16).padStart(64, '0');
@@ -122,12 +123,12 @@ test('funding: owner sets a goal; members and the Instructor pledge; totals are 
   const pledges = sqlite.prepare('SELECT id,pledger_account_id p,pledger_is_instructor i FROM pledges ORDER BY amount_usd').all() as any[];
   const [small, mid, big] = pledges;
   assert.equal(big.i, 1);
-  assert.equal((await api.pledge_close(db, hash(3), small.id, 'withdrawn')).kind, 'forbidden');
-  assert.equal((await api.pledge_close(db, hash(4), small.id, 'withdrawn')).kind, 'withdrawn');
-  assert.equal((await api.pledge_close(db, hash(4), small.id, 'withdrawn')).kind, 'invalid');
-  assert.equal((await api.pledge_close(db, hash(3), mid.id, 'received')).kind, 'forbidden');
-  assert.equal((await api.pledge_close(db, hash(1), mid.id, 'received')).kind, 'received');
-  assert.equal((await api.pledge_close(db, hash(99), big.id, 'withdrawn')).kind, 'withdrawn');
+  assert.equal((await api.pledge_close(db, hash(3), P1, small.id, 'withdrawn')).kind, 'forbidden');
+  assert.equal((await api.pledge_close(db, hash(4), P1, small.id, 'withdrawn')).kind, 'withdrawn');
+  assert.equal((await api.pledge_close(db, hash(4), P1, small.id, 'withdrawn')).kind, 'invalid');
+  assert.equal((await api.pledge_close(db, hash(3), P1, mid.id, 'received')).kind, 'forbidden');
+  assert.equal((await api.pledge_close(db, hash(1), P1, mid.id, 'received')).kind, 'received');
+  assert.equal((await api.pledge_close(db, hash(99), P1, big.id, 'withdrawn')).kind, 'withdrawn');
   assert.throws(() => sqlite.exec(`UPDATE pledges SET status='pledged' WHERE id='${mid.id}'`), /pledge_transition|CHECK/);
   assert.throws(() => sqlite.exec(`UPDATE pledges SET amount_usd=1 WHERE id='${mid.id}'`), /pledge_immutable/);
   assert.throws(() => sqlite.exec(`DELETE FROM pledges WHERE id='${mid.id}'`), /pledges_are_kept/);
@@ -138,4 +139,79 @@ test('funding: owner sets a goal; members and the Instructor pledge; totals are 
   assert.equal((await api.funding_set(db, hash(1), P1, '1', false, null)).kind, 'saved');
   assert.equal((sqlite.prepare('SELECT goal_usd g FROM project_funding').get() as any).g, 1500);
   assert.equal((await api.pledge_post(db, hash(3), P1, '20', null)).kind, 'not_seeking');
+});
+
+test('moderation: the Instructor hides ideas and comments; authors still see them; hidden ideas take no changes', async () => {
+  const { db, sqlite } = fixture();
+  const id = await shared(db, 1);
+  await api.comment_post(db, hash(2), id, 'Try the canteen.');
+  await api.comment_post(db, hash(3), id, 'Something rude.');
+  const comments = (sqlite.prepare('SELECT id,author_account_id a FROM comments ORDER BY created_at, id').all() as any[]);
+  const rude = comments.find(c => c.a === 'acc3').id;
+  assert.equal((await api.comment_moderate(db, hash(1), id, rude, true)).kind, 'forbidden');
+  assert.equal((await api.comment_moderate(db, hash(99), id, rude, true)).kind, 'comment_hidden');
+  assert.equal((await api.comment_moderate(db, hash(99), id, rude, true)).kind, 'unchanged');
+  assert.equal((await api.comment_moderate(db, hash(99), P1, rude, true)).kind, 'missing');
+  const bodies = async (user: number) => ((await api.idea_page(db, hash(user), id)) as any).idea.comments.map((c: any) => [c.body, c.hidden]);
+  assert.deepEqual(await bodies(2), [['Try the canteen.', false]]);
+  assert.deepEqual((await bodies(3)).sort(), [['Something rude.', true], ['Try the canteen.', false]]);
+  assert.equal((await bodies(99)).length, 2);
+  assert.equal(((await api.ideas_feed(db, hash(2))) as any).ideas[0].commentCount, 1);
+  assert.throws(() => sqlite.exec(`UPDATE comments SET body='edited' WHERE id='${rude}'`), /comments_immutable/);
+  assert.equal((await api.comment_moderate(db, hash(99), id, rude, false)).kind, 'comment_restored');
+
+  assert.equal((await api.idea_moderate(db, hash(1), id, v(sqlite, id), true)).kind, 'forbidden');
+  assert.equal((await api.idea_moderate(db, hash(99), id, '9', true)).kind, 'stale');
+  assert.equal((await api.idea_moderate(db, hash(99), id, v(sqlite, id), true)).kind, 'hidden');
+  assert.equal((await api.idea_moderate(db, hash(99), id, v(sqlite, id), true)).kind, 'unchanged');
+  assert.equal(((await api.ideas_feed(db, hash(2))) as any).ideas.length, 0);
+  assert.equal((await api.idea_page(db, hash(2), id)).kind, 'missing');
+  const mine = ((await api.ideas_feed(db, hash(1))) as any).ideas;
+  assert.equal(mine.length, 1); assert.equal(mine[0].hidden, true);
+  assert.equal(((await api.idea_page(db, hash(99), id)) as any).idea.hidden, true);
+  assert.equal((await api.comment_post(db, hash(2), id, 'Still here?')).kind, 'hidden_idea');
+  assert.equal((await api.comment_post(db, hash(99), id, 'Hidden for now')).kind, 'hidden_idea');
+  assert.equal((await api.idea_interest(db, hash(2), id, 'Designer', null)).kind, 'hidden_idea');
+  assert.equal((await api.idea_edit(db, hash(1), id, v(sqlite, id), fields({ title: 'New title' }))).kind, 'hidden_idea');
+  assert.equal((await api.idea_moderate(db, hash(99), id, v(sqlite, id), false)).kind, 'restored');
+  assert.equal(((await api.ideas_feed(db, hash(2))) as any).ideas.length, 1);
+});
+
+test('ideas: revoked members leave the interest roster; unlinking keeps the stage; comments only target ideas', async () => {
+  const { db, sqlite } = fixture();
+  const id = await shared(db, 1);
+  await api.idea_interest(db, hash(2), id, 'Designer', null);
+  await api.idea_interest(db, hash(4), id, 'Builder', null);
+  sqlite.exec("UPDATE accounts SET status='revoked' WHERE internal_id='acc4'");
+  const page = ((await api.idea_page(db, hash(3), id)) as any).idea;
+  assert.deepEqual(page.interest.map((p: any) => p.nickname), ['Nova']);
+  assert.equal(page.interestCount, 1);
+  assert.equal(((await api.ideas_feed(db, hash(3))) as any).ideas[0].interestCount, 1);
+  assert.equal((await api.idea_link(db, hash(1), id, v(sqlite, id), P1)).kind, 'linked');
+  assert.equal((await api.idea_link(db, hash(1), id, v(sqlite, id), '')).kind, 'unlinked');
+  assert.equal(idea(sqlite, id).project_id, null); assert.equal(idea(sqlite, id).stage, 'building');
+  assert.throws(() => sqlite.exec(`INSERT INTO comments(id,target_kind,target_id,author_account_id,body) VALUES('c','project','${P1}','acc2','Hi')`), /CHECK/);
+});
+
+test('visibility: unpublished or hidden products are missing for pledges and untitled in the feed', async () => {
+  const { db, sqlite } = fixture();
+  assert.equal((await api.funding_set(db, hash(2), P2, '0', true, '500')).kind, 'saved');
+  const id = await shared(db, 2);
+  await api.idea_link(db, hash(2), id, v(sqlite, id), P2);
+  sqlite.exec(`UPDATE personal_projects SET publication='Draft' WHERE id='${P2}'`);
+  assert.equal((await api.pledge_post(db, hash(1), P2, '50', null)).kind, 'missing');
+  assert.equal(((await api.ideas_feed(db, hash(1))) as any).ideas[0].projectTitle, null);
+  assert.equal(((await api.ideas_feed(db, hash(2))) as any).ideas[0].projectTitle, 'Recipe Swap');
+  sqlite.exec(`UPDATE personal_projects SET publication='Published',moderation='Hidden' WHERE id='${P2}'`);
+  assert.equal((await api.pledge_post(db, hash(1), P2, '50', null)).kind, 'missing');
+  sqlite.exec(`UPDATE personal_projects SET moderation='Visible' WHERE id='${P2}'`);
+  assert.equal((await api.pledge_post(db, hash(99), P2, '50', null)).kind, 'pledged');
+  const pledge = (sqlite.prepare('SELECT id FROM pledges').get() as any).id;
+  assert.equal((await api.pledge_close(db, hash(99), P2, pledge, 'received')).kind, 'forbidden');
+  assert.equal((await api.pledge_close(db, hash(2), P1, pledge, 'received')).kind, 'missing');
+  assert.equal((await api.pledge_close(db, hash(2), P2, pledge, 'received')).kind, 'received');
+  const funding = ((await api.project_funding(db, hash(2), P2)) as any).funding;
+  assert.equal(readFunding(funding).version, '1');
+  assert.throws(() => readFunding({ ...funding, version: '01' }));
+  assert.throws(() => readFunding({ ...funding, version: 2 }));
 });

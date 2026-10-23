@@ -9,10 +9,12 @@ export async function collabPage(path: string, data: PageData, s: Services, hash
   if (path === '/collaborate') {
     const v = await s.domainOperation('collab_board', hash);
     if (v.kind !== 'ok') throw new Error('Unavailable');
-    const ideas = await s.domainOperation('ideas_feed', hash);
-    if (ideas.kind !== 'ok') throw new Error('Unavailable');
     data.collab = readBoard(v);
-    data.ideas = readIdeas(ideas).ideas;
+    // Ideas load on their own: a failure leaves the Jobs and Teams tabs working.
+    try {
+      const ideas = await s.domainOperation('ideas_feed', hash);
+      if (ideas.kind === 'ok') data.ideas = readIdeas(ideas).ideas;
+    } catch {}
     return;
   }
   const idea = ideaPath.exec(path);

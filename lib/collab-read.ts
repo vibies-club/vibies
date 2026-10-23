@@ -140,8 +140,8 @@ export function readTeam(value: any): Team {
 // ---------- Ideas and funding ----------
 
 export type IdeaSummary = { id: string; title: string; problem: string; audience: string; help: Help[]; stage: Stage; author: string; isMine: boolean;
-  projectId: string | null; projectTitle: string | null; interestCount: number; commentCount: number; interested: boolean; createdAt: string; activityAt: string };
-export type IdeaComment = { author: string; byInstructor: boolean; body: string; at: string };
+  projectId: string | null; projectTitle: string | null; interestCount: number; commentCount: number; interested: boolean; hidden: boolean; createdAt: string; activityAt: string };
+export type IdeaComment = { id: string; hidden: boolean; author: string; byInstructor: boolean; body: string; at: string };
 export type IdeaInterest = { nickname: string; role: string; note: string | null; at: string; team: "invited" | "active" | null };
 export type IdeaDetail = IdeaSummary & { version: string; interest: IdeaInterest[]; mine: { role: string; note: string | null } | null;
   myTeam: "invited" | "active" | null; comments: IdeaComment[]; products: { id: string; title: string }[] | null };
@@ -156,7 +156,7 @@ function ideaSummary(value: unknown): IdeaSummary {
   return { id: id(v.id), title: str(v.title, 80), problem: str(v.problem, 2000), audience: str(v.audience, 200),
     help: list(v.help, one(Object.keys(HELP) as Help[]), 5), stage: one(Object.keys(STAGES) as Stage[])(v.stage), author: name(v.author),
     isMine: bool(v.isMine), projectId: opt(v.projectId, id), projectTitle: opt(v.projectTitle, s => str(s, 80)),
-    interestCount: int(0, 100_000)(v.interestCount), commentCount: int(0, 100_000)(v.commentCount), interested: bool(v.interested),
+    interestCount: int(0, 100_000)(v.interestCount), commentCount: int(0, 100_000)(v.commentCount), interested: bool(v.interested), hidden: bool(v.hidden),
     createdAt: time(v.createdAt), activityAt: time(v.activityAt) };
 }
 export function readIdeas(value: any): { viewer: "member" | "instructor"; ideas: IdeaSummary[] } {
@@ -170,7 +170,7 @@ export function readIdeaPage(value: any): IdeaPage {
       at: time(x.at), team: opt(x.team, teamStatus) }; }),
     mine: opt(v.mine, m => { const x = obj(m); return { role: str(x.role, 40), note: opt(x.note, s => str(s, 500)) }; }),
     myTeam: opt(v.myTeam, teamStatus),
-    comments: list(v.comments, c => { const x = obj(c); return { author: name(x.author), byInstructor: bool(x.byInstructor), body: str(x.body, 1000), at: time(x.at) }; }, 2000),
+    comments: list(v.comments, c => { const x = obj(c); return { id: id(x.id), hidden: bool(x.hidden), author: name(x.author), byInstructor: bool(x.byInstructor), body: str(x.body, 1000), at: time(x.at) }; }, 2000),
     products: opt(v.products, p => list(p, item => { const x = obj(item); return { id: id(x.id), title: str(x.title, 80) }; }, 100)) } };
 }
 export function readFunding(value: any): Funding {

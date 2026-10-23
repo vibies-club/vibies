@@ -12,7 +12,8 @@ CREATE TABLE ideas (
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   activity_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-  version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0)
+  version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+  hidden INTEGER NOT NULL DEFAULT 0 CHECK (hidden IN (0,1))
 );
 CREATE INDEX ideas_activity_idx ON ideas(activity_at DESC, id);
 CREATE TRIGGER ideas_help_values BEFORE INSERT ON ideas
@@ -46,22 +47,24 @@ CREATE TRIGGER idea_interest_not_author BEFORE INSERT ON idea_interest
 WHEN NEW.account_id = (SELECT author_account_id FROM ideas WHERE id = NEW.idea_id)
 BEGIN SELECT RAISE(ABORT,'interest_author'); END;
 
--- Generic comments. Only ideas take comments today; 'project' is reserved for later.
+-- Generic comments. Only ideas take comments today; widen target_kind when another target ships.
 CREATE TABLE comments (
   id TEXT PRIMARY KEY NOT NULL,
-  target_kind TEXT NOT NULL CHECK (target_kind IN ('idea','project')),
+  target_kind TEXT NOT NULL CHECK (target_kind IN ('idea')),
   target_id TEXT NOT NULL,
   author_account_id TEXT REFERENCES accounts(internal_id),
   author_is_instructor INTEGER NOT NULL DEFAULT 0 CHECK (author_is_instructor IN (0,1)),
   body TEXT NOT NULL CHECK (length(body) BETWEEN 1 AND 1000 AND body = trim(body)),
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  hidden INTEGER NOT NULL DEFAULT 0 CHECK (hidden IN (0,1)),
   CHECK ((author_account_id IS NULL) = (author_is_instructor = 1))
 );
 CREATE INDEX comments_target_idx ON comments(target_kind, target_id, created_at);
 CREATE TRIGGER comments_idea_exists BEFORE INSERT ON comments
 WHEN NEW.target_kind = 'idea' AND NOT EXISTS (SELECT 1 FROM ideas WHERE id = NEW.target_id)
 BEGIN SELECT RAISE(ABORT,'comment_target'); END;
-CREATE TRIGGER comments_no_update BEFORE UPDATE ON comments
+-- Comments are kept as written; only the Instructor's hidden flag changes.
+CREATE TRIGGER comments_no_update BEFORE UPDATE OF id, target_kind, target_id, author_account_id, author_is_instructor, body, created_at ON comments
 BEGIN SELECT RAISE(ABORT,'comments_immutable'); END;
 CREATE TRIGGER comments_no_delete BEFORE DELETE ON comments
 BEGIN SELECT RAISE(ABORT,'comments_immutable'); END;

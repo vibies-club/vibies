@@ -22,12 +22,12 @@ export function CollaboratePage(props: PageProps) {
   if (data.kind !== "ok" || !data.collab || (access.kind !== "member" && access.kind !== "instructor")) {
     return <AppShell data={data}><Retry href="/collaborate" /></AppShell>;
   }
-  return <AppShell data={data}><Collaborate board={data.collab} ideas={data.ideas ?? []} message={search.get("message")} /></AppShell>;
+  return <AppShell data={data}><Collaborate board={data.collab} ideas={data.ideas ?? null} message={search.get("message")} /></AppShell>;
 }
 
 const tabFor = (hash: string) => ["mine", "post"].includes(hash) ? "jobs" : hash === "idea-new" ? "ideas" : ["ideas", "teams"].includes(hash) ? hash : "jobs";
 
-function Collaborate({ board, ideas, message }: { board: Board; ideas: IdeaSummary[]; message: string | null }) {
+function Collaborate({ board, ideas, message }: { board: Board; ideas: IdeaSummary[] | null; message: string | null }) {
   const member = board.viewer === "member";
   const hash = useHash("jobs");
   const tab = member || hash !== "teams" ? tabFor(hash) : "jobs";
@@ -40,7 +40,7 @@ function Collaborate({ board, ideas, message }: { board: Board; ideas: IdeaSumma
         {item.count ? <span className="tab-count mono" aria-label={`${item.count} waiting`}>{item.count}</span> : null}</a></li>)}
     </ul></nav>
     <CollabMessage message={message} />
-    {tab === "teams" ? <Teams board={board} /> : tab === "ideas" ? (hash === "idea-new" && member ? <NewIdea /> : <Ideas ideas={ideas} member={member} />) : hash === "post" ? <Post board={board} /> : <Jobs board={board} mine={hash === "mine"} />}
+    {tab === "teams" ? <Teams board={board} /> : tab === "ideas" ? (hash === "idea-new" && member ? <NewIdea /> : ideas ? <Ideas ideas={ideas} member={member} /> : <p className="quiet">Ideas could not load right now. Refresh the page to try again.</p>) : hash === "post" ? <Post board={board} /> : <Jobs board={board} mine={hash === "mine"} />}
   </>;
 }
 
