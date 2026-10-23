@@ -47,7 +47,7 @@ function Panel({ member, session, onClose }: { member: Member; session: CourseSe
           <form method="post" action="/course/action" className="inline-form">
             <input type="hidden" name="action" value="clear" />{hidden}
             <button type="submit" className="small" aria-label={`Clear flag: ${item.text}`}>Clear flag</button>
-          </form> :
+          </form> : check?.state === "done" &&
           <details className="gate-mark">
             <summary className="button small" aria-label={`Flag needs work: ${item.text}`}>Flag needs work</summary>
             <form method="post" action="/course/action" className="stack-form">
@@ -65,7 +65,15 @@ function Panel({ member, session, onClose }: { member: Member; session: CourseSe
 
 export function GatesPage({ data, search }: { data: PageData; search: URLSearchParams }) {
   const [open, setOpen] = useState(() => window.location.hash.slice(1));
-  useEffect(() => { if (open) document.getElementById("gate-panel")?.scrollIntoView({ block: "start" }); }, [open]);
+  const [early, setEarly] = useState(false);
+  useEffect(() => {
+    // Move focus to the opened cell so keyboard and screen reader users land on its items.
+    const heading = document.querySelector<HTMLElement>("#gate-panel h2");
+    if (!open || !heading) return;
+    heading.tabIndex = -1;
+    heading.focus({ preventScroll: true });
+    document.getElementById("gate-panel")?.scrollIntoView({ block: "start" });
+  }, [open]);
   if (data.kind !== "ok" || data.access.kind !== "instructor") return <AppShell data={data}><Retry href="/admin/gates" /></AppShell>;
   const course = data.course, board = data.gateBoard;
   const message = MESSAGES[search.get("message") ?? ""];
@@ -73,12 +81,17 @@ export function GatesPage({ data, search }: { data: PageData; search: URLSearchP
   const close = () => { setOpen(""); history.replaceState(null, "", `${window.location.pathname}${window.location.search}`); };
   const header = <PageHeader title="Gates" lead="Each cell shows how many gate items a member has ticked. Open a cell to check proof links and send an item back." />;
   if (!course || !board) return <AppShell data={data}>{header}<EmptyState href="/course" action="Open the course">Slides are not published yet, so there are no gates to review.</EmptyState></AppShell>;
-  const sessions = course.sessions.filter(session => session.gate.length > 0);
-  const selected = board.members.flatMap(member => sessions.map(session => ({ member, session }))).find(cell => cellKey(cell.member.nickname, cell.session.n) === open);
+  const gated = course.sessions.filter(session => session.gate.length > 0);
+  const selected = board.members.flatMap(member => gated.map(session => ({ member, session }))).find(cell => cellKey(cell.member.nickname, cell.session.n) === open);
+  // ponytail: S12 starts the build-your-product arc, so the grid opens there; earlier sessions are one tap away.
+  const showEarly = early || (selected !== undefined && selected.session.n < 12);
+  const sessions = showEarly ? gated : gated.filter(session => session.n >= 12);
+  const hasEarly = gated.some(session => session.n < 12);
   return <AppShell data={data}>
     {header}
     {message && <MessageBanner>{message}</MessageBanner>}
     {board.members.length === 0 ? <EmptyState href="/admin/members" action="Review members">No approved members yet.</EmptyState> : <>
+      {hasEarly && <button type="button" className="link-button board-toggle" aria-expanded={showEarly} onClick={() => setEarly(!showEarly)}>{showEarly ? "Hide S1 to S11" : "Show S1 to S11"}</button>}
       <div className="board-scroll">
         <table className="board">
           <thead><tr><th scope="col">Member</th>{sessions.map(session => <th key={session.n} scope="col"><a href={`/course/${session.n}`} title={session.title}>S{session.n}</a></th>)}</tr></thead>

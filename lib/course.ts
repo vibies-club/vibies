@@ -15,7 +15,7 @@ export type CourseSession = {
 export type CourseManifest = { version: 1; demoDay: string; phases: { id: string; title: string }[]; sessions: CourseSession[] };
 
 export type GateState = "done" | "needs_work";
-export type GateCheck = { sessionNo: number; itemId: string; state: GateState; proofUrl: string | null; note: string | null };
+export type GateCheck = { sessionNo: number; itemId: string; state: GateState; proofUrl: string | null; memberNote: string | null; instructorNote: string | null };
 // The board also carries proof links and notes so the Instructor can review a cell before flagging it.
 export type GateBoard = { members: { nickname: string; checks: GateCheck[] }[] };
 

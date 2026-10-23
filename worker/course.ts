@@ -27,8 +27,8 @@ export async function readCourse(env: Env): Promise<CourseManifest | null> {
 function gateCheck(value: any): GateCheck {
   if (!value || !Number.isInteger(value.sessionNo) || value.sessionNo < 1 || value.sessionNo > 30 || !gateItemId(value.itemId) ||
     !['done', 'needs_work'].includes(value.state) || !(value.proofUrl === null || typeof value.proofUrl === 'string') ||
-    !(value.note === null || typeof value.note === 'string')) throw new Error('Unavailable');
-  return { sessionNo: value.sessionNo, itemId: value.itemId, state: value.state, proofUrl: value.proofUrl, note: value.note };
+    !(value.memberNote === null || typeof value.memberNote === 'string') || !(value.instructorNote === null || typeof value.instructorNote === 'string')) throw new Error('Unavailable');
+  return { sessionNo: value.sessionNo, itemId: value.itemId, state: value.state, proofUrl: value.proofUrl, memberNote: value.memberNote, instructorNote: value.instructorNote };
 }
 
 /** Course and gate data for /welcome, /course, /course/:n and /admin/gates. Access and role redirects are already checked by the caller. */

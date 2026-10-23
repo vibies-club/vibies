@@ -115,13 +115,14 @@ function Pager({ course, session }: { course: CourseManifest; session: CourseSes
   </nav>;
 }
 
-const MESSAGES: Record<string, string> = { done: "Marked done. Nice work.", undone: "Moved back to to do." };
+const MESSAGES: Record<string, string> = { done: "Marked done. Nice work.", undone: "Moved back to To do." };
 
 /** Proof link and note under a gate item. */
 export function GateDetails({ check }: { check?: GateCheck }) {
-  if (!check || (!check.proofUrl && !check.note)) return null;
+  if (!check || (!check.proofUrl && !check.memberNote && !check.instructorNote)) return null;
   return <div className="gate-details">
-    {check.state === "needs_work" && check.note ? <p className="gate-flag"><span className="mono">Instructor</span> {check.note}</p> : check.note && <p className="gate-note">{check.note}</p>}
+    {check.instructorNote && <p className="gate-flag"><span className="mono">Instructor</span> {check.instructorNote}</p>}
+    {check.memberNote && <p className="gate-note">{check.memberNote}</p>}
     {check.proofUrl && <a className="text-link" href={check.proofUrl} target="_blank" rel="noreferrer" referrerPolicy="no-referrer">Open proof link</a>}
   </div>;
 }
@@ -147,7 +148,7 @@ function GateRow({ n, item, checks, canEdit }: { n: number; item: GateItem; chec
           <label htmlFor={`proof-${item.id}`}>Proof link <span className="quiet">(optional)</span></label>
           <input id={`proof-${item.id}`} name="proofUrl" type="url" inputMode="url" placeholder="https://" pattern="https://.+" maxLength={512} defaultValue={check?.proofUrl ?? ""} />
           <label htmlFor={`note-${item.id}`}>Note <span className="quiet">(optional)</span></label>
-          <textarea id={`note-${item.id}`} name="note" rows={2} maxLength={500} />
+          <textarea id={`note-${item.id}`} name="note" rows={2} maxLength={500} defaultValue={check?.memberNote ?? ""} />
           <button type="submit" className="small">Save as done</button>
         </form>
       </details>)}

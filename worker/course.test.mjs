@@ -11,7 +11,7 @@ const token=n=>n.toString(16).padStart(64,'0');
 const hash=n=>createHash('sha256').update(token(n)).digest('hex');
 const manifest={version:1,demoDay:'2026-11-19',phases:[{id:'build',title:'Build'}],sessions:[
  {n:17,title:'Make It Move',goal:'Add motion.',date:'2026-10-12',phase:'build',deck:'s17.html',gate:[],prompts:[]},
- {n:18,title:'A Home for Real Users',goal:'Ship it.',date:'2026-10-15',phase:'build',deck:'s18.html',gate:[{id:'s18-deploy',text:'Deploy it.'}],prompts:[{file:'cloudflare-prompt.md',label:'Cloudflare prompt'}]},
+ {n:18,title:'A Home for Real Users',goal:'Ship it.',date:'2026-10-15',phase:'build',deck:'s18.html',gate:[{id:'s18-deploy',text:'Deploy it.'},{id:'s18-readme',text:'Write the README.'}],prompts:[{file:'cloudflare-prompt.md',label:'Cloudflare prompt'}]},
  {n:19,title:'Make It Work',goal:'',date:'2026-10-26',phase:'build',deck:null,gate:[],prompts:[]},
 ]};
 const deck='<!doctype html><title>S18</title><script>document.title="inline"</script><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque" rel="stylesheet">';
@@ -70,12 +70,12 @@ test('course pages and files share page access and only serve listed files',asyn
    assert.equal((await get('/course-files/decks/s17.html',2,{method:'HEAD'})).status,404);
   });
   const post=(body,user,init={})=>mf.dispatchFetch(origin+'/course/action',{redirect:'manual',method:'POST',headers:{origin,'content-type':'application/x-www-form-urlencoded',...(user?{cookie:`__Host-vibies-session=${token(user)}`}:{})},body:new URLSearchParams(body).toString(),...init});
-  const stored=async()=>(await db.prepare('SELECT account_id,session_no,item_id,state,proof_url,note FROM gate_checks ORDER BY account_id,session_no,item_id').all()).results;
+  const stored=async()=>(await db.prepare('SELECT account_id,session_no,item_id,state,proof_url,member_note,instructor_note FROM gate_checks ORDER BY account_id,session_no,item_id').all()).results;
   await t.test('members tick and untick only their own gate items',async()=>{
    let r=await post({action:'done',session:'18',item:'s18-deploy',proofUrl:'https://example.com/proof',note:'Shipped it.',member:'Builder4'},2);
    assert.equal(r.status,303);assert.equal(r.headers.get('location'),'/course/18?message=done');
-   assert.deepEqual(await stored(),[{account_id:'account2',session_no:18,item_id:'s18-deploy',state:'done',proof_url:'https://example.com/proof',note:'Shipped it.'}]);
-   const mine=await page('/course/18',2);assert.deepEqual(mine.gates.mine,[{sessionNo:18,itemId:'s18-deploy',state:'done',proofUrl:'https://example.com/proof',note:'Shipped it.'}]);
+   assert.deepEqual(await stored(),[{account_id:'account2',session_no:18,item_id:'s18-deploy',state:'done',proof_url:'https://example.com/proof',member_note:'Shipped it.',instructor_note:null}]);
+   const mine=await page('/course/18',2);assert.deepEqual(mine.gates.mine,[{sessionNo:18,itemId:'s18-deploy',state:'done',proofUrl:'https://example.com/proof',memberNote:'Shipped it.',instructorNote:null}]);
    assert.deepEqual((await page('/course/18',4)).gates.mine,[]);assert.deepEqual((await page('/welcome',4)).gates.mine,[]);
    assert.equal((await page('/course',2)).gates.mine.length,1);
    assert.equal((await page('/course/18',1)).gates,undefined);
@@ -115,16 +115,23 @@ test('course pages and files share page access and only serve listed files',asyn
   await t.test('the Instructor flags and clears; members never receive the board',async()=>{
    let r=await post({action:'flag',session:'18',item:'s18-deploy',member:'Builder2',note:'The link shows a 404.'},1);
    assert.equal(r.status,303);assert.equal(r.headers.get('location'),'/admin/gates?message=flagged#cell-Builder2-18');
-   assert.deepEqual((await page('/course/18',2)).gates.mine[0],{sessionNo:18,itemId:'s18-deploy',state:'needs_work',proofUrl:'https://example.com/proof',note:'The link shows a 404.'});
+   assert.deepEqual((await page('/course/18',2)).gates.mine[0],{sessionNo:18,itemId:'s18-deploy',state:'needs_work',proofUrl:'https://example.com/proof',memberNote:'Shipped it.',instructorNote:'The link shows a 404.'});
    const board=await page('/admin/gates',1);assert.equal(board.kind,'ok');
    assert.deepEqual(board.gateBoard.members.map(m=>m.nickname),['Builder2','Builder4']);assert.equal(board.gateBoard.members[0].checks[0].state,'needs_work');
    assert.equal(JSON.stringify(board).includes('account2'),false);
    for(const user of [2,4]){const v=await page('/admin/gates',user);assert.equal(v.redirect,'/welcome');assert.equal(v.gateBoard,undefined);}
    for(const path of ['/welcome','/course','/course/18'])assert.equal((await page(path,2)).gateBoard,undefined,path);
    assert.equal((await post({action:'flag',session:'18',item:'s18-deploy',member:'Nobody',note:'x'},1)).headers.get('location'),'/admin/gates?message=missing#cell-Nobody-18');
+   const flagged=await stored();
+   assert.equal((await post({action:'flag',session:'18',item:'s18-readme',member:'Builder2',note:'Not ticked yet.'},1)).headers.get('location'),'/admin/gates?message=unchanged#cell-Builder2-18');
+   assert.equal((await post({action:'flag',session:'18',item:'s18-deploy',member:'Builder2',note:'Again.'},1)).headers.get('location'),'/admin/gates?message=unchanged#cell-Builder2-18');
+   assert.deepEqual(await stored(),flagged);
    r=await post({action:'clear',session:'18',item:'s18-deploy',member:'Builder2'},1);assert.equal(r.headers.get('location'),'/admin/gates?message=cleared#cell-Builder2-18');
-   assert.deepEqual((await stored())[0],{account_id:'account2',session_no:18,item_id:'s18-deploy',state:'done',proof_url:'https://example.com/proof',note:null});
+   assert.deepEqual((await stored())[0],{account_id:'account2',session_no:18,item_id:'s18-deploy',state:'done',proof_url:'https://example.com/proof',member_note:'Shipped it.',instructor_note:null});
    assert.equal((await post({action:'clear',session:'18',item:'s18-deploy',member:'Builder2'},1)).headers.get('location'),'/admin/gates?message=unchanged#cell-Builder2-18');
+   await post({action:'flag',session:'18',item:'s18-deploy',member:'Builder2',note:'One more fix.'},1);
+   await post({action:'done',session:'18',item:'s18-deploy',proofUrl:'https://example.com/fixed',note:'Fixed the build folder.'},2);
+   assert.deepEqual((await stored())[0],{account_id:'account2',session_no:18,item_id:'s18-deploy',state:'done',proof_url:'https://example.com/fixed',member_note:'Fixed the build folder.',instructor_note:null});
   });
   await t.test('read-only mode allows gate reads and blocks gate writes',async()=>{
    await restart({...options,bindings:{...options.bindings,VIBIES_READ_ONLY:'1'}});
