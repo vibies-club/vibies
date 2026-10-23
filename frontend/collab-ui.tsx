@@ -130,8 +130,32 @@ const messages: Record<string, string> = {
   agreement_not_team: "Every line must be the owner or a teammate who joined.",
   agreement_invalid: "Use whole percents from 1 to 100 that add up to exactly 100.",
   agreement_already: "You already answered this version.",
+  idea_posted: "Idea shared. Classmates can comment and say they are interested.",
+  idea_edited: "Idea saved.",
+  idea_linked: "Idea linked to your product. You can now invite interested classmates to its team.",
+  idea_unlinked: "Product link removed.",
+  idea_interested: "Saved. Classmates and the Instructor can see your role and note.",
+  idea_withdrawn: "Interest withdrawn.",
+  idea_commented: "Comment posted.",
+  idea_own_idea: "This is your idea, so there is no need to say you are interested.",
+  idea_stale: "This idea changed while you were looking. Review it and try again.",
+  idea_invalid: "Check the fields and try again.",
+  idea_hidden: "Idea hidden from Members. The author still sees it.",
+  idea_restored: "Idea visible to the class again.",
+  idea_comment_hidden: "Comment hidden from Members. Its author still sees it.",
+  idea_comment_restored: "Comment visible to the class again.",
+  idea_unchanged: "No change was made.",
+  idea_hidden_idea: "The Instructor hid this idea, so it cannot change or take comments right now.",
+  funding_saved: "Funding settings saved.",
+  funding_pledged: "Pledge recorded. Send it outside the site when you are ready.",
+  funding_withdrawn: "Pledge withdrawn.",
+  funding_received: "Marked as received.",
+  funding_not_seeking: "This product is not seeking funding right now.",
+  funding_own_project: "Owners cannot pledge to their own product.",
+  funding_stale: "Funding changed while you were looking. Review it and try again.",
+  funding_invalid: "Use whole US dollars from 1 to 1,000,000. Seeking funding needs a goal.",
 };
-export function CollabMessage({ message, only }: { message: string | null; only?: "team" }) {
-  if (!message || (only === "team" && !/^(team|agreement)_/.test(message))) return null;
+export function CollabMessage({ message, only }: { message: string | null; only?: "team" | "funding" }) {
+  if (!message || (only === "team" && !/^(team|agreement)_/.test(message)) || (only === "funding" && !message.startsWith("funding_"))) return null;
   return Object.hasOwn(messages, message) ? <MessageBanner>{messages[message]}</MessageBanner> : null;
 }

@@ -245,3 +245,37 @@ test('collaborate: posters, immutable job events, agreement activation and proje
     assert.equal(db.prepare("SELECT project_id FROM jobs WHERE id='j1'").get().project_id, null);
   } finally { db.close(); }
 });
+
+test('ideas, comments and pledges keep their records and their authors', () => {
+  const db = fixture();
+  try {
+    account(db, 1, 'approved', 'Pixel'); account(db, 2, 'approved', 'Nova'); project(db, 1);
+    const idea = (id, help = '[]', projectId = null) => db.prepare("INSERT INTO ideas(id,author_account_id,title,problem,audience,help,stage,project_id) VALUES(?,'account-1','Swap','Food waste','Flats',?,'idea',?)").run(id, help, projectId);
+    assert.throws(() => idea('i0', '["investor"]'), /idea_help/);
+    assert.throws(() => idea('i0', '[]', 'project-1'), /idea_project/);
+    idea('i1', '["designer","funding"]');
+    assert.throws(() => db.exec("UPDATE ideas SET stage='launched'"), /CHECK/);
+    assert.throws(() => db.exec("UPDATE ideas SET author_account_id='account-2'"), /idea_immutable/);
+    assert.throws(() => db.exec("INSERT INTO idea_interest(idea_id,account_id,role) VALUES('i1','account-1','Me')"), /interest_author/);
+    db.exec("INSERT INTO idea_interest(idea_id,account_id,role) VALUES('i1','account-2','Designer')");
+    assert.throws(() => db.exec("INSERT INTO comments(id,target_kind,target_id,author_account_id,body) VALUES('c0','idea','missing','account-2','Hi')"), /comment_target/);
+    assert.throws(() => db.exec("INSERT INTO comments(id,target_kind,target_id,author_account_id,author_is_instructor,body) VALUES('c0','idea','i1','account-2',1,'Hi')"), /CHECK/);
+    db.exec("INSERT INTO comments(id,target_kind,target_id,author_is_instructor,body) VALUES('c1','idea','i1',1,'Ask the canteen')");
+    assert.throws(() => db.exec('DELETE FROM comments'), /comments_immutable/);
+
+    const pledge = (id, who) => db.prepare("INSERT INTO pledges(id,project_id,pledger_account_id,pledger_is_instructor,amount_usd) VALUES(?,'project-1',?,?,50)").run(id, who, who ? 0 : 1);
+    assert.throws(() => pledge('g0', 'account-2'), /pledge_not_seeking/);
+    assert.throws(() => db.exec("INSERT INTO project_funding(project_id,seeking) VALUES('project-1',1)"), /CHECK/);
+    db.exec("INSERT INTO project_funding(project_id,seeking,goal_usd) VALUES('project-1',1,500)");
+    assert.throws(() => pledge('g0', 'account-1'), /pledge_owner/);
+    pledge('g1', 'account-2'); pledge('g2', null);
+    assert.throws(() => db.exec("UPDATE pledges SET status='received' WHERE id='g1'"), /CHECK/);
+    db.exec("UPDATE pledges SET status='received',closed_at='2026-10-23T00:00:00Z' WHERE id='g1'");
+    assert.throws(() => db.exec("UPDATE pledges SET status='withdrawn' WHERE id='g1'"), /pledge_transition/);
+    assert.throws(() => db.exec("DELETE FROM pledges WHERE id='g2'"), /pledges_are_kept/);
+    db.exec("UPDATE ideas SET project_id='project-1' WHERE id='i1'");
+    db.exec("DELETE FROM personal_projects WHERE id='project-1'");
+    assert.equal(db.prepare('SELECT count(*) n FROM pledges').get().n, 0);
+    assert.equal(db.prepare("SELECT project_id FROM ideas WHERE id='i1'").get().project_id, null);
+  } finally { db.close(); }
+});

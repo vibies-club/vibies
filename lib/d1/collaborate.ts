@@ -1,37 +1,11 @@
 import { nickname, validToken } from '../access-core.ts';
 import { projectId, projectVersion } from '../project-core.ts';
 import { httpsUrl, isoDate, text, type AgreementLine, type JobTerms } from '../collab-core.ts';
-import type { AccessDatabase, D1Result, D1Statement } from './access.ts';
+import type { AccessDatabase } from './access.ts';
+import { actor, bool, instructor, instructorName, me, nick, now, rows, single, statements, uuid, visibleProject, type Kind, type Row } from './collab-sql.ts';
 
-// Every rule below is decided inside the write batch that applies it (one D1 transaction).
-// Batches are chained by a fresh nonce: the first guarded write records it, later writes
-// require it, so a failed guard leaves every statement at zero rows.
-const now = "strftime('%Y-%m-%dT%H:%M:%fZ','now')";
-const fresh = "julianday(s.created_at) > julianday('now','-24 hours')";
-const me = `(SELECT a.internal_id FROM sessions s JOIN accounts a ON a.github_id=s.github_id
-  WHERE s.session_hash=?1 AND ${fresh} AND a.status='approved')`;
-const instructor = `EXISTS (SELECT 1 FROM sessions s JOIN community c ON c.instructor_github_id=s.github_id
-  WHERE s.session_hash=?1 AND c.singleton=1 AND ${fresh})`;
-const actor = `(${me} IS NOT NULL OR ${instructor})`;
 const isPoster = `(j.poster_account_id=${me} OR (j.poster_is_instructor=1 AND ${instructor}))`;
 const isClaimant = `(j.claimant_account_id IS NOT NULL AND j.claimant_account_id=${me})`;
-const visibleProject = "p.publication='Published' AND p.connection='Connected' AND p.moderation='Visible'";
-const bool = (sql: string) => `json(CASE WHEN ${sql} THEN 'true' ELSE 'false' END)`;
-const instructorName = "(SELECT instructor_nickname FROM community WHERE singleton=1)";
-
-type Kind = { kind: string };
-type Row = Record<string, unknown>;
-function rows<T>(result: D1Result<T>): T[] {
-  if (!result.success) throw new Error('Collaborate unavailable');
-  return result.results;
-}
-function statements(db: AccessDatabase, args: unknown[]) {
-  return (sql: string) => {
-    const count = Math.max(0, ...Array.from(sql.matchAll(/\?(\d+)/g), match => Number(match[1])));
-    return db.prepare(sql).bind(...args.slice(0, count));
-  };
-}
-const uuid = (value: unknown): value is string => projectId(value);
 
 /** The poster's current line on a product: their active percent, or 100 when no agreement exists yet. */
 const lineOf = (project: string, account: string) => `(SELECT CASE WHEN a.id IS NULL THEN 100 ELSE coalesce((SELECT l.percent
@@ -321,12 +295,6 @@ export const job_moderate = (db: AccessDatabase, hash: string | null, id: string
 
 const owns = `EXISTS (SELECT 1 FROM personal_projects p WHERE p.id=?2 AND p.owner_account_id=${me})`;
 /** Runs [decision, ...writes, final?]. Returns the decision and, when given, the final row. */
-async function single(db: AccessDatabase, args: unknown[], decision: string, writes: string[], final?: string): Promise<Kind & { last?: Row }> {
-  const stmt = statements(db, args);
-  const results = await db.batch<Row>([stmt(decision), ...writes.map(sql => stmt(sql)), ...(final ? [stmt(final)] : [])]);
-  results.forEach(rows);
-  return { kind: rows(results[0])[0].kind as string, last: final ? rows(results[results.length - 1])[0] : undefined };
-}
 const key = (value: unknown) => nickname(value)?.toLowerCase() ?? null;
 
 export async function team_invite(db: AccessDatabase, hash: string | null, project: string, member: unknown, role: unknown): Promise<Kind> {
@@ -437,7 +405,6 @@ export async function agreement_respond(db: AccessDatabase, hash: string | null,
 
 // ---------- Reads ----------
 
-const nick = (account: string) => `CASE WHEN ${account} IS NULL THEN NULL ELSE (SELECT nickname FROM accounts WHERE internal_id=${account}) END`;
 const jobSummary = `'id',j.id,'title',j.title,'deliverable',j.deliverable,'windowDays',j.window_days,'money',j.money_usd,'share',j.share_percent,
   'poster',CASE WHEN j.poster_is_instructor=1 THEN ${instructorName} ELSE ${nick('j.poster_account_id')} END,
   'byInstructor',${bool('j.poster_is_instructor=1')},'projectId',j.project_id,'projectTitle',(SELECT title FROM personal_projects WHERE id=j.project_id),

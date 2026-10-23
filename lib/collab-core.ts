@@ -115,3 +115,20 @@ export function tierAt(claimedAt: string, windowDays: number, at: number): 100 |
 }
 /** Whole dollars and whole percents, rounded down, like the SQL that settles them. */
 export const payout = (amount: number, tier: number) => Math.floor(amount * tier / 100);
+
+export const HELP = { cofounder: "Co-founder", designer: "Designer", builder: "Builder", tester: "Tester", funding: "Funding" } as const;
+export type Help = keyof typeof HELP;
+export const STAGES = { idea: "Idea", exploring: "Exploring", building: "Building" } as const;
+export type Stage = keyof typeof STAGES;
+export type IdeaFields = { title: string; problem: string; audience: string; help: Help[]; stage: Stage };
+
+/** Reads the idea form. Each help-wanted checkbox has its own name (help_designer=yes), since forms reject repeated keys. */
+export function ideaFields(form: URLSearchParams): IdeaFields | null {
+  const title = text(form.get("title"), 1, 80), problem = text(form.get("problem"), 1, 2000, true), audience = text(form.get("audience"), 1, 200);
+  const help = (Object.keys(HELP) as Help[]).filter(key => form.get(`help_${key}`) === "yes"), stage = form.get("stage");
+  if (!title || !problem || !audience || !stage || !Object.hasOwn(STAGES, stage)) return null;
+  return { title, problem, audience, help, stage: stage as Stage };
+}
+
+/** "$1,200" or "1200" -> 1200. Whole US dollars from 1 to 1,000,000. */
+export const usdAmount = (value: unknown) => typeof value === "string" ? wholeNumber(value.trim().replace(/^\$/, "").replace(/,/g, ""), 1, 1_000_000) : null;
