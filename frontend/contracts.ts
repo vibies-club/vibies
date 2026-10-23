@@ -2,7 +2,7 @@ import type { WikiEntry } from "../lib/wiki-filter";
 import type { Access } from "../lib/access-core";
 import type { MemberAccount } from "../lib/d1/access";
 import type { DemoState } from "../lib/demo";
-import type { Project } from "../lib/projects";
+import type { Project } from "../lib/project-read";
 import type { RepositoryChoice } from "../lib/project-github";
 
 /** Only validated presentation data crosses the Worker/browser boundary. */

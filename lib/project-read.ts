@@ -49,6 +49,8 @@ function readRoadmap(value: any): ProjectRoadmap {
   return { milestones, completedCount:value.completedCount, totalCount:value.totalCount, percentage };
 }
 
+export type ProjectContext = {githubId:string; username:string; repositoryId:string; version:string; publication:string; connection:string};
+
 export function readProject(value: any): Project {
   const details = projectDetails(value?.title, value?.summary, value?.demoUrl ?? "");
   if (!details || !projectId(value?.id) || !nickname(value?.nickname) || typeof value?.isOwner !== "boolean") throw new Error("Project unavailable");

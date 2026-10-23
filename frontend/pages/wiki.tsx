@@ -1,6 +1,6 @@
 import type { PageData } from "../contracts";
 import { AccessShell, Retry } from "../access-shell";
-import { CopyCommand } from "../../app/wiki/copy-command";
+import { CopyCommand } from "../copy-command";
 import { filterEntries } from "../../lib/wiki-filter";
 
 export function WikiPage({ data, search }: { data: PageData; search: URLSearchParams }) {

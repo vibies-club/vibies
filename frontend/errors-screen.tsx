@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import { demoErrors, searchDemoErrors } from "../../lib/demo-errors";
+import { demoErrors, searchDemoErrors } from "../lib/demo-errors";
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, ReactNode> = {

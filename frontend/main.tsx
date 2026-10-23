@@ -1,7 +1,7 @@
 import { createRoot, hydrateRoot } from "react-dom/client";
 import "./fonts.css";
-import "../app/globals.css";
-import "../app/home.css";
+import "./globals.css";
+import "./home.css";
 import { App } from "./app";
 
 const root = document.getElementById("root")!;
