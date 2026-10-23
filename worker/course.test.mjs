@@ -22,7 +22,7 @@ test('course pages and files share page access and only serve listed files',asyn
  // A fresh isolate drops the cached manifest.
  try{
   const db=await mf.getD1Database('DB');
-  for(const file of ['0001_application.sql','0002_activation.sql','0003_google.sql'])await db.batch(unstable_splitSqlQuery(readFileSync(new URL(`../d1/migrations/${file}`,import.meta.url),'utf8')).map(sql=>db.prepare(sql)));
+  for(const file of ['0001_application.sql','0002_activation.sql','0003_google.sql','0004_identity.sql'])await db.batch(unstable_splitSqlQuery(readFileSync(new URL(`../d1/migrations/${file}`,import.meta.url),'utf8')).map(sql=>db.prepare(sql)));
   await db.prepare("UPDATE deployment_activation SET state='reconciled',environment_id='test',snapshot_hash='synthetic',reconciled_at='2026-01-01'").run();
   await db.prepare("UPDATE deployment_activation SET state='active',activated_at='2026-01-01'").run();
   await db.prepare("UPDATE community SET instructor_github_id='1',instructor_nickname='Tutor',instructor_nickname_key='tutor'").run();
@@ -65,6 +65,8 @@ test('course pages and files share page access and only serve listed files',asyn
     const r=await get(path,2);assert.equal(r.status,404,path);assert.equal(r.headers.get('cache-control'),'no-store',path);await r.text();
    }
    assert.equal((await get('/course-files/decks/s18.html',2,{method:'POST'})).status,405);
+   const head=await get('/course-files/decks/s18.html',2,{method:'HEAD'});assert.equal(head.status,200);assert.equal(head.headers.get('content-type'),'text/html; charset=utf-8');assert.equal(await head.text(),'');
+   assert.equal((await get('/course-files/decks/s17.html',2,{method:'HEAD'})).status,404);
   });
   await t.test('a malformed manifest counts as unpublished',async()=>{
    await bucket.put('manifest.json',JSON.stringify({...manifest,sessions:[{...manifest.sessions[0],deck:'../x.html'}]}));

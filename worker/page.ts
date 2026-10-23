@@ -74,7 +74,7 @@ export async function page(request:Request,s:Services,env:Env) {
         }
       }
     }
-  }catch { data.kind='error';delete data.members;delete data.projects;delete data.project;delete data.linking;delete data.connect;delete data.demo; }
+  }catch { data.kind='error';delete data.members;delete data.projects;delete data.project;delete data.linking;delete data.connect;delete data.demo;delete data.course;delete data.session;delete data.gates; }
   const response=Response.json(data,{status:data.kind==='error'?503:data.redirect?.startsWith('/sign-in')?401:data.redirect==='/access-denied'?403:200,headers:{'Cache-Control':'private, no-store','Vary':'Cookie','X-Content-Type-Options':'nosniff'}});
   if(data.redirect?.startsWith('/sign-in')&&privatePath(path))s.setCookie(response,'return',encodeURIComponent(path!),600);
   const returnTo=privatePath(url.searchParams.get('returnTo'));

@@ -10,18 +10,18 @@ let cached: { at: number; value: CourseManifest | null } | undefined;
 export async function readCourse(env: Env): Promise<CourseManifest | null> {
   if (!env.COURSE) return null;
   if (cached && Date.now() - cached.at < TTL) return cached.value;
+  let value: CourseManifest | null = null;
   try {
     const object = await env.COURSE.get('manifest.json');
-    let value: CourseManifest | null = null;
     if (object && object.size <= 256_000) value = parseCourse(await object.json());
     else await object?.body.cancel();
     if (object && !value) console.error('Course manifest is invalid. The course stays unpublished until it is fixed.');
-    cached = { at: Date.now(), value };
-    return value;
   } catch {
     console.error('Course manifest could not be read.');
-    return null;
   }
+  // Failures are cached too, so a broken manifest or a storage outage costs one read per isolate per minute.
+  cached = { at: Date.now(), value };
+  return value;
 }
 
 /** Course data for /welcome, /course and /course/:n. Access is already checked by the caller. */
@@ -51,9 +51,10 @@ export async function courseFile(request: Request, s: Services, env: Env, path: 
   const course = await readCourse(env);
   const listed = match && course?.sessions.some(session => match[1] === 'decks' ? session.deck === match[2] : session.prompts.some(prompt => prompt.file === match[2]));
   if (!listed || !env.COURSE) return text('Slides are not published yet.', 404);
-  const object = await env.COURSE.get(`${match[1]}/${match[2]}`);
+  const key = `${match[1]}/${match[2]}`;
+  const object = request.method === 'HEAD' ? await env.COURSE.head(key) : await env.COURSE.get(key);
   if (!object) return text('Slides are not published yet.', 404);
-  return new Response(object.body, { headers: {
+  return new Response(request.method === 'HEAD' ? null : (object as R2ObjectBody).body, { headers: {
     // Prompts are shown as plain text so a prompt file can never run as a page.
     'Content-Type': match[1] === 'decks' ? 'text/html; charset=utf-8' : 'text/plain; charset=utf-8',
     'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex', Vary: 'Cookie',
