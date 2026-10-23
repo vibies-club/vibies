@@ -50,7 +50,12 @@ function nextStep(project: Project, roadmap: Project["roadmap"]) {
   return null;
 }
 
-function Product({ mine, detail, onboarded, quiet }: { mine: Project[]; detail?: Project; onboarded: boolean; quiet: boolean }) {
+function Unavailable({ title, className, href, link }: { title: string; className: string; href: string; link: string }) {
+  return <Card title={title} className={className}><p className="quiet">We could not load this right now. <a className="text-link" href={href}>{link}</a></p></Card>;
+}
+
+function Product({ mine, detail, onboarded, quiet }: { mine?: Project[]; detail?: Project; onboarded: boolean; quiet: boolean }) {
+  if (!mine) return <Card title="Your product" className="home-product"><p className="quiet">We could not load your product. <a className="text-link" href="/projects">Open Products.</a></p></Card>;
   const project = mine[0];
   if (!project) return <Card title="Your product" className="home-product">
     <EmptyState href="/projects/connect" action="Connect a repository" quiet={quiet}>
@@ -77,12 +82,13 @@ function Product({ mine, detail, onboarded, quiet }: { mine: Project[]; detail?:
 
 function Waiting({ data }: { data: PageData }) {
   const members = data.members;
-  const waiting = members?.accounts.filter(account => account.status === "unapproved").length ?? 0;
+  if (!members) return <Unavailable title="Members waiting" className="home-gate" href="/admin/members" link="Open Members." />;
+  const waiting = members.accounts.filter(account => account.status === "unapproved").length;
   return <Card title="Members waiting" className="home-gate">
     <div className="stat">
       <HexCell className="stat-cell"><span className="mono">{waiting}</span></HexCell>
       <p>{waiting === 0 ? "Nobody is waiting for approval." : waiting === 1 ? "One account is waiting for approval." : `${waiting} accounts are waiting for approval.`}
-        {members && <span className="mono stat-note">{members.activeCount} of 8 places filled</span>}</p>
+        <span className="mono stat-note">{members.activeCount} of 8 places filled</span></p>
     </div>
     <a className="text-link" href="/admin/members">Review members</a>
   </Card>;
@@ -122,10 +128,10 @@ export function WelcomePage({ data, search }: { data: PageData; search: URLSearc
       <NextClass session={session} />
       {state.kind === "instructor" ? <>
         <Waiting data={data} />
-        <Community count={projects?.community.length ?? 0} />
+        {projects ? <Community count={projects.community.length} /> : <Unavailable title="Community" className="home-product" href="/projects" link="Open Products." />}
       </> : <>
         <Gate session={session} checks={data.gates?.mine ?? []} />
-        <Product mine={projects?.mine ?? []} detail={detail} onboarded={state.onboardingComplete === true} quiet={session !== null} />
+        <Product mine={projects?.mine} detail={detail} onboarded={state.onboardingComplete === true} quiet={session !== null} />
       </>}
     </div>
     <DemoDay course={data.course} today={today} />

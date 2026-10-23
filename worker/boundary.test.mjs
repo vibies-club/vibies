@@ -71,6 +71,14 @@ test('Worker HTTP boundary uses local D1 authorization and native routes',async 
    const current=await(await get('/api/page?path=/projects/'+id,2)).json();
    assert.equal(current.project.project.roadmap.totalCount,1);
    const home=await(await get('/api/page?path=/welcome',2)).json();assert.equal(home.projects.mine[0].id,id);assert.equal(home.project.project.roadmap.milestones[0].title,'Next step');
+   // A broken community row fails /projects but Home still loads without the product data.
+   await db.prepare("INSERT INTO accounts(internal_id,github_id,github_username,nickname,nickname_key,status) VALUES('account9','9','member9','x','x','revoked')").run();
+   await db.prepare("INSERT INTO personal_projects(id,owner_account_id,repository_id,title,summary,publication) VALUES('99999999-9999-4999-8999-999999999999','account9','99','Broken','Synthetic','Published')").run();
+   assert.equal((await get('/api/page?path=/projects',2)).status,503);
+   const degraded=await get('/api/page?path=/welcome',2);const degradedData=await degraded.json();
+   assert.equal(degraded.status,200);assert.equal(degradedData.kind,'ok');assert.equal(degradedData.projects,undefined);assert.equal(degradedData.project,undefined);
+   await db.prepare("DELETE FROM personal_projects WHERE id='99999999-9999-4999-8999-999999999999'").run();
+   await db.prepare("DELETE FROM accounts WHERE internal_id='account9'").run();
    await db.prepare("UPDATE accounts SET status='approved' WHERE github_id='3'").run();
    assert.equal((await post({action:'delete',id,confirm:'yes'},3)).status,403);
    assert.equal((await(await get('/api/page?path=/projects/'+id,3)).json()).project.kind,'missing');
