@@ -18,7 +18,7 @@
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .app button.chip { min-height: 40px; padding: 6px 14px; border-color: var(--rule-warm); border-radius: 20px; font: 600 14px/1.2 var(--mono); }
 .app button.chip[aria-pressed="true"] { border-color: var(--amber-ink); background: var(--cell-fill); color: var(--amber-ink); }
-.app button.chip[aria-pressed="true"]::before { content: ""; width: 10px; height: 9px; background: var(--honey); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); box-shadow: inset 0 0 0 1px var(--amber-ink); }
+.app button.chip[aria-pressed="true"]::before { content: ""; width: 10px; height: 9px; background: var(--honey); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
 .skill-filter { margin: 0; }
 .app .skill-filter select { width: auto; min-height: 40px; padding-block: 6px; font-size: 14px; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -62,6 +62,7 @@
 .job-form > fieldset > legend, .proposal-row > legend { padding: 0 6px; margin-left: -6px; font-size: var(--text-h3); font-weight: 800; }
 .app .choice { display: grid; gap: 0; margin: 8px 0 0; padding: 0; border: 0; }
 .app .choice > legend { padding: 0; margin-bottom: 2px; font-weight: 700; }
+.app .choice input[type=radio] { display: inline-block; flex: none; width: 20px; height: 20px; margin: 0; padding: 0; accent-color: var(--amber-ink); }
 .affix { display: flex; align-items: center; gap: 8px; }
 .affix .mono { color: var(--amber-ink); font-size: 18px; font-weight: 700; }
 .app input.short { max-width: 140px; }
@@ -74,9 +75,9 @@
 .tier-list li { display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: center; gap: 12px; }
 .tier-list li > span:last-child { display: grid; gap: 2px; min-width: 0; }
 .tier-list li > span:last-child > span { color: var(--ink-2); overflow-wrap: anywhere; }
-.tier-hex { display: grid; place-items: center; width: 58px; aspect-ratio: 100 / 86.6; background: var(--paper); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); box-shadow: inset 0 0 0 2px var(--comb-line); color: var(--amber-ink); font-weight: 700; }
+.tier-hex { display: grid; place-items: center; width: 58px; aspect-ratio: 100 / 86.6; background: var(--rule-warm); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); color: var(--amber-ink); font-weight: 700; }
 .is-full .tier-hex { background: linear-gradient(180deg, var(--gold-hi), var(--honey)); color: var(--ink); }
-.is-none .tier-hex { color: var(--ink-2); }
+.is-none .tier-hex { background: var(--rule-soft); color: var(--ink-2); }
 
 /* Job page */
 .job-head { display: grid; justify-items: start; gap: 12px; margin-bottom: 20px; }
@@ -98,9 +99,9 @@
 .job-layout { display: grid; gap: var(--space-md); }
 .job-main { display: grid; gap: var(--space-md); min-width: 0; }
 .job-side { display: contents; }
-.next-step { order: -1; border-color: var(--honey-edge); }
-.next-step .card-bar { background: linear-gradient(180deg, var(--gold-hi), var(--honey)); border-color: var(--honey-edge); }
-.next-step .card-body > p { font-size: 17px; }
+.job-next { order: -1; border-color: var(--honey-edge); }
+.job-next .card-bar { background: linear-gradient(180deg, var(--gold-hi), var(--honey)); border-color: var(--honey-edge); }
+.job-next .card-body > p { font-size: 17px; }
 .more-actions { display: grid; }
 .criteria { display: grid; gap: 0; padding: 0; list-style: none; counter-reset: crit; }
 .criteria li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; padding: 10px 0 10px 34px; border-bottom: 1px solid var(--rule-soft); counter-increment: crit; position: relative; overflow-wrap: anywhere; }
@@ -111,12 +112,12 @@
 .tier-now > .mono { color: var(--amber-ink); font-weight: 700; }
 .app .quote { max-width: 65ch; padding: 8px 12px; border-radius: var(--radius-field); background: var(--ground-2); white-space: pre-wrap; overflow-wrap: anywhere; }
 .strong-mono { color: var(--amber-ink); font-size: 18px; font-weight: 700; }
-.timeline { display: grid; padding: 0; list-style: none; }
-.timeline > li { position: relative; display: grid; gap: 4px; padding: 0 0 16px 24px; }
-.timeline > li::before { content: ""; position: absolute; left: 3px; top: 6px; width: 11px; height: 10px; background: var(--honey); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
-.timeline > li:not(:last-child)::after { content: ""; position: absolute; left: 8px; top: 20px; bottom: 2px; border-left: 1.5px solid var(--rule-warm); }
-.timeline > li.is-pending::before { background: var(--comb-line); opacity: .6; }
-.timeline .failed { margin: 0; padding-left: 20px; color: var(--ink-2); font-size: var(--text-small); }
+.job-trail { display: grid; padding: 0; list-style: none; }
+.job-trail > li { position: relative; display: grid; gap: 4px; padding: 0 0 16px 24px; }
+.job-trail > li::before { content: ""; position: absolute; left: 3px; top: 6px; width: 11px; height: 10px; background: var(--honey); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+.job-trail > li:not(:last-child)::after { content: ""; position: absolute; left: 8px; top: 20px; bottom: 2px; border-left: 1.5px solid var(--rule-warm); }
+.job-trail > li.is-pending::before { background: var(--comb-line); opacity: .6; }
+.job-trail .failed { margin: 0; padding-left: 20px; color: var(--ink-2); font-size: var(--text-small); }
 .app .confirmation { align-items: flex-start; max-width: 560px; padding: 4px 0; line-height: 1.4; }
 .app .confirmation input { margin-top: 2px; flex: none; }
 
@@ -144,7 +145,7 @@
 .agreement-table tbody th { font-weight: 700; overflow-wrap: anywhere; }
 .agreement-table .num { text-align: right; }
 .agreement-table td.num { color: var(--amber-ink); font-size: 15px; font-weight: 700; }
-.swatch { display: inline-block; width: 12px; height: 11px; margin-right: 8px; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); box-shadow: inset 0 0 0 1px var(--amber-ink); }
+.swatch { display: inline-block; width: 12px; height: 11px; margin-right: 8px; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
 .brings { display: block; margin-top: 2px; color: var(--ink-2); font-weight: 400; }
 .pending { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--honey-edge); border-radius: var(--radius-button); background: var(--cell-fill); }
 .pending .agreement-table, .team-item .agreement-table { background: var(--paper); }
@@ -175,12 +176,18 @@
 @media (min-width: 960px) {
   .job-layout { grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); align-items: start; }
   .job-side { display: grid; gap: var(--space-md); position: sticky; top: 88px; }
-  .next-step { order: 0; }
+  .job-next { order: 0; }
 }
 @media (max-width: 767px) {
   .collab-tabs a { flex: 1; justify-content: center; }
   .collab-tabs li { display: flex; flex: 1; }
-  .agreement-table :is(th, td) { padding-inline: 4px; }
+}
+/* Phone: each agreement line becomes a two-row block, name first, then role, share and answer. */
+@media (max-width: 639px) {
+  .agreement-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .agreement-table tr { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 12px; padding: 10px 6px; border-bottom: 1px solid var(--rule-soft); }
+  .agreement-table tbody th { grid-column: 1 / -1; }
+  .agreement-table :is(th, td) { padding: 0; border: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .job-card { transition: none; }

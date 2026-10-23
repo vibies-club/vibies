@@ -181,11 +181,11 @@ function History({ job }: { job: JobDetail }) {
   const events = job.events ?? [];
   const pending: JobEvent | null = job.lapse && job.lapseAt ? { kind: job.lapse, actorKind: "system", actor: null, at: job.lapseAt, detail: { tier: job.lockedTier ?? undefined } } : null;
   return <Card title="History" meta="Tehran time" className="job-history">
-    <ol className="timeline">{[...events, ...(pending ? [pending] : [])].map((event, index) => {
+    <ol className="job-trail">{[...events, ...(pending ? [pending] : [])].map((event, index) => {
       const d = event.detail ?? {};
       return <li key={index} className={event === pending ? "is-pending" : undefined}>
         <p><strong>{describe(event)}</strong> <span className="mono quiet"><Time iso={event.at} /></span></p>
-        {event === pending && <p className="hint">Shown now; it is written to the record with the next action.</p>}
+        {event === pending && <p className="hint">Shown now. It is saved to the record with the next action.</p>}
         {d.url && <p><a className="text-link" href={d.url} rel="noreferrer" referrerPolicy="no-referrer">Open delivery</a></p>}
         {d.failed && d.failed.length > 0 && <ul className="failed">{d.failed.map(item => <li key={item}>{item}</li>)}</ul>}
         {(d.note || d.reason) && <p className="quote">{d.note ?? d.reason}</p>}
@@ -244,7 +244,7 @@ function Job({ page, message }: { page: JobData; message: string | null }) {
         {job.events && <History job={job} />}
       </div>
       <aside className="job-side" aria-label="Your next step and timing">
-        <section className="card next-step" aria-labelledby="next-title">
+        <section className="card job-next" aria-labelledby="next-title">
           <div className="card-bar"><h2 id="next-title">{step.primary ? "Your next step" : "Where it stands"}</h2></div>
           <div className="card-body">
             <p>{step.text}</p>
