@@ -4,6 +4,9 @@
 [Decision D-019](DECISIONS.md#d-019-add-optional-personal-project-roadmaps) ·
 [Roadmap workflow](WORKFLOWS.md#13-manage-a-personal-project-roadmap)
 
+These receipts describe the Supabase and Vercel stack that was retired on
+2026-10-23 (D-033 in [Decisions](DECISIONS.md)).
+
 **Status:** The implementation merged in
 [PR #43](https://github.com/vibies-club/vibies/pull/43) on 2026-09-15. Automated
 database and HTTP receipts are recorded below. Only the P8 and P13 browser

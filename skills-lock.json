@@ -25,12 +25,6 @@
       "skillPath": "skills/productivity/grilling/SKILL.md",
       "computedHash": "ef1641a2047b71b60f1942cd35efb47d3afc9d584dff5a0b01f8c7db923aaa08"
     },
-    "migrate-to-vinext": {
-      "source": "cloudflare/vinext",
-      "sourceType": "github",
-      "skillPath": ".agents/skills/migrate-to-vinext/SKILL.md",
-      "computedHash": "a0356b9e9d04ad991f44132643d8d4d32b4bb9da0647e23acadc82f450c1c85b"
-    },
     "review-animations": {
       "source": "emilkowalski/skills",
       "sourceType": "github",

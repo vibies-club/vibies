@@ -24,7 +24,6 @@
 | 3D, three.js, React Three Fiber | MengTo/Skills: `threejs`; EnzeD/r3f-skills: `r3f-fundamentals`, `r3f-lighting`, `r3f-materials`, `r3f-loaders`, `r3f-postprocessing` | Follow the 3D rules in docs/CRAFT.md. |
 | Video made in code (demos, launch films, captions) | remotion-dev/skills: `remotion-best-practices`, `remotion-create`, `remotion-render` | Write the video as React, render to MP4, then embed it. |
 | A design comp as an image, then code from it | Leonxlnx/taste-skill: `imagegen-frontend-web`, `image-to-code` | Generate the comp, analyse it, then implement it. |
-| Database, sign-in, storage | supabase/agent-skills: `supabase`, `supabase-postgres-best-practices` | Every Supabase table, policy, query, and auth flow. |
 | A hard bug | mattpocock/skills: `diagnosing-bugs` | Reproduce, isolate, fix the cause. |
 | Logic that must not break | mattpocock/skills: `tdd` | Test first for money, data, and rules. |
 | Search and AI search visibility | coreyhaines31/marketingskills: `seo-audit`, `ai-seo`, `schema` | Before launch and on every public page. |

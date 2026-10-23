@@ -25,8 +25,9 @@ Numbered, checkable statements that say when this is done.
 
 Local: the commands and checks that prove each criterion.
 Hosted: which criteria need staging (a browser or a real sign-in), or none.
-Schema: does this change `supabase/`? If yes, staging cannot be used before
-merge; the full migration check in CI is the proof.
+Schema: does this add a file to `d1/migrations`? If yes, name it. Staging and
+PR previews apply it to an isolated synthetic database, and `migration-check`
+applies it to a fresh local D1 database.
 
 ## Grill notes
 

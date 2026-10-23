@@ -4,6 +4,9 @@
 [Access specification #14](https://github.com/vibies-club/vibies/issues/14) ·
 [Access setup](ACCESS-SETUP.md)
 
+These receipts describe the Supabase and Vercel stack that was retired on
+2026-10-23 (D-033 in [Decisions](DECISIONS.md)).
+
 This is the proof record for issue #5. Record the command or human procedure and
 the observed result for every acceptance check. Use synthetic identifiers and
 Nicknames. Never record a credential, GitHub profile, real name, contact detail,
@@ -106,7 +109,7 @@ The slides' complete publishing journey cannot be demonstrated with this PR.
 For this access walkthrough, use sign-in, unapproved denial, Instructor approval,
 Member welcome, revocation, and sign-out. Hosted proof ran on the per-branch
 Preview on 2026-09-10, with Production proof after the reviewed merge. New
-features use [reusable staging](DATABASE-DEPLOYMENT.md#reusable-staging).
+features use [reusable staging](https://github.com/vibies-club/vibies/blob/690c05d/docs/DATABASE-DEPLOYMENT.md#reusable-staging).
 
 ## Automated receipts
 
@@ -257,7 +260,7 @@ recorded above.
 ## Issue #14 acceptance record
 
 The procedures below name the 2026-09-10 Preview; run them on
-[reusable staging](DATABASE-DEPLOYMENT.md#reusable-staging) today.
+[reusable staging](https://github.com/vibies-club/vibies/blob/690c05d/docs/DATABASE-DEPLOYMENT.md#reusable-staging) today.
 
 | Check | Procedure | Observed result | Receipt |
 | --- | --- | --- | --- |

@@ -10,13 +10,14 @@
 - No open PRs. Merged today: #63 (no required review, D-021), #59 (sign-in in
   the daylight design), #54 (`/errors` demo and its home page section), and
   #36 (protected `/wiki` command reference, D-022).
-- Closed without merging, branches kept: #33 (Error Library schema; its old
-  snapshots would have revoked Roadmap grants in Production) and #62
-  (Cloudflare migration; it changed the live site and added runtime
-  dependencies).
-- Production on Vercel serves the merged main. Live checks: the home page,
-  `/errors`, and `/sign-in` load; "Continue with GitHub" reaches GitHub with the
-  Production callback; signed-out `/wiki` returns to sign-in.
+- Closed without merging, branch kept: #33 (Error Library schema; its old
+  snapshots would have revoked Roadmap grants in Production).
+- #62 (Cloudflare migration, issue #61) merged. Production now runs only on the
+  Cloudflare Worker `vibies-production` at https://vibies.club with the D1
+  database `vibies-production`. `www.vibies.club` and the workers.dev URL
+  redirect to the apex. Production data moved to D1.
+- The Vercel and Supabase projects are deleted, and the repository no longer
+  carries their code ([D-033](DECISIONS.md#d-033-retire-vercel-and-supabase)).
 - Production has 7 approved Members, all onboarded, and 7 published Personal
   Projects. One Member place is free.
 
@@ -38,6 +39,10 @@ The open-source readiness work from issue #8 merged through PR #9 on
   members cannot create repositories.
 
 ## Product status
+
+The entries below are dated history. The Vercel, Supabase and PostgreSQL
+pieces they describe were retired on 2026-10-23
+([D-033](DECISIONS.md#d-033-retire-vercel-and-supabase)).
 
 Issue #13 merged through PR #15 on 2026-09-07. It provides:
 
@@ -123,12 +128,9 @@ accepted design.
 Record the P8 and P13 browser receipts for
 [PR #43](https://github.com/vibies-club/vibies/pull/43) on staging in
 [Roadmap verification](ROADMAP-VERIFICATION.md). Approve the eighth student
-through the normal flow when they sign in. Bring
-[PR #33](https://github.com/vibies-club/vibies/pull/33) and
-[PR #36](https://github.com/vibies-club/vibies/pull/36) back to a mergeable
-state on current main and answer the PR #33 review; after PR #33 merges, verify
-its Production migration before the Error Library app child starts. Run the
-first Preview PR selection on staging when an eligible PR exists and record its
-receipt. Close issue #32; its final receipt is posted. Complete the live
-Production Member publishing check when Builder is available. Only the
-Instructor merges.
+through the normal flow when they sign in. Rebuild the Error Library schema
+from closed [PR #33](https://github.com/vibies-club/vibies/pull/33) as a new D1
+migration before the Error Library app child starts. Run the first Preview PR
+selection on staging when an eligible PR exists and record its receipt.
+Complete the live Production Member publishing check when Builder is available.
+Only the Instructor merges.

@@ -20,7 +20,7 @@ Check each box only after you verified it yourself.
 Show how you proved each acceptance criterion. Every claim needs a receipt.
 
 - Branch contains current `main` at commit:
-- Changes `supabase/`: no / yes. If yes, this PR cannot use staging; link the
-  full `migration-check` run instead.
+- Adds a file to `d1/migrations`: no / yes. If yes, name the migration and
+  link the passing `migration-check` run.
 - Staging receipt for hosted claims: link to the staging workflow's comment on
   this PR, or "none needed".

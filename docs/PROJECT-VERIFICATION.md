@@ -3,13 +3,16 @@
 [Documentation home](../README.md) · [Setup and exact commands](PROJECT-SETUP.md) ·
 [Accepted decision](DECISIONS.md#d-015-share-member-written-personal-projects-with-checked-repository-access)
 
+These receipts describe the Supabase and Vercel stack that was retired on
+2026-10-23 (D-033 in [Decisions](DECISIONS.md)).
+
 ## Current status
 
 [PR #18](https://github.com/vibies-club/vibies/pull/18) merged on 2026-09-10 UTC
 at `5e55642` after Member approval. All P1 to P16 receipts below are complete.
 The isolated Preview database was then removed by native cleanup. Preview links
 below identify the historical test environment; they are not a live setup for
-new tests. [Database deployment](DATABASE-DEPLOYMENT.md#receipts) records cleanup and the
+new tests. [Database deployment](https://github.com/vibies-club/vibies/blob/690c05d/docs/DATABASE-DEPLOYMENT.md#receipts) records cleanup and the
 Production migration and settings rollout, which completed through PR #30 on
 2026-09-11; the live Member publishing check remains pending.
 
@@ -61,7 +64,7 @@ account identifiers, or private repository links are included in this record.
 | Instructor Community read | PASS: `/projects` displayed an empty Community list | No published project existed for the three-person read proof. |
 | Signed-out app boundary | PASS: after application sign-out, `/projects` and a synthetic direct project URL both redirected to `/sign-in?message=expired` | Browser retained Vercel access but had no Vibies session. This does not prove denial of a real published project's details. |
 | Public demo | PASS: `/demo` displayed the fixed fictional sample while signed out of Vibies | Hosted browser read from isolated demo setup. |
-| Temporary setup cleanup | PASS: local helper stopped and its temporary credential files were removed | Live credentials remained in the branch-scoped Preview configuration; those rows were the cleanup target of [Vercel Preview cleanup](VERCEL-PREVIEW-CLEANUP.md). |
+| Temporary setup cleanup | PASS: local helper stopped and its temporary credential files were removed | Live credentials remained in the branch-scoped Preview configuration; those rows were the cleanup target of [Vercel Preview cleanup](https://github.com/vibies-club/vibies/blob/690c05d/docs/VERCEL-PREVIEW-CLEANUP.md). |
 | Vercel protection | At setup, sharing listed only team members and unauthenticated requests redirected to Vercel SSO | The Vercel redirect is not application-denial proof. Subsequent participant access is recorded below. |
 
 ## Live journey receipts
@@ -227,8 +230,8 @@ left Published, Connected, and Visible.
 
 | Row | Evidence and remaining work | Status |
 | --- | --- | --- |
-| P1 | [HTTP proof](../scripts/check-projects-web.mjs) passes the synthetic journey. Live receipts above show eligible private selection, publication and onboarding, Scout's list with a human-confirmed direct read, and Guide's list and direct page. | Local and live PASS |
-| P2 | [Database tests](../tests/projects-database.test.ts) and HTTP proof pass signed-out, unapproved, revoked, expired, Instructor owner-action, wrong-owner, and cross-origin denial. | Local PASS |
+| P1 | [HTTP proof](https://github.com/vibies-club/vibies/blob/690c05d/scripts/check-projects-web.mjs) passes the synthetic journey. Live receipts above show eligible private selection, publication and onboarding, Scout's list with a human-confirmed direct read, and Guide's list and direct page. | Local and live PASS |
+| P2 | [Database tests](https://github.com/vibies-club/vibies/blob/690c05d/tests/projects-database.test.ts) and HTTP proof pass signed-out, unapproved, revoked, expired, Instructor owner-action, wrong-owner, and cross-origin denial. | Local PASS |
 | P3 | [Provider tests](../tests/project-github.test.ts) pass public, organization, wrong-owner, missing, suspended, All repositories, renamed/mismatched account, later pages, unrelated installations, and incomplete or malformed scans. HTTP checks confirm ineligible results create no project. | Local PASS |
 | P4 | Database and HTTP checks pass duplicate connection, unchanged details, competing last-place requests, and capacity enforcement. The database counts all retained rows. | Local PASS |
 | P5 | Database checks pass atomic publication/onboarding, trigger-injected failure rollback, and concurrent/repeated publication. HTTP checks pass repeated publication with no stored changes. | Local PASS |
@@ -263,4 +266,4 @@ shows the normal protected merge at 21:59:40 UTC, commit
 remote checks, without independently repeating the tests or live journey.
 The Production migration and settings rollout completed through PR #30 on
 2026-09-11, with the live Member publishing check still pending; see
-[Database deployment](DATABASE-DEPLOYMENT.md#receipts).
+[Database deployment](https://github.com/vibies-club/vibies/blob/690c05d/docs/DATABASE-DEPLOYMENT.md#receipts).

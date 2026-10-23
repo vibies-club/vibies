@@ -7,24 +7,18 @@ The approved scope is in [issue #17](https://github.com/vibies-club/vibies/issue
 The [domain model](DOMAIN.md#projects-and-repositories) owns field and state
 definitions. The [workflows](WORKFLOWS.md) own user behavior.
 
-[PR #18](https://github.com/vibies-club/vibies/pull/18) is merged. Its isolated
-Preview database was deleted, with main retained, as recorded in
-[Database deployment](DATABASE-DEPLOYMENT.md#exception-branch-cleanup).
-The steps below record the original issue #17 setup. Automatic Supabase
-Preview branching has been off since 2026-09-16; a temporary branch is an
-owner-granted exception with a cost cap under
-[Shared staging limits](DATABASE-DEPLOYMENT.md#shared-staging-limits).
+The issue #17 proof ran on the Supabase and Vercel stack that was retired on
+2026-10-23 (D-033 in [Decisions](DECISIONS.md)). Its setup is kept below as
+history. Production now runs on the Cloudflare Worker `vibies-production` at
+`https://vibies.club` with the D1 database `vibies-production`.
 
 ## Human setup for the issue #17 Preview, as history
 
-Routine app reviews use reusable staging, configured once, including the GitHub
-App; see [Reusable staging](DATABASE-DEPLOYMENT.md#reusable-staging). The issue
-#17 proof used this setup, kept here as history:
+The issue #17 proof used this setup, kept here as history:
 
 1. An isolated Preview database. The owner followed
-   [Access setup](ACCESS-SETUP.md) for GitHub sign-in, the runtime login, TLS,
-   and Instructor designation, applied `supabase/access.sql` as the database
-   owner twice, and verified retained rows and runtime grants. Test fixture
+   the access setup of the time for GitHub sign-in, the database login, and
+   Instructor designation, and verified retained rows and grants. Test fixture
    commands were never run against this database.
 2. A separate GitHub App registered with installation by Any account, which
    requires a public App. It requested Metadata read-only and no optional
@@ -39,10 +33,8 @@ App; see [Reusable staging](DATABASE-DEPLOYMENT.md#reusable-staging). The issue
    `feature/personal-projects-17`, with `VIBIES_APP_ORIGIN` set to the fixed
    Preview origin, the OAuth callback set to that origin plus `/auth/callback`,
    and a redeploy after each configuration change.
-5. Both Members passed Vercel's separate Preview access gate. When Vercel asked
-   for access, each participant signed in to Vercel and requested access to the
-   branch Preview, and the deployment owner granted access before application
-   testing. A Vercel SSO redirect does not prove a Vibies access rule.
+5. Both Members passed the hosting provider's separate Preview access gate
+   before application testing.
 6. The Instructor and two approved Members signed in in separate browser
    sessions, using a private personal repository with synthetic content for the
    live proof. The owning Member selected only that repository in the App
@@ -62,72 +54,24 @@ page and a 10-page limit. The verifier has a 20-second deadline, with at most
 
 ## Local and CI commands
 
-Use Node.js 24. `npm test` runs offline unit tests, including synthetic provider
-responses and project validation. It needs no database or GitHub configuration.
+Use Node.js 24. Every check is offline. `npm test` covers synthetic provider
+responses and project validation. `npm run test:d1` runs the D1 project and
+access suites against local SQLite and workerd. `npm run test:worker` checks the
+Worker HTTP boundary with synthetic GitHub results. None of them needs a
+database URL or GitHub configuration, and none of them is live GitHub proof.
 
 ```sh
+npm ci
 npm run typecheck
 npm test
+npm run test:d1
+npm run test:worker
+npm run build:cloudflare
 ```
 
-`npm run test:access` and `npm run test:projects` are explicit database proof
-commands. Both fail with a setup message if `VIBIES_TEST_DATABASE_URL` is absent.
-They accept only the isolated loopback database named `vibies_access_test`.
-`test:projects` also runs provider and validation tests. Run these commands
-sequentially because they reset synthetic fixtures.
-
-Start a disposable PostgreSQL 17 container and create the fixture databases:
-
-```sh
-docker run --detach --name vibies-projects-test-17 \
-  --env POSTGRES_HOST_AUTH_METHOD=trust \
-  --publish 127.0.0.1:55437:5432 postgres:17-alpine
-docker exec vibies-projects-test-17 createdb -U postgres vibies_access_test
-docker exec vibies-projects-test-17 createdb -U postgres vibies_access_web_test
-VIBIES_TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:55437/vibies_access_test \
-  npm run test:access
-VIBIES_TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:55437/vibies_access_test \
-  npm run test:projects
-```
-
-Build in a clean checkout with no `.env` files. Next.js loads those files
-automatically; an agent must use a clean source snapshot instead of opening them.
-
-```sh
-npm run build
-VIBIES_TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:55437/vibies_access_web_test \
-VIBIES_TEST_APP_ORIGIN=http://127.0.0.1:3105 \
-  npm run check:access-web -- --prepare
-```
-
-Start the built server with the isolated test hook. The hook exists only in test
-code, checks the exact local fixture database and runtime login, and supplies
-synthetic GitHub responses. It is never imported by application code. It does
-not establish live GitHub proof.
-
-```sh
-NODE_ENV=production PORT=3105 \
-VIBIES_APP_ORIGIN=http://127.0.0.1:3105 \
-VIBIES_TEST_APP_ORIGIN=http://127.0.0.1:3105 \
-VIBIES_DATABASE_URL=postgresql://vibies_web_test@127.0.0.1:55437/vibies_access_web_test \
-VIBIES_GITHUB_CLIENT_ID=fixture-client \
-VIBIES_GITHUB_CLIENT_SECRET=fixture-secret \
-  node --import ./tests/project-provider-hook.mjs node_modules/next/dist/bin/next start --hostname 127.0.0.1
-```
-
-In another terminal, run the combined built-server proof:
-
-```sh
-VIBIES_TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:55437/vibies_access_web_test \
-VIBIES_TEST_APP_ORIGIN=http://127.0.0.1:3105 \
-  npm run check:access-web
-```
-
-The command fails when fixtures, the test hook, or the built server are absent.
-Stop the server and `docker stop vibies-projects-test-17` after the checks.
-CI runs the same offline, database, build, and HTTP layers with its own disposable
-PostgreSQL service. The [proof record](PROJECT-VERIFICATION.md) distinguishes each
-completed layer from pending live work.
+CI runs the same commands in the `app-check` job. The
+[proof record](PROJECT-VERIFICATION.md) distinguishes each completed layer from
+pending live work.
 
 ## Live P1 and P15 procedure
 
@@ -151,16 +95,15 @@ completed layer from pending live work.
 
 Issue #17 completed this stage order before Member review and merge. Its
 [proof record](PROJECT-VERIFICATION.md) contains every acceptance receipt.
-For later routine changes, finish the approved proof on reusable staging before
-merging; see
-[Preview a PR or clear staging](DATABASE-DEPLOYMENT.md#preview-a-pr-or-clear-staging).
+For later routine changes, finish the approved proof on a Cloudflare PR preview
+or staging before merging; see [Cloudflare PR previews](CLOUDFLARE-PR-PREVIEWS.md).
 
 ## Production setup
 
-[Database deployment](DATABASE-DEPLOYMENT.md) owns the migration rollout order.
-Use [Access setup](ACCESS-SETUP.md) for the Production database login, TLS,
-OAuth origin and callback, and Instructor setup. Configure the three server-only
-GitHub App settings from step 3 in Production and verify the selected-repository,
-Metadata-read boundary from step 2. Schema migration does not copy Preview
-credentials or complete this one-time runtime setup. Record the Production
-journey separately from the historical Preview proof.
+[Database deployment](DATABASE-DEPLOYMENT.md) owns D1 migrations, the build, and
+the deploy. Use [Access setup](ACCESS-SETUP.md) for the OAuth origin, callback,
+Worker secrets, and Instructor setup. `VIBIES_GITHUB_APP_ID` and
+`VIBIES_GITHUB_APP_SLUG` live in the `production` environment of
+`wrangler.jsonc`. The operator sets `VIBIES_GITHUB_APP_PRIVATE_KEY` with
+`npx wrangler secret put VIBIES_GITHUB_APP_PRIVATE_KEY --env production`. Verify
+the selected-repository, Metadata-read boundary from step 2 of the history above.

@@ -267,7 +267,7 @@ Humans supply public configuration locally and in Vercel. This decision does not
 define the full Vibies product or its future production data model.
 
 **Related documents:** [Demo data model](DATA-MODEL.md),
-[Supabase setup](SUPABASE-SETUP.md), and [progress](PROGRESS.md).
+[Supabase setup](https://github.com/vibies-club/vibies/blob/690c05d/docs/SUPABASE-SETUP.md), and [progress](PROGRESS.md).
 
 ## D-013: Restrict GitHub identity to access management
 
@@ -618,7 +618,7 @@ class. A curated TypeScript catalog in `lib/wiki.ts` stores its entries, and
 reviewed PRs maintain the catalog. The Error Library keeps its separate purpose:
 Members create solved-error records in the database.
 
-The wiki owns taught command references. [Supabase setup](SUPABASE-SETUP.md),
+The wiki owns taught command references. [Supabase setup](https://github.com/vibies-club/vibies/blob/690c05d/docs/SUPABASE-SETUP.md),
 [Personal Project setup](PROJECT-SETUP.md),
 [Database deployment](DATABASE-DEPLOYMENT.md), [access setup](ACCESS-SETUP.md),
 and the [README](../README.md) own their exact procedures. An overlapping wiki
@@ -766,3 +766,11 @@ readiness; each deployment still needs capacity and provider proof.
 **Decision:** Use one same-Worker SQLite Durable Object per hashed browser token to serialize Google starts, callbacks, linking and sign-out. Persist attempt phases and hashed revocation references before external effects. Interrupted exchanges require a fresh flow. D1 remains authoritative for accounts, approval, projects and sessions. Each compatibility, preview, staging and production Worker has its own namespace. This supersedes D-031 startup priming.
 
 **Why:** Live Google callbacks still exceeded the ordinary Workers Free CPU allowance after the bounded initialization optimizations. The owner selected Durable Objects after reviewing the alternatives. Cloudflare’s account dashboard confirms the $0 Free plan and includes SQLite Durable Objects. The coordinator also closes duplicate-callback and concurrent-sign-out races; live proof must establish both Worker and object CPU suitability before production migration. No paid plan or card is authorized.
+
+## D-033: Retire Vercel and Supabase
+
+**Date:** 2026-10-23
+
+**Decision:** Production runs only on the Cloudflare Worker `vibies-production` at https://vibies.club with the D1 database `vibies-production`. The Vercel projects and the Supabase projects are deleted. The repository drops the Next.js app, the PostgreSQL and Supabase code, and the finished one-time migration tooling. The required checks keep their names: `migration-check` now checks D1 migrations only.
+
+**Why:** Vercel is unreachable from Iran, where the Members are, and the migration to Cloudflare D1 is complete and verified.

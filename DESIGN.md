@@ -149,7 +149,7 @@ A single warm family: cocoa ink on pale honey, with honey, gold, and amber doing
 **Body Font:** Bricolage Grotesque (with system-ui, sans-serif)
 **Label/Mono Font:** JetBrains Mono, variable 100 to 800, self-hosted (with ui-monospace, monospace)
 
-**Character:** A loud, friendly grotesque for everything people read as a sentence, and a terminal mono for everything that reads like a fact or a status. Both are self-hosted through next/font/local from app/fonts/, with their OFL license files beside them. Optical sizing is on.
+**Character:** A loud, friendly grotesque for everything people read as a sentence, and a terminal mono for everything that reads like a fact or a status. Both are self-hosted with `@font-face` rules in frontend/fonts.css, loading from frontend/fonts/ with their OFL license files beside them. Optical sizing is on.
 
 ### Hierarchy
 - **Display** (800, clamp(44px, 7vw, 100px), 0.98): The hero headline. The Coming soon band uses a larger display step (800, clamp(56px, 9vw, 136px), 0.95, -0.04em).
