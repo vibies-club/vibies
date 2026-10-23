@@ -11,7 +11,7 @@ function Step({ n, current, title, children }: { n: number; current: number; tit
   const state = n < current ? "is-done" : n === current ? "is-current" : "is-later";
   return <li className={`step ${state}`} aria-current={n === current ? "step" : undefined}>
     <HexCell className="step-cell">{n < current
-      ? <svg viewBox="0 0 24 24" width="22" height="22" aria-label="Done"><path d="m6 12.5 4 4 8-9" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      ? <svg viewBox="0 0 24 24" width="22" height="22" role="img" aria-label="Done"><path d="m6 12.5 4 4 8-9" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
       : <span className="mono">{n}</span>}</HexCell>
     <div><h2>{title}</h2>{children}</div>
   </li>;
@@ -28,7 +28,8 @@ export function ConnectPage({ data, search }: PageProps) {
   const current = repositories.length > 0 ? 3 : status === "lost" ? 1 : refreshed || message ? 2 : 1;
   const problem = status === "lost"
     ? "We could not find the Vibies GitHub App on your GitHub account. Install it, then come back and refresh."
-    : status ? "We could not reach GitHub just now. Wait a minute, then refresh again."
+    : status === "unknown" ? "We could not reach GitHub just now. Wait a minute, then refresh again."
+    : status ? "Something went wrong. Please try again."
     : refreshed && repositories.length === 0 ? "The GitHub App is installed, and no private repository is selected in it yet. Open the App settings, select a private repository, then refresh."
     : null;
   return <AppShell data={data}>
@@ -42,19 +43,18 @@ export function ConnectPage({ data, search }: PageProps) {
         {install ? <a className={current === 1 ? "button primary" : "button"} href={install} rel="noreferrer">{current === 1 ? "Install the GitHub App" : "Change App settings"}<Arrow /></a>
           : <MessageBanner>The GitHub App is not set up yet. Please try again later.</MessageBanner>}
       </Step>
-      <Step n={2} current={current} title="Refresh and pick a private repository">
+      <Step n={2} current={current} title="Refresh your private repositories">
         {current === 2 && problem && <MessageBanner>{problem}</MessageBanner>}
-        {repositories.length > 0 ? <>
-          <label htmlFor="repository">Private repository</label>
-          <select id="repository" name="repositoryId" form="connect-form" required>
-            {repositories.map(repo => <option key={repo.id} value={repo.id}>{repo.name}</option>)}
-          </select>
-        </> : <p className="hint">After you install the App, refresh to load your private repositories.</p>}
+        <p className="hint">{repositories.length > 0 ? `Found ${repositories.length} private ${repositories.length === 1 ? "repository" : "repositories"}. Changed the App settings? Refresh again.` : "After you install the App, refresh to load your private repositories."}</p>
         <form method="get" action="/projects/connect"><button name="refresh" value="yes" className={current === 2 ? "primary" : undefined}>{repositories.length > 0 ? "Refresh the list" : "Refresh my repositories"}</button></form>
       </Step>
-      <Step n={3} current={current} title="Title, summary and demo link">
-        {repositories.length > 0 ? <form id="connect-form" method="post" action="/projects/action" className="stack-form">
+      <Step n={3} current={current} title="Pick a repository, then add a title, summary and demo link">
+        {repositories.length > 0 ? <form method="post" action="/projects/action" className="stack-form">
           <input type="hidden" name="action" value="connect" />
+          <label htmlFor="repository">Private repository</label>
+          <select id="repository" name="repositoryId" required>
+            {repositories.map(repo => <option key={repo.id} value={repo.id}>{repo.name}</option>)}
+          </select>
           <ProjectFields /><button type="submit" className="primary">Save draft<Arrow /></button>
           <p className="hint">A draft is only visible to you. You can publish it from its product page.</p>
         </form> : <p className="hint">Describe your product here once you pick a repository.</p>}

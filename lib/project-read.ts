@@ -1,5 +1,5 @@
-import { nickname } from "./access-core";
-import { milestoneDetails, projectDetails, projectId, projectVersion, type ProjectDetails } from "./project-core";
+import { nickname } from "./access-core.ts";
+import { milestoneDetails, projectDetails, projectId, projectVersion, type ProjectDetails } from "./project-core.ts";
 export type ProjectMilestone = {
   id: string;
   title: string;
