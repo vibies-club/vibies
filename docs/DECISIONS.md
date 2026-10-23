@@ -217,6 +217,8 @@ words such as “collaborate” or “manage.”
 **Supplemented by:** [D-017](#d-017-review-prs-with-an-instructor-run-agent-account),
 which lets the Instructor's review agent account satisfy the review rule, so
 the approving review comes from a Member or from `Trident-app`.
+[D-021](#d-021-merge-without-a-required-github-review) later removed the
+required review.
 
 **Decision:** The repository moves to the `vibies-club` organization and
 becomes public under the Apache License 2.0. Members receive Write access
@@ -462,7 +464,8 @@ records both actions.
 
 ## D-017: Review PRs with an Instructor-run agent account
 
-**Status:** Accepted by the Instructor on 2026-09-13.
+**Status:** Accepted by the Instructor on 2026-09-13. Superseded by
+[D-021](#d-021-merge-without-a-required-github-review) on 2026-10-23.
 
 **Decision:** The Instructor operates one GitHub machine account,
 `Trident-app`, driven by a coding agent. The account belongs to the
@@ -584,6 +587,26 @@ project skills live in `.agents/skills/`.
 quality reproducible across contributors and future agent sessions.
 
 **Merge boundary:** The owner explicitly retained the current merge rule:
-only the Instructor merges. Required GitHub approval, the three head checks,
+only the Instructor merges. Required GitHub approval (removed by
+[D-021](#d-021-merge-without-a-required-github-review)), the three head checks,
 staging eligibility, and post-merge receipts remain in force. The local
 `pr_reviewer` verdict supplements these gates.
+
+## D-021: Merge without a required GitHub review
+
+**Status:** Accepted by the Instructor on 2026-10-23.
+
+**Decision:** Main no longer requires an approving GitHub review. Branch
+protection still lets only the Instructor (`0xinBeta`) update main, and still
+requires green `app-check`, `migration-check`, and `links` on the head commit,
+with admins included. The agent's local `pr_reviewer` pass remains part of the
+workflow in [AGENTS.md](../AGENTS.md). `CODEOWNERS` is removed because it only
+requested the Instructor's review.
+
+**Why:** Member reviews did not arrive, so finished and checked PRs waited
+without an end.
+
+**Consequence:** This supersedes the review rule in
+[D-017](#d-017-review-prs-with-an-instructor-run-agent-account) and the
+approval part of [D-020](#d-020-configure-a-project-agent-workflow-and-craft-policy).
+A Member review is still welcome and no longer blocks a merge.

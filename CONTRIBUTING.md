@@ -8,10 +8,9 @@ contributor follows. Agents follow the same rules through
 
 Follow the lanes and steps in [AGENTS.md](AGENTS.md#how-work-flows), the one
 home of the development workflow. The Instructor is the only person who merges.
-Every PR needs an approving review from a Member or the Instructor's review
-agent `Trident-app`, as [D-017](docs/DECISIONS.md#d-017-review-prs-with-an-instructor-run-agent-account)
-defines. An approval covers only the commit it checked; re-request review after
-every push. Both lanes follow the merge gate, required checks, staging rules,
+No GitHub review is required, as
+[D-021](docs/DECISIONS.md#d-021-merge-without-a-required-github-review)
+defines. Both lanes follow the merge gate, required checks, staging rules,
 and post-merge receipts below.
 
 ## The merge gate: six checks
