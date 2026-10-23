@@ -8,7 +8,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/demo.test.ts tests/demo-errors.test.ts tests/access-core.test.ts tests/project-core.test.ts tests/project-github.test.ts tests/staging.test.mjs tests/wiki.test.ts tests/read-only.test.ts tests/preview-cloudflare.test.mjs tests/course.test.ts",
+    "test": "node --test tests/demo.test.ts tests/demo-errors.test.ts tests/access-core.test.ts tests/project-core.test.ts tests/project-read.test.ts tests/project-github.test.ts tests/staging.test.mjs tests/wiki.test.ts tests/read-only.test.ts tests/preview-cloudflare.test.mjs tests/course.test.ts",
     "cf:typegen": "wrangler types",
     "test:d1": "node --test tests/d1-access-workerd.test.ts tests/d1-access.test.ts tests/d1-projects-workerd.test.ts tests/d1-projects.test.ts tests/d1-schema.test.mjs tests/google-auth.test.ts tests/d1-instructor-workerd.test.ts",
     "build:cloudflare:production": "CLOUDFLARE_ENV=production npm run build:cloudflare",

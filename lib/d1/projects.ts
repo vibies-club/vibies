@@ -1,5 +1,5 @@
 import { validToken } from '../access-core.ts';
-import { milestoneDetails, projectDetails, projectId, projectVersion } from '../project-core.ts';
+import { COURSE_ROADMAP, milestoneDetails, projectDetails, projectId, projectVersion } from '../project-core.ts';
 import type { AccessDatabase, D1Result, D1Statement } from './access.ts';
 
 const now = "strftime('%Y-%m-%dT%H:%M:%fZ','now')";
@@ -141,6 +141,18 @@ export async function add_project_milestone(db:AccessDatabase,hash:string|null,i
     stmt(`INSERT INTO project_milestones(id,project_id,title,blocked_note,position)
       SELECT ?6,?2,?4,?5,(SELECT count(*)+1 FROM project_milestones WHERE project_id=?2) WHERE changes()=1 RETURNING id`)]);
 }
+// Only an empty roadmap can be seeded, so the six course steps always fit under the 20-milestone cap.
+export async function seed_project_roadmap(db:AccessDatabase,hash:string|null,id:string,version:string):Promise<Kind> {
+  if(!validToken(hash)||!projectId(id)||!validVersion(version)) return {kind:'invalid'};
+  id=id.toLowerCase();
+  const stmt=statements(db,[hash,id,version,...COURSE_ROADMAP.map(()=>crypto.randomUUID()),...COURSE_ROADMAP]);
+  const decide=decision('seeded',"WHEN EXISTS (SELECT 1 FROM project_milestones WHERE project_id=?2) THEN 'not_empty'");
+  const n=COURSE_ROADMAP.length;
+  const values=COURSE_ROADMAP.map((_,i)=>`(?${4+i},?${4+n+i},${i+1})`).join(',');
+  return mutation(db,[stmt(decide),stmt(bump(decide,'seeded')),
+    stmt(`INSERT INTO project_milestones(id,project_id,title,position)
+      SELECT column1,?2,column2,column3 FROM (VALUES ${values}) WHERE changes()=1 RETURNING id`)]);
+}
 export async function edit_project_milestone(db:AccessDatabase,hash:string|null,id:string,milestoneId:string|null,version:string,title:string,note:string|null=null):Promise<Kind> {
   if(!validToken(hash)||!projectId(id)||!projectId(milestoneId)||!validVersion(version)||!validMilestone(title,note)) return {kind:'invalid'};
   id=id.toLowerCase(); milestoneId=milestoneId.toLowerCase();
@@ -202,13 +214,14 @@ export async function delete_project_milestone(db:AccessDatabase,hash:string|nul
 }
 
 const progress=`(SELECT CASE WHEN count(*)=0 THEN NULL ELSE CAST(round(sum(m.completed)*100.0/count(*)) AS INTEGER) END FROM project_milestones m WHERE m.project_id=p.id)`;
+const nextMilestone=`(SELECT m.title FROM project_milestones m WHERE m.project_id=p.id AND m.completed=0 ORDER BY m.position LIMIT 1)`;
 const common=`'id',p.id,'title',p.title,'summary',p.summary,'demoUrl',p.demo_url,'nickname',a.nickname,'isOwner',json(CASE WHEN p.owner_account_id=(${member}) THEN 'true' ELSE 'false' END)`;
 const states="'publication',p.publication,'connection',p.connection,'moderation',p.moderation,'version',CAST(p.version AS TEXT),'lastCheckedAt',p.last_checked_at";
 const visible="p.publication='Published' AND p.connection='Connected' AND p.moderation='Visible'";
 export async function projects(db:AccessDatabase,hash:string|null):Promise<Kind & {mine?:Row[];community?:Row[]}> {
   if(!validToken(hash)) return {kind:'forbidden'};
   const result=await db.prepare(`SELECT
-    (SELECT json_group_array(json(item)) FROM (SELECT json_object(${common},${states}) item FROM personal_projects p
+    (SELECT json_group_array(json(item)) FROM (SELECT json_object(${common},${states},'progressPercentage',${progress},'nextMilestone',${nextMilestone}) item FROM personal_projects p
       JOIN accounts a ON a.internal_id=p.owner_account_id WHERE p.owner_account_id=(${member}) ORDER BY p.created_at,p.id)) mine,
     (SELECT json_group_array(json(item)) FROM (SELECT json_object(${common},'progressPercentage',${progress}) item FROM personal_projects p
       JOIN accounts a ON a.internal_id=p.owner_account_id WHERE ${visible} ORDER BY p.created_at,p.id)) community

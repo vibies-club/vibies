@@ -84,6 +84,29 @@ test('Worker HTTP boundary uses local D1 authorization and native routes',async 
    assert.equal((await(await get('/api/page?path=/projects/'+id,3)).json()).project.kind,'missing');
    assert.equal(await db.prepare('SELECT title FROM personal_projects WHERE id=?').bind(id).first('title'),'Saved title');
   });
+  await t.test('course roadmap seeding is owner-only, empty-only and versioned',async()=>{
+   const id='22222222-2222-4222-8222-222222222222';
+   await db.prepare("INSERT INTO personal_projects(id,owner_account_id,repository_id,title,summary) VALUES(?,'account2','43','Seed me','Synthetic summary')").bind(id).run();
+   const post=(body,n=2)=>mf.dispatchFetch(origin+'/projects/action',{redirect:'manual',method:'POST',headers:{origin,'content-type':'application/x-www-form-urlencoded',cookie:`__Host-vibies-session=${token(n)}`},body:new URLSearchParams(body).toString()});
+   const count=()=>db.prepare('SELECT count(*) n FROM project_milestones WHERE project_id=?').bind(id).first('n');
+   // Another member and the Instructor cannot seed someone else's product.
+   assert.equal((await post({action:'seed_course_roadmap',id,version:'1'},3)).status,403);
+   assert.equal((await post({action:'seed_course_roadmap',id,version:'1'},1)).status,403);
+   assert.equal(await count(),0);
+   assert.equal((await post({action:'seed_course_roadmap',id})).status,400);
+   assert.equal((await post({action:'seed_course_roadmap',id,version:'2'})).headers.get('location'),`/projects/${id}?message=stale`);
+   const seeded=await post({action:'seed_course_roadmap',id,version:'1'});
+   assert.equal(seeded.headers.get('location'),`/projects/${id}?message=roadmap_seeded`);
+   const page=await(await get('/api/page?path=/projects/'+id,2)).json();
+   assert.deepEqual(page.project.project.roadmap.milestones.map(m=>m.title),['Core screen','Works on demo data','Data and sign-in','3 real users','Polish and SEO','Demo Day']);
+   assert.equal(page.project.project.version,'2');
+   const list=await(await get('/api/page?path=/projects',2)).json();
+   const mine=list.projects.mine.find(p=>p.id===id);assert.equal(mine.nextMilestone,'Core screen');assert.equal(mine.progressPercentage,0);
+   // A roadmap that already has milestones is never replaced.
+   assert.equal((await post({action:'seed_course_roadmap',id,version:'2'})).headers.get('location'),`/projects/${id}?message=roadmap_not_empty`);
+   assert.equal(await count(),6);
+   await db.prepare('DELETE FROM personal_projects WHERE id=?').bind(id).run();
+  });
   await t.test('malformed and expired sessions fail closed; page redirects remain compatible',async()=>{
    assert.equal((await(await mf.dispatchFetch(origin+'/api/page?path=/projects',{headers:{cookie:'__Host-vibies-session=bad'}})).json()).access.kind,'signed_out');
    await db.prepare("UPDATE sessions SET created_at='2000-01-01' WHERE session_hash=?").bind(hash(4)).run();
@@ -101,6 +124,8 @@ test('Worker HTTP boundary uses local D1 authorization and native routes',async 
    db=await mf.getD1Database('DB');
    const before=await db.prepare('SELECT count(*) n FROM sign_in_flows').first('n');
    assert.equal((await(await get('/api/page?path=/projects',2)).json()).projects.mine.length,1);
+   const seed=await mf.dispatchFetch(origin+'/projects/action',{redirect:'manual',method:'POST',headers:{origin,'content-type':'application/x-www-form-urlencoded',cookie:`__Host-vibies-session=${token(2)}`},body:'action=seed_course_roadmap&id=11111111-1111-4111-8111-111111111111&version=3'});
+   assert.equal(seed.status,503);
    for(const path of ['/projects/action','/admin/members/action','/auth/start','/auth/google/start','/auth/google/link']) {
     const result=await mf.dispatchFetch(origin+path,{redirect:'manual',method:'POST',headers:{origin,'content-type':'application/x-www-form-urlencoded',cookie:`__Host-vibies-session=${token(2)}`},body:'action=delete'});
     assert.equal(result.status,503,path);

@@ -1,7 +1,7 @@
-import { MILESTONE_BLOCKED_NOTE_LIMIT, MILESTONE_TITLE_LIMIT } from "../lib/project-core";
+import { COURSE_ROADMAP, MILESTONE_BLOCKED_NOTE_LIMIT, MILESTONE_TITLE_LIMIT } from "../lib/project-core";
 import type { ProjectDetails } from "../lib/project-core";
 import type { Project, ProjectMilestone } from "../lib/project-read";
-import { Arrow, EmptyState, HexBadge, MessageBanner, Progress } from "./ui";
+import { Arrow, HexBadge, MessageBanner, Progress } from "./ui";
 
 const messages: Record<string, string> = {
   created: "Draft saved. Review the details before you publish.",
@@ -13,7 +13,7 @@ const messages: Record<string, string> = {
   deleted: "Project deleted. A project place is now free.",
   hidden: "Project hidden from the Community.",
   restored: "Project restored. It is available only when Published and Connected.",
-  lost: "Repository access was lost. Keep the repository private and select it in the GitHub App, then check again.",
+  lost: "Vibies can no longer see this repository. Keep it private and selected in the GitHub App, then check the connection again.",
   unknown: "We could not check GitHub. No project data changed. Please try again.",
   stale: "The project changed during this request. Reload the page, review it, and try again.",
   full: "All three project places are filled.",
@@ -28,6 +28,8 @@ const messages: Record<string, string> = {
   milestone_unchanged: "No change was made.",
   milestone_deleted: "Milestone deleted.",
   roadmap_full: "This roadmap has the maximum of 20 milestones.",
+  roadmap_seeded: "Course roadmap added. Rename, reorder or remove any step so it fits your product.",
+  roadmap_not_empty: "Your roadmap already has milestones, so we left it as it is.",
 };
 
 export function ProjectMessage({ message }: { message?: string }) {
@@ -80,6 +82,26 @@ export function RoadmapProgress({ project }: { project: Pick<Project, "progressP
     <Progress value={project.progressPercentage} label="Roadmap progress" />;
 }
 
+/** The single next thing an owner should do with a product, if anything is missing. */
+export function ownerNextStep(project: Project): "check" | "publish" | "roadmap" | null {
+  if (!project.isOwner) return null;
+  if (project.connection === "Disconnected") return "check";
+  if (project.publication === "Draft") return "publish";
+  const empty = project.roadmap ? project.roadmap.totalCount === 0 : project.progressPercentage === null;
+  return empty ? "roadmap" : null;
+}
+
+/** One honey button that fills an empty roadmap with the course steps, plus a way to write your own. */
+export function SeedRoadmap({ project, addHref, quiet }: { project: Project; addHref: string; quiet?: boolean }) {
+  return <div className="seed-roadmap">
+    <form action="/projects/action" method="post" className="inline-form">
+      <RoadmapHiddenFields project={project} action="seed_course_roadmap" />
+      <button type="submit" className={quiet ? undefined : "primary"}>Use the course roadmap<Arrow /></button>
+    </form>
+    <a className="text-link" href={addHref}>or add your own</a>
+  </div>;
+}
+
 function milestoneStatus(milestone: ProjectMilestone, next: boolean) {
   return milestone.completed ? "Done" : milestone.blockedNote ? "Blocked" : next ? "Next up" : "Planned";
 }
@@ -121,18 +143,19 @@ function MilestoneEditor({ project, milestone }: { project: Project; milestone: 
     </form>;
 }
 
-function MilestoneControls({ project, milestone, index, total }: {
+function MilestoneControls({ project, milestone, index, total, next }: {
   project: Project;
   milestone: ProjectMilestone;
   index: number;
   total: number;
+  next: boolean;
 }) {
   const toggle = milestone.completed ? "Mark not done" : "Mark done";
   return <div className="roadmap-controls">
     <form action="/projects/action" method="post">
       <RoadmapHiddenFields project={project} milestone={milestone} action="milestone_complete" />
       <input type="hidden" name="completed" value={milestone.completed ? "no" : "yes"} />
-      <button type="submit" className="small" aria-label={`${toggle}: ${milestone.title}`}>{toggle}</button>
+      <button type="submit" className={next ? "small" : "small link-button"} aria-label={`${toggle}: ${milestone.title}`}>{toggle}</button>
     </form>
     <details className="disclosure milestone-more">
     <summary>Edit, move or delete</summary>
@@ -169,30 +192,34 @@ export function ProjectRoadmap({ project, quiet }: { project: Project; quiet?: b
   const addNoteId = "milestone-note-new";
   const addHelpId = "milestone-help-new";
   const nextId = roadmap.milestones.find(milestone => !milestone.completed)?.id;
-  return <section className="card roadmap" aria-labelledby="roadmap-title">
+  return <section id="roadmap" className="card roadmap" aria-labelledby="roadmap-title">
     <div className="card-bar"><h2 id="roadmap-title">Roadmap</h2>{roadmap.totalCount > 0 && <span className="card-meta">{roadmap.completedCount} of {roadmap.totalCount} done</span>}</div>
     <div className="card-body">
     {roadmap.totalCount === 0 ? (project.isOwner ?
-      <EmptyState href="#milestone-title-new" action="Add a milestone" quiet={quiet}>Add your first milestone so classmates can follow your progress.</EmptyState> :
+      <div className="roadmap-empty">
+        <p>Start with the six course steps and shape them to your product. Classmates follow your progress here.</p>
+        <ol className="course-steps">{COURSE_ROADMAP.map(step => <li key={step}>{step}</li>)}</ol>
+        <SeedRoadmap project={project} addHref={`#${addTitleId}`} quiet={quiet} />
+      </div> :
       <p className="quiet">No milestones yet.</p>) : <>
       <Progress value={roadmap.percentage ?? 0} label="Roadmap progress" detail={`${roadmap.percentage}% complete`} />
       <ol className="milestones">
         {roadmap.milestones.map((milestone, index) => {
           const next = milestone.id === nextId;
-          return <li key={milestone.id} className={`milestone${milestone.completed ? " is-done" : ""}${next ? " is-next" : ""}`}>
+          return <li key={milestone.id} className={`milestone${milestone.completed ? " is-done" : ""}${next ? " is-next" : ""}${milestone.blockedNote ? " is-blocked" : ""}`}>
             <MilestoneNode milestone={milestone} next={next} />
             <div className="milestone-body">
               <h3>{milestone.title}</h3>
-              <p className="milestone-state">{milestoneStatus(milestone, next)}</p>
+              <p className="milestone-state"><span className="step-no">Step {index + 1}</span> {milestoneStatus(milestone, next)}</p>
               {milestone.blockedNote && <p className="blocked-note"><span className="mono">Blocked note</span> {milestone.blockedNote}</p>}
-              {project.isOwner && <MilestoneControls project={project} milestone={milestone} index={index} total={roadmap.totalCount} />}
+              {project.isOwner && <MilestoneControls project={project} milestone={milestone} index={index} total={roadmap.totalCount} next={next} />}
             </div>
           </li>;
         })}
       </ol>
     </>}
     {project.isOwner && <form action="/projects/action" method="post" className="roadmap-add">
-      <h3>Add a milestone</h3>
+      <h3>{roadmap.totalCount === 0 ? "Or write your own first milestone" : "Add a milestone"}</h3>
       <RoadmapHiddenFields project={project} action="milestone_add" />
       <label htmlFor={addTitleId}>Milestone title</label>
       <input id={addTitleId} name="title" required aria-describedby={addHelpId} />
