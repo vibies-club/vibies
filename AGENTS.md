@@ -42,7 +42,7 @@ When the user picks a new design direction through a comp, update DESIGN.md in t
 >
 > Run reviewers in the background while you prepare the next step. Never push to main. After a merge, delete the merged branch. If a turn stops on an error, continue from `notes/plans/` and the git state.
 
-Repository gates still apply to both lanes: use `feature/`, `fix/`, `docs/`, or `chore/` branches from current main, one issue per PR, and an approving Member or `Trident-app` review of the current head. Require green `app-check`, `migration-check`, and `links` checks. Follow [CONTRIBUTING.md](CONTRIBUTING.md) for hosted staging proof and post-merge receipts. Never push to the `staging` ref.
+Repository gates still apply to both lanes: use `feature/`, `fix/`, `docs/`, or `chore/` branches from current main, and one issue per PR. No GitHub review is required ([D-021](docs/DECISIONS.md#d-021-merge-without-a-required-github-review)). Require green `app-check`, `migration-check`, and `links` checks. Follow [CONTRIBUTING.md](CONTRIBUTING.md) for hosted staging proof and post-merge receipts. Never push to the `staging` ref.
 
 ## Decisions
 
@@ -54,12 +54,12 @@ When a task matches a row in docs/SKILLS.md, install that skill if it is missing
 
 ## Merge choice
 
-Only the Instructor (`0xinBeta`) merges to main. The user confirmed that the current repository merge rule stays in effect on 2026-10-08. After a `ship` verdict, report that the PR is ready in three lines; leave merging to the Instructor. A local reviewer verdict does not replace the required GitHub approval and CI gates.
+Only the Instructor (`0xinBeta`) merges to main. GitHub enforces this: only `0xinBeta` can update main. After a `ship` verdict, report that the PR is ready in three lines; leave merging to the Instructor. The three required CI checks must be green on the head commit.
 
 ## Safety and writing
 
 - Durable artifacts are English: docs, code, comments, issues, PRs, and commits.
 - Never read or write `.env` files, credentials, or secrets. Keep secret values out of outputs and commits.
 - Nicknames only. Keep real names, photos, contact details, and other personal data out of the repository.
-- Work on feature branches only. Never push to main. All work reaches main through a reviewed PR that the Instructor merges.
+- Work on feature branches only. Never push to main. All work reaches main through a PR that the Instructor merges.
 - Follow [CONTRIBUTING.md](CONTRIBUTING.md#writing-rules) for writing and [RULES.md](RULES.md) for conduct and feedback.

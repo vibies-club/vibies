@@ -1,4 +1,0 @@
-# The instructor merges everything that reaches main. Review comes from a
-# Member or the review agent account (D-017). This file only auto-requests the
-# instructor on every PR.
-* @0xinBeta

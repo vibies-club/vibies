@@ -59,7 +59,7 @@ Impeccable's configuration, design sidecar, and surface briefs live in
 The [progress record](docs/PROGRESS.md) is dated history; verify current GitHub
 state before using its next steps. [AGENTS.md](AGENTS.md) owns the workflow.
 [CONTRIBUTING.md](CONTRIBUTING.md) owns repository gates. Only the Instructor
-merges reviewed PRs to main.
+merges PRs to main.
 
 ## License
 

@@ -13,8 +13,8 @@ The open-source readiness work from issue #8 merged through PR #9 on
 
 - The repository is public at `vibies-club/vibies` under the Apache
   License 2.0.
-- Main is protected: every change arrives through a PR with one approving
-  review from a Member or the review agent `Trident-app`, and passing `links`,
+- Main is protected: every change arrives through a PR that only the
+  Instructor can merge, with passing `links`,
   `app-check`, and `migration-check` checks.
   Only the Instructor merges. The protection applies to the Instructor too.
   The [verified settings](https://github.com/vibies-club/vibies/issues/29#issuecomment-5626049922)
