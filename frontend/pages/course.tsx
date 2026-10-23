@@ -16,6 +16,4 @@ export function CollaboratePage({ data }: { data: PageData; search: URLSearchPar
   return <Stub data={data} title="Collaborate" text="Collaboration is on the way." />;
 }
 
-export function GatesPage({ data }: { data: PageData; search: URLSearchParams }) {
-  return <Stub data={data} title="Gates" />;
-}
+export { GatesPage } from "./gates";

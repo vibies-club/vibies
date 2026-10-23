@@ -2,8 +2,8 @@ import { useState } from "react";
 import type { PageData } from "../contracts";
 import { Retry } from "../access-shell";
 import { AppShell } from "../app-shell";
-import { Arrow, BackLink, Card, EmptyState, HexBadge, HexCell, PageHeader } from "../ui";
-import { localToday, nextSession, type CourseManifest, type CourseSession, type GateCheck } from "../../lib/course";
+import { Arrow, BackLink, Card, EmptyState, HexBadge, HexCell, MessageBanner, PageHeader } from "../ui";
+import { localToday, nextSession, type CourseManifest, type CourseSession, type GateCheck, type GateItem } from "../../lib/course";
 import "../course.css";
 
 type PageProps = { data: PageData; search: URLSearchParams };
@@ -54,19 +54,26 @@ export function CoursePage({ data }: PageProps) {
             <h2 id={`phase-${phase.id}`}>{phase.title}</h2>
             <span className="mono">{sessions.length === 1 ? `S${sessions[0].n}` : `S${sessions[0].n} to S${sessions.at(-1)!.n}`}</span>
           </div>
-          <ol className="timeline">{sessions.map(session => <TimelineRow key={session.n} session={session} stage={stage(session, next)} today={today} />)}</ol>
+          <ol className="timeline">{sessions.map(session => <TimelineRow key={session.n} session={session} stage={stage(session, next)} today={today} checks={data.gates?.mine} />)}</ol>
         </section>;
       })}</div>}
   </AppShell>;
 }
 
-function TimelineRow({ session, stage, today }: { session: CourseSession; stage: Stage; today: string }) {
+/** "3 of 5 done", plus any items the Instructor sent back. */
+export function gateProgress(session: CourseSession, checks: GateCheck[]) {
+  const mine = checks.filter(check => check.sessionNo === session.n && session.gate.some(item => item.id === check.itemId));
+  const done = mine.filter(check => check.state === "done").length, flags = mine.length - done;
+  return `${done} of ${session.gate.length} done${flags ? ` · ${flags} need${flags === 1 ? "s" : ""} work` : ""}`;
+}
+
+function TimelineRow({ session, stage, today, checks }: { session: CourseSession; stage: Stage; today: string; checks?: GateCheck[] }) {
   const label = stage === "done" ? "Done" : stage === "next" ? (session.date === today ? "Today" : "Next class") : "Planned";
   return <li className={`timeline-row is-${stage}`} id={`session-${session.n}`}>
     <a href={`/course/${session.n}`} aria-current={stage === "next" ? "step" : undefined}>
       <Node n={session.n} stage={stage} />
       <span className="timeline-body">
-        <span className="timeline-meta mono">{rowMeta(session, stage)}</span>
+        <span className="timeline-meta mono">{rowMeta(session, stage)}{checks && session.gate.length > 0 && <span className="timeline-progress"> · {gateProgress(session, checks)}</span>}</span>
         <span className="timeline-title">{session.title}</span>
         {stage === "next" && <span className="timeline-goal">{session.goal}</span>}
       </span>
@@ -75,8 +82,7 @@ function TimelineRow({ session, stage, today }: { session: CourseSession; stage:
   </li>;
 }
 
-function gateBadge(checks: GateCheck[], n: number, id: string) {
-  const state = checks.find(check => check.sessionNo === n && check.itemId === id)?.state;
+export function gateBadge(state?: GateCheck["state"]) {
   return state === "done" ? <HexBadge tone="strong">Done</HexBadge> : state === "needs_work" ? <HexBadge>Needs work</HexBadge> : <HexBadge tone="muted">To do</HexBadge>;
 }
 
@@ -109,7 +115,46 @@ function Pager({ course, session }: { course: CourseManifest; session: CourseSes
   </nav>;
 }
 
-export function SessionPage({ data }: PageProps) {
+const MESSAGES: Record<string, string> = { done: "Marked done. Nice work.", undone: "Moved back to to do." };
+
+/** Proof link and note under a gate item. */
+export function GateDetails({ check }: { check?: GateCheck }) {
+  if (!check || (!check.proofUrl && !check.note)) return null;
+  return <div className="gate-details">
+    {check.state === "needs_work" && check.note ? <p className="gate-flag"><span className="mono">Instructor</span> {check.note}</p> : check.note && <p className="gate-note">{check.note}</p>}
+    {check.proofUrl && <a className="text-link" href={check.proofUrl} target="_blank" rel="noreferrer" referrerPolicy="no-referrer">Open proof link</a>}
+  </div>;
+}
+
+function Hidden({ n, item }: { n: number; item: string }) {
+  return <><input type="hidden" name="session" value={n} /><input type="hidden" name="item" value={item} /></>;
+}
+
+function GateRow({ n, item, checks, canEdit }: { n: number; item: GateItem; checks?: GateCheck[]; canEdit: boolean }) {
+  const check = checks?.find(entry => entry.sessionNo === n && entry.itemId === item.id);
+  return <li className="gate-row">
+    <div className="gate-row-head"><span>{item.text}</span>{checks && gateBadge(check?.state)}</div>
+    <GateDetails check={check} />
+    {checks && canEdit && (check?.state === "done" ?
+      <form method="post" action="/course/action" className="inline-form">
+        <input type="hidden" name="action" value="undo" /><Hidden n={n} item={item.id} />
+        <button type="submit" className="small" aria-label={`Undo: ${item.text}`}>Undo</button>
+      </form> :
+      <details className="gate-mark">
+        <summary className="button small" aria-label={`Mark done: ${item.text}`}>Mark done</summary>
+        <form method="post" action="/course/action" className="stack-form">
+          <input type="hidden" name="action" value="done" /><Hidden n={n} item={item.id} />
+          <label htmlFor={`proof-${item.id}`}>Proof link <span className="quiet">(optional)</span></label>
+          <input id={`proof-${item.id}`} name="proofUrl" type="url" inputMode="url" placeholder="https://" pattern="https://.+" maxLength={512} defaultValue={check?.proofUrl ?? ""} />
+          <label htmlFor={`note-${item.id}`}>Note <span className="quiet">(optional)</span></label>
+          <textarea id={`note-${item.id}`} name="note" rows={2} maxLength={500} />
+          <button type="submit" className="small">Save as done</button>
+        </form>
+      </details>)}
+  </li>;
+}
+
+export function SessionPage({ data, search }: PageProps) {
   const n = Number(window.location.pathname.slice("/course/".length));
   if (!signedIn(data)) return <AppShell data={data}><Retry href={`/course/${n}`} /></AppShell>;
   const course = data.course, session = data.session;
@@ -120,9 +165,11 @@ export function SessionPage({ data }: PageProps) {
       <EmptyState href="/welcome" action="Back to Home">{UNPUBLISHED}</EmptyState>}
   </AppShell>;
   const phase = course.phases.find(item => item.id === session.phase)?.title;
-  const checks = data.gates?.mine ?? [];
+  const checks = data.access.kind === "member" ? data.gates?.mine : undefined;
+  const message = MESSAGES[search.get("message") ?? ""];
   return <AppShell data={data}>
     <BackLink href="/course">All sessions</BackLink>
+    {message && <MessageBanner>{message}</MessageBanner>}
     <div className="session-head">
       <HexCell className="session-cell"><span className="mono">S{session.n}</span></HexCell>
       <div className="session-intro">
@@ -134,9 +181,12 @@ export function SessionPage({ data }: PageProps) {
       </div>
     </div>
     <div className="session-grid">
-      <Card title="Gate" meta={session.gate.length ? `${session.gate.length} ${session.gate.length === 1 ? "item" : "items"}` : undefined} className="session-gate">
+      <Card title="Gate" meta={session.gate.length === 0 ? undefined : checks ? gateProgress(session, checks) : `${session.gate.length} ${session.gate.length === 1 ? "item" : "items"}`} className="session-gate">
         {session.gate.length === 0 ? <p className="quiet">No gate for this session.</p> :
-          <ul className="gate-list">{session.gate.map(item => <li key={item.id}><span>{item.text}</span>{gateBadge(checks, session.n, item.id)}</li>)}</ul>}
+          <ul className="gate-list gate-rows">{session.gate.map(item => <GateRow key={item.id} n={session.n} item={item} checks={checks} canEdit={!data.readOnly} />)}</ul>}
+        {data.access.kind === "instructor" ? <a className="text-link" href="/admin/gates">Review the class on Gates</a> :
+          !checks ? <p className="hint">We could not load your gate checks right now. Refresh to try again.</p> :
+          data.readOnly && <p className="hint">Vibies is read-only for a few minutes, so ticking is paused.</p>}
       </Card>
       <Card title="Prompts" className="session-prompts">
         {session.prompts.length === 0 ? <p className="quiet">No prompts for this session.</p> :

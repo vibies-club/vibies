@@ -16,7 +16,8 @@ export type CourseManifest = { version: 1; demoDay: string; phases: { id: string
 
 export type GateState = "done" | "needs_work";
 export type GateCheck = { sessionNo: number; itemId: string; state: GateState; proofUrl: string | null; note: string | null };
-export type GateBoard = { members: { nickname: string; checks: { sessionNo: number; itemId: string; state: GateState }[] }[] };
+// The board also carries proof links and notes so the Instructor can review a cell before flagging it.
+export type GateBoard = { members: { nickname: string; checks: GateCheck[] }[] };
 
 /** The first session dated today or later; after the last class, the last session. */
 export function nextSession(course: CourseManifest, today: string): CourseSession | null {
@@ -80,4 +81,21 @@ export function parseCourse(value: unknown): CourseManifest | null {
   }
   if (!unique(sessions.map(session => session.n))) return null;
   return { version: 1, demoDay: value.demoDay, phases, sessions: sessions.sort((a, b) => a.n - b.n) };
+}
+
+export const gateItemId = (value: unknown): value is string => typeof value === "string" && ID.test(value);
+
+/** An optional https proof link: "" is none, anything else must be a plain https URL of at most 512 characters. */
+export function gateProof(value: string): string | null | false {
+  const trimmed = value.trim();
+  if (trimmed === "") return null;
+  if (trimmed.length > 512 || !/^https:\/\/[^\s]+$/i.test(trimmed) || !trimmed.startsWith("https://")) return false;
+  try { const url = new URL(trimmed); return url.protocol === "https:" && !url.username && !url.password ? trimmed : false; } catch { return false; }
+}
+
+/** An optional note of at most 500 characters: "" is none. */
+export function gateNote(value: string): string | null | false {
+  const trimmed = value.trim().replace(/\r\n?/g, "\n");
+  if (trimmed === "") return null;
+  return trimmed.length <= 500 && !/[\u0000-\u0008\u000b-\u001f\u007f]/.test(trimmed) ? trimmed : false;
 }

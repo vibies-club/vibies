@@ -181,3 +181,23 @@ test('destination identity is operator-created, singleton and immutable', () => 
     assert.throws(() => db.exec('DELETE FROM deployment_identity'), /destination_identity_required/);
   } finally { db.close(); }
 });
+
+test('gate checks belong to an account and keep sessions, ids, states, proof links and notes bounded', () => {
+  const db = fixture();
+  try {
+    account(db, 1, 'approved', 'Member 1');
+    const check = (session, item, state = 'done', proof = null, note = null, owner = 'account-1') =>
+      db.prepare("INSERT INTO gate_checks(account_id,session_no,item_id,state,proof_url,note,updated_at) VALUES(?,?,?,?,?,?,'2026-10-23T00:00:00Z')").run(owner, session, item, state, proof, note);
+    check(18, 's18-deploy', 'done', 'https://example.com/proof', 'Shipped.');
+    check(18, 's18-readme', 'needs_work', null, 'Add one line about what it does.');
+    assert.throws(() => check(18, 's18-deploy'), /UNIQUE|PRIMARY/);
+    assert.throws(() => check(18, 'x', 'done', null, null, 'account-missing'), /FOREIGN KEY/);
+    for (const session of [0, 31, 18.5]) assert.throws(() => check(session, `n-${String(session).replace('.', '')}`), /CHECK/, String(session));
+    for (const item of ['', 'a'.repeat(41), 'S18', 's18 deploy', 's18_deploy']) assert.throws(() => check(17, item), /CHECK/, item);
+    assert.throws(() => check(17, 'state', 'verified'), /CHECK/);
+    for (const proof of ['http://example.com', 'javascript:alert(1)', `https://${'a'.repeat(505)}`]) assert.throws(() => check(17, 'proof', 'done', proof), /CHECK/);
+    assert.throws(() => check(17, 'note', 'done', null, 'x'.repeat(501)), /CHECK/);
+    check(17, 'bounds', 'done', `https://${'a'.repeat(504)}`, 'x'.repeat(500));
+    assert.equal(db.prepare('SELECT count(*) n FROM gate_checks').get().n, 3);
+  } finally { db.close(); }
+});

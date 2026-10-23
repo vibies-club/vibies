@@ -5,6 +5,7 @@ import {build} from 'esbuild';
 import {Miniflare} from 'miniflare';
 import {unstable_splitSqlQuery} from 'wrangler';
 import {createHash} from 'node:crypto';
+import * as gates from '../lib/d1/gates.ts';
 const origin='https://worker.test';
 const token=n=>n.toString(16).padStart(64,'0');
 const hash=n=>createHash('sha256').update(token(n)).digest('hex');
@@ -21,15 +22,15 @@ test('course pages and files share page access and only serve listed files',asyn
  const mf=new Miniflare(options);
  // A fresh isolate drops the cached manifest.
  try{
-  const db=await mf.getD1Database('DB');
-  for(const file of ['0001_application.sql','0002_activation.sql','0003_google.sql','0004_identity.sql'])await db.batch(unstable_splitSqlQuery(readFileSync(new URL(`../d1/migrations/${file}`,import.meta.url),'utf8')).map(sql=>db.prepare(sql)));
+  let db=await mf.getD1Database('DB');
+  for(const file of ['0001_application.sql','0002_activation.sql','0003_google.sql','0004_identity.sql','0005_gates.sql'])await db.batch(unstable_splitSqlQuery(readFileSync(new URL(`../d1/migrations/${file}`,import.meta.url),'utf8')).map(sql=>db.prepare(sql)));
   await db.prepare("UPDATE deployment_activation SET state='reconciled',environment_id='test',snapshot_hash='synthetic',reconciled_at='2026-01-01'").run();
   await db.prepare("UPDATE deployment_activation SET state='active',activated_at='2026-01-01'").run();
   await db.prepare("UPDATE community SET instructor_github_id='1',instructor_nickname='Tutor',instructor_nickname_key='tutor'").run();
-  for(let n=1;n<=3;n++)await db.prepare("INSERT INTO sessions(session_hash,github_id,created_at,auth_provider) VALUES(?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now'),'github')").bind(hash(n),String(n)).run();
-  for(const n of [2,3])await db.prepare("INSERT INTO accounts(internal_id,github_id,github_username,nickname,nickname_key,status) VALUES(?,?,?,?,?,?)").bind(`account${n}`,String(n),`member${n}`,`Builder${n}`,`builder${n}`,n===2?'approved':'revoked').run();
+  for(let n=1;n<=4;n++)await db.prepare("INSERT INTO sessions(session_hash,github_id,created_at,auth_provider) VALUES(?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now'),'github')").bind(hash(n),String(n)).run();
+  for(const n of [2,3,4])await db.prepare("INSERT INTO accounts(internal_id,github_id,github_username,nickname,nickname_key,status) VALUES(?,?,?,?,?,?)").bind(`account${n}`,String(n),`member${n}`,`Builder${n}`,`builder${n}`,n===3?'revoked':'approved').run();
   let bucket=await mf.getR2Bucket('COURSE');
-  const restart=async(next=options)=>{await mf.setOptions(next);if(next.r2Buckets)bucket=await mf.getR2Bucket('COURSE');};
+  const restart=async(next=options)=>{await mf.setOptions(next);db=await mf.getD1Database('DB');if(next.r2Buckets)bucket=await mf.getR2Bucket('COURSE');};
   await bucket.put('manifest.json',JSON.stringify(manifest));
   await bucket.put('decks/s18.html',deck);
   await bucket.put('decks/s17-instructor.html','instructor only');
@@ -67,6 +68,73 @@ test('course pages and files share page access and only serve listed files',asyn
    assert.equal((await get('/course-files/decks/s18.html',2,{method:'POST'})).status,405);
    const head=await get('/course-files/decks/s18.html',2,{method:'HEAD'});assert.equal(head.status,200);assert.equal(head.headers.get('content-type'),'text/html; charset=utf-8');assert.equal(await head.text(),'');
    assert.equal((await get('/course-files/decks/s17.html',2,{method:'HEAD'})).status,404);
+  });
+  const post=(body,user,init={})=>mf.dispatchFetch(origin+'/course/action',{redirect:'manual',method:'POST',headers:{origin,'content-type':'application/x-www-form-urlencoded',...(user?{cookie:`__Host-vibies-session=${token(user)}`}:{})},body:new URLSearchParams(body).toString(),...init});
+  const stored=async()=>(await db.prepare('SELECT account_id,session_no,item_id,state,proof_url,note FROM gate_checks ORDER BY account_id,session_no,item_id').all()).results;
+  await t.test('members tick and untick only their own gate items',async()=>{
+   let r=await post({action:'done',session:'18',item:'s18-deploy',proofUrl:'https://example.com/proof',note:'Shipped it.',member:'Builder4'},2);
+   assert.equal(r.status,303);assert.equal(r.headers.get('location'),'/course/18?message=done');
+   assert.deepEqual(await stored(),[{account_id:'account2',session_no:18,item_id:'s18-deploy',state:'done',proof_url:'https://example.com/proof',note:'Shipped it.'}]);
+   const mine=await page('/course/18',2);assert.deepEqual(mine.gates.mine,[{sessionNo:18,itemId:'s18-deploy',state:'done',proofUrl:'https://example.com/proof',note:'Shipped it.'}]);
+   assert.deepEqual((await page('/course/18',4)).gates.mine,[]);assert.deepEqual((await page('/welcome',4)).gates.mine,[]);
+   assert.equal((await page('/course',2)).gates.mine.length,1);
+   assert.equal((await page('/course/18',1)).gates,undefined);
+   r=await post({action:'undo',session:'18',item:'s18-deploy'},4);assert.equal(r.headers.get('location'),'/course/18?message=undone');
+   assert.equal((await stored()).length,1);
+   assert.deepEqual(await gates.set_gate_check(db,hash(4),18,'s18-deploy',true),{kind:'done'});
+   assert.deepEqual(await gates.set_gate_check(db,hash(3),18,'s18-deploy',true),{kind:'forbidden'});
+   assert.deepEqual(await gates.set_gate_check(db,hash(1),18,'s18-deploy',true),{kind:'forbidden'});
+   assert.deepEqual((await stored()).map(row=>row.account_id),['account2','account4']);
+   r=await post({action:'undo',session:'18',item:'s18-deploy'},4);assert.equal((await stored()).length,1);
+  });
+  await t.test('roles, items and proof links are checked at the boundary',async()=>{
+   const before=await stored();
+   const cases=[
+    [{action:'flag',session:'18',item:'s18-deploy',member:'Builder2',note:'Redo it.'},2,403,'member cannot flag'],
+    [{action:'done',session:'18',item:'s18-deploy'},1,403,'instructor cannot tick as a member'],
+    [{action:'done',session:'18',item:'s18-deploy'},3,403,'denied'],
+    [{action:'done',session:'18',item:'s18-deploy'},undefined,403,'signed out'],
+    [{action:'done',session:'18',item:'s18-unknown'},2,400,'unknown item'],
+    [{action:'done',session:'17',item:'s18-deploy'},2,400,'item from another session'],
+    [{action:'done',session:'31',item:'s18-deploy'},2,400,'session out of range'],
+    [{action:'done',session:'18',item:'s18-deploy',proofUrl:'http://example.com'},2,400,'http proof'],
+    [{action:'done',session:'18',item:'s18-deploy',proofUrl:'javascript:alert(1)'},2,400,'script proof'],
+    [{action:'done',session:'18',item:'s18-deploy',proofUrl:'https://'+'a'.repeat(510)},2,400,'long proof'],
+    [{action:'done',session:'18',item:'s18-deploy',note:'x'.repeat(501)},2,400,'long note'],
+    [{action:'flag',session:'18',item:'s18-deploy',member:'Builder2'},1,400,'flag without a note'],
+    [{action:'verify',session:'18',item:'s18-deploy'},2,400,'unknown action'],
+   ];
+   for(const [body,user,status,name] of cases)assert.equal((await post(body,user)).status,status,name);
+   assert.equal((await post({action:'done',session:'18',item:'s18-deploy'},2,{headers:{origin:'https://evil.test','content-type':'application/x-www-form-urlencoded',cookie:`__Host-vibies-session=${token(2)}`}})).status,403);
+   assert.equal((await mf.dispatchFetch(origin+'/course/action',{method:'GET'})).status,405);
+   assert.deepEqual(await stored(),before);
+   assert.deepEqual(await gates.flag_gate_check(db,hash(2),'Builder2',18,'s18-deploy',true,'Self flag'),{kind:'forbidden'});
+   assert.deepEqual(await gates.gates_board(db,hash(2)),{kind:'forbidden'});
+   assert.deepEqual(await gates.gates_mine(db,hash(1)),{kind:'forbidden'});
+  });
+  await t.test('the Instructor flags and clears; members never receive the board',async()=>{
+   let r=await post({action:'flag',session:'18',item:'s18-deploy',member:'Builder2',note:'The link shows a 404.'},1);
+   assert.equal(r.status,303);assert.equal(r.headers.get('location'),'/admin/gates?message=flagged#cell-Builder2-18');
+   assert.deepEqual((await page('/course/18',2)).gates.mine[0],{sessionNo:18,itemId:'s18-deploy',state:'needs_work',proofUrl:'https://example.com/proof',note:'The link shows a 404.'});
+   const board=await page('/admin/gates',1);assert.equal(board.kind,'ok');
+   assert.deepEqual(board.gateBoard.members.map(m=>m.nickname),['Builder2','Builder4']);assert.equal(board.gateBoard.members[0].checks[0].state,'needs_work');
+   assert.equal(JSON.stringify(board).includes('account2'),false);
+   for(const user of [2,4]){const v=await page('/admin/gates',user);assert.equal(v.redirect,'/welcome');assert.equal(v.gateBoard,undefined);}
+   for(const path of ['/welcome','/course','/course/18'])assert.equal((await page(path,2)).gateBoard,undefined,path);
+   assert.equal((await post({action:'flag',session:'18',item:'s18-deploy',member:'Nobody',note:'x'},1)).headers.get('location'),'/admin/gates?message=missing#cell-Nobody-18');
+   r=await post({action:'clear',session:'18',item:'s18-deploy',member:'Builder2'},1);assert.equal(r.headers.get('location'),'/admin/gates?message=cleared#cell-Builder2-18');
+   assert.deepEqual((await stored())[0],{account_id:'account2',session_no:18,item_id:'s18-deploy',state:'done',proof_url:'https://example.com/proof',note:null});
+   assert.equal((await post({action:'clear',session:'18',item:'s18-deploy',member:'Builder2'},1)).headers.get('location'),'/admin/gates?message=unchanged#cell-Builder2-18');
+  });
+  await t.test('read-only mode allows gate reads and blocks gate writes',async()=>{
+   await restart({...options,bindings:{...options.bindings,VIBIES_READ_ONLY:'1'}});
+   const before=await stored();
+   assert.equal((await page('/course/18',2)).gates.mine.length,1);
+   assert.equal((await page('/admin/gates',1)).gateBoard.members.length,2);
+   for(const [body,user] of [[{action:'done',session:'18',item:'s18-deploy'},2],[{action:'undo',session:'18',item:'s18-deploy'},2],[{action:'flag',session:'18',item:'s18-deploy',member:'Builder2',note:'x'},1]])
+    assert.equal((await post(body,user)).status,503);
+   assert.deepEqual(await stored(),before);
+   await restart();
   });
   await t.test('a malformed manifest counts as unpublished',async()=>{
    await bucket.put('manifest.json',JSON.stringify({...manifest,sessions:[{...manifest.sessions[0],deck:'../x.html'}]}));
