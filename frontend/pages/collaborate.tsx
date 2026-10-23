@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { PageData } from "../contracts";
-import type { Board, JobSummary } from "../../lib/collab-read";
+import type { Board, IdeaSummary, JobSummary } from "../../lib/collab-read";
+import { HELP, type Help } from "../../lib/collab-core";
 import { Retry } from "../access-shell";
 import { AppShell } from "../app-shell";
 import { Arrow, BackLink, EmptyState, HexBadge, HexCell, PageHeader } from "../ui";
@@ -8,40 +9,38 @@ import { ActionForm, addDays, CollabMessage, MONEY_NOTE, Pay, StateBadge, Time, 
 import { JobForm } from "../job-form";
 import { AgreementTable, ShareBar } from "../project-team";
 import { JobPage } from "./job";
+import { IdeaBadges, IdeaForm, IdeaPage } from "./idea";
 
 type PageProps = { data: PageData; search: URLSearchParams };
 
 export function CollaboratePage(props: PageProps) {
   const path = window.location.pathname;
   if (path.startsWith("/collaborate/jobs/")) return <JobPage {...props} />;
-  if (path.startsWith("/collaborate/ideas/")) return <AppShell data={props.data}>
-    <PageHeader title="Ideas" />
-    <EmptyState href="/collaborate" action="Back to Collaborate">Ideas are on the way.</EmptyState>
-  </AppShell>;
+  if (path.startsWith("/collaborate/ideas/")) return <IdeaPage {...props} />;
   const { data, search } = props;
   const access = data.access;
   if (data.kind !== "ok" || !data.collab || (access.kind !== "member" && access.kind !== "instructor")) {
     return <AppShell data={data}><Retry href="/collaborate" /></AppShell>;
   }
-  return <AppShell data={data}><Collaborate board={data.collab} message={search.get("message")} /></AppShell>;
+  return <AppShell data={data}><Collaborate board={data.collab} ideas={data.ideas ?? []} message={search.get("message")} /></AppShell>;
 }
 
-const tabFor = (hash: string) => ["mine", "post"].includes(hash) ? "jobs" : hash;
+const tabFor = (hash: string) => ["mine", "post"].includes(hash) ? "jobs" : hash === "idea-new" ? "ideas" : ["ideas", "teams"].includes(hash) ? hash : "jobs";
 
-function Collaborate({ board, message }: { board: Board; message: string | null }) {
+function Collaborate({ board, ideas, message }: { board: Board; ideas: IdeaSummary[]; message: string | null }) {
   const member = board.viewer === "member";
   const hash = useHash("jobs");
   const tab = member || hash !== "teams" ? tabFor(hash) : "jobs";
   const waiting = board.invitations.length + board.pending.length;
-  const tabs = [{ id: "jobs", label: "Jobs" }, ...(member ? [{ id: "teams", label: "Teams", count: waiting }] : [])];
+  const tabs = [{ id: "jobs", label: "Jobs" }, { id: "ideas", label: "Ideas" }, ...(member ? [{ id: "teams", label: "Teams", count: waiting }] : [])];
   return <>
-    <PageHeader title="Collaborate" lead="Small paid jobs and product teams for the class. Vibies keeps the record; you settle with each other outside the site." />
+    <PageHeader title="Collaborate" lead="Small paid jobs, ideas and product teams for the class. Vibies keeps the record, and you settle with each other outside the site." />
     <nav className="collab-tabs" aria-label="Collaborate sections"><ul>
       {tabs.map(item => <li key={item.id}><a href={`#${item.id}`} aria-current={tab === item.id ? "page" : undefined}>{item.label}
         {item.count ? <span className="tab-count mono" aria-label={`${item.count} waiting`}>{item.count}</span> : null}</a></li>)}
     </ul></nav>
     <CollabMessage message={message} />
-    {tab === "teams" ? <Teams board={board} /> : hash === "post" ? <Post board={board} /> : <Jobs board={board} mine={hash === "mine"} />}
+    {tab === "teams" ? <Teams board={board} /> : tab === "ideas" ? (hash === "idea-new" && member ? <NewIdea /> : <Ideas ideas={ideas} member={member} />) : hash === "post" ? <Post board={board} /> : <Jobs board={board} mine={hash === "mine"} />}
   </>;
 }
 
@@ -187,4 +186,39 @@ function Teams({ board }: { board: Board }) {
         </li>)}</ul>}
     </section>
   </div>;
+}
+
+function NewIdea() {
+  return <section className="post-job" aria-labelledby="idea-title">
+    <BackLink href="#ideas">Back to ideas</BackLink>
+    <h2 id="idea-title">Share an idea</h2>
+    <p className="lead">Ideas are open to the whole class. Say what help you want and who it is for.</p>
+    <IdeaForm />
+  </section>;
+}
+
+function Ideas({ ideas, member }: { ideas: IdeaSummary[]; member: boolean }) {
+  const [want, setWant] = useState<Help | null>(null);
+  const shown = want ? ideas.filter(idea => idea.help.includes(want)) : ideas;
+  return <section className="list-section" aria-labelledby="ideas-title">
+    <div className="section-head"><h2 id="ideas-title">Ideas</h2><span className="mono">{ideas.length}</span>
+      {member && <a className="button primary" href="#idea-new">Share an idea<Arrow /></a>}</div>
+    {ideas.length > 0 && <div className="filters" role="group" aria-label="Filter by help wanted">
+      {(Object.keys(HELP) as Help[]).map(item => <button key={item} type="button" className="chip" aria-pressed={want === item}
+        onClick={() => setWant(want === item ? null : item)}>{HELP[item]}</button>)}
+    </div>}
+    {ideas.length === 0 ? <EmptyState href={member ? "#idea-new" : "#jobs"} action={member ? "Share an idea" : "See jobs"} quiet>No ideas yet. Write the one you keep thinking about.</EmptyState> :
+      shown.length === 0 ? <p className="quiet">No ideas want that kind of help right now.</p> :
+      <ul className="job-list">{shown.map(idea => <li key={idea.id} className="job-card idea-card">
+        <IdeaBadges idea={idea} />
+        <h3><a href={`/collaborate/ideas/${idea.id}`}>{idea.title}</a></h3>
+        <p className="summary is-clamped">{idea.problem}</p>
+        <p className="job-by"><span className="mono">by {idea.author}</span>{idea.projectTitle && <span className="mono quiet">Now {idea.projectTitle}</span>}</p>
+        <div className="job-foot">
+          <span className="mono quiet">{idea.interestCount} interested · {idea.commentCount} {idea.commentCount === 1 ? "comment" : "comments"}</span>
+          {idea.interested && <HexBadge tone="strong">You are in</HexBadge>}
+          <span className="mono quiet">Active <Time iso={idea.activityAt} dayOnly /></span>
+        </div>
+      </li>)}</ul>}
+  </section>;
 }

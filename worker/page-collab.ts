@@ -1,14 +1,26 @@
 import type { PageData } from '../frontend/contracts';
-import { readBoard, readJobPage, readTeam } from '../lib/collab-read';
+import { readBoard, readFunding, readIdeaPage, readIdeas, readJobPage, readTeam } from '../lib/collab-read';
 import type { Services } from './services';
 
+const ideaPath = /^\/collaborate\/ideas\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
 const jobPath = /^\/collaborate\/jobs\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
 /** Collaborate page data. Fields are set only after a read validates, so a failure never leaves partial data. */
 export async function collabPage(path: string, data: PageData, s: Services, hash: string | null) {
   if (path === '/collaborate') {
     const v = await s.domainOperation('collab_board', hash);
     if (v.kind !== 'ok') throw new Error('Unavailable');
+    const ideas = await s.domainOperation('ideas_feed', hash);
+    if (ideas.kind !== 'ok') throw new Error('Unavailable');
     data.collab = readBoard(v);
+    data.ideas = readIdeas(ideas).ideas;
+    return;
+  }
+  const idea = ideaPath.exec(path);
+  if (idea) {
+    const v = await s.domainOperation('idea_page', hash, idea[1]);
+    if (v.kind === 'missing') data.idea = { kind: 'missing' };
+    else if (v.kind === 'ok') data.idea = { kind: 'ok', ...readIdeaPage(v) };
+    else throw new Error('Unavailable');
     return;
   }
   const job = jobPath.exec(path);
@@ -24,6 +36,10 @@ export async function collabPage(path: string, data: PageData, s: Services, hash
     try {
       const v = await s.domainOperation('collab_team', hash, data.project.project.id);
       if (v.kind === 'ok') data.team = readTeam(v.team);
+    } catch {}
+    try {
+      const v = await s.domainOperation('project_funding', hash, data.project.project.id);
+      if (v.kind === 'ok') data.funding = readFunding(v.funding);
     } catch {}
   }
 }

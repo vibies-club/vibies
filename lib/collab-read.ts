@@ -1,4 +1,4 @@
-import { JOB_STATES, DELIVERABLES, type Deliverable, type JobState } from "./collab-core.ts";
+import { JOB_STATES, DELIVERABLES, HELP, STAGES, type Deliverable, type Help, type JobState, type Stage } from "./collab-core.ts";
 import { projectId, projectVersion } from "./project-core.ts";
 
 /** Only these validated shapes cross the Worker/browser boundary for Collaborate. */
@@ -135,4 +135,50 @@ export function readTeam(value: any): Team {
     active: opt(v.active, agreement), pending: opt(v.pending, agreement),
     myDecision: opt(v.myDecision, one(["needed", "accepted", "declined", "not_listed"] as const)), myChange: opt(v.myChange, shareChange),
     history: list(v.history, agreement, 1000), openShareJobs: int(0, 10_000)(v.openShareJobs) };
+}
+
+// ---------- Ideas and funding ----------
+
+export type IdeaSummary = { id: string; title: string; problem: string; audience: string; help: Help[]; stage: Stage; author: string; isMine: boolean;
+  projectId: string | null; projectTitle: string | null; interestCount: number; commentCount: number; interested: boolean; createdAt: string; activityAt: string };
+export type IdeaComment = { author: string; byInstructor: boolean; body: string; at: string };
+export type IdeaInterest = { nickname: string; role: string; note: string | null; at: string; team: "invited" | "active" | null };
+export type IdeaDetail = IdeaSummary & { version: string; interest: IdeaInterest[]; mine: { role: string; note: string | null } | null;
+  myTeam: "invited" | "active" | null; comments: IdeaComment[]; products: { id: string; title: string }[] | null };
+export type IdeaPage = { viewer: "member" | "instructor"; idea: IdeaDetail };
+export type Pledge = { id: string; pledger: string; amount: number; note: string | null; status: "pledged" | "received" | "withdrawn"; at: string; closedAt: string | null; mine: boolean };
+export type Funding = { projectId: string; isOwner: boolean; seeking: boolean; goal: number | null; version: string; pledged: number; received: number; backers: number; pledges: Pledge[] };
+
+const viewer = one(["member", "instructor"] as const);
+const usd = (v: unknown) => int(0, 1_000_000_000)(v);
+function ideaSummary(value: unknown): IdeaSummary {
+  const v = obj(value);
+  return { id: id(v.id), title: str(v.title, 80), problem: str(v.problem, 2000), audience: str(v.audience, 200),
+    help: list(v.help, one(Object.keys(HELP) as Help[]), 5), stage: one(Object.keys(STAGES) as Stage[])(v.stage), author: name(v.author),
+    isMine: bool(v.isMine), projectId: opt(v.projectId, id), projectTitle: opt(v.projectTitle, s => str(s, 80)),
+    interestCount: int(0, 100_000)(v.interestCount), commentCount: int(0, 100_000)(v.commentCount), interested: bool(v.interested),
+    createdAt: time(v.createdAt), activityAt: time(v.activityAt) };
+}
+export function readIdeas(value: any): { viewer: "member" | "instructor"; ideas: IdeaSummary[] } {
+  return { viewer: viewer(value?.viewer), ideas: list(value.ideas, ideaSummary, 2000) };
+}
+const teamStatus = one(["invited", "active"] as const);
+export function readIdeaPage(value: any): IdeaPage {
+  const v = obj(value?.idea);
+  return { viewer: viewer(value.viewer), idea: { ...ideaSummary(v), version: projectVersion(v.version) ? v.version as string : fail(),
+    interest: list(v.interest, i => { const x = obj(i); return { nickname: name(x.nickname), role: str(x.role, 40), note: opt(x.note, s => str(s, 500)),
+      at: time(x.at), team: opt(x.team, teamStatus) }; }),
+    mine: opt(v.mine, m => { const x = obj(m); return { role: str(x.role, 40), note: opt(x.note, s => str(s, 500)) }; }),
+    myTeam: opt(v.myTeam, teamStatus),
+    comments: list(v.comments, c => { const x = obj(c); return { author: name(x.author), byInstructor: bool(x.byInstructor), body: str(x.body, 1000), at: time(x.at) }; }, 2000),
+    products: opt(v.products, p => list(p, item => { const x = obj(item); return { id: id(x.id), title: str(x.title, 80) }; }, 100)) } };
+}
+export function readFunding(value: any): Funding {
+  const v = obj(value);
+  return { projectId: id(v.projectId), isOwner: bool(v.isOwner), seeking: bool(v.seeking), goal: opt(v.goal, int(1, 1_000_000)),
+    version: v.version === "0" || projectVersion(v.version) ? v.version as string : fail(), pledged: usd(v.pledged), received: usd(v.received),
+    backers: int(0, 100_000)(v.backers),
+    pledges: list(v.pledges, p => { const x = obj(p); return { id: id(x.id), pledger: name(x.pledger), amount: int(1, 1_000_000)(x.amount),
+      note: opt(x.note, s => str(s, 500)), status: one(["pledged", "received", "withdrawn"] as const)(x.status), at: time(x.at),
+      closedAt: opt(x.closedAt, time), mine: bool(x.mine) }; }, 2000) };
 }

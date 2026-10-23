@@ -1,12 +1,14 @@
 import { readOnlyResponse } from "../lib/read-only";
 import { projectForm, projectId, projectVersion } from "../lib/project-core";
-import { agreementLines, FORBIDDEN_FIELDS, httpsUrl, isoDate, jobTerms, optionalText, text, wholeNumber } from "../lib/collab-core";
+import { agreementLines, FORBIDDEN_FIELDS, httpsUrl, ideaFields, isoDate, jobTerms, optionalText, text, wholeNumber } from "../lib/collab-core";
 import { go, safeError, type Services } from "./services";
 
 const confirmed = new Set(["job_cancel", "job_abandon", "job_release", "job_reject", "team_leave", "team_remove"]);
 const jobActions = new Set(["job_post", "job_edit", "job_cancel", "job_claim", "job_abandon", "job_release", "job_deliver", "job_accept",
   "job_changes", "job_reject", "job_paid", "job_receipt", "job_not_received", "job_dispute", "job_hide", "job_restore", "job_resolve"]);
 const teamActions = new Set(["team_invite", "team_accept", "team_decline", "team_leave", "team_remove", "agreement_propose", "agreement_accept", "agreement_decline"]);
+const ideaActions = new Set(["idea_post", "idea_edit", "idea_link", "idea_interest", "idea_uninterest", "comment_post"]);
+const fundingActions = new Set(["funding_set", "pledge_post", "pledge_withdraw", "pledge_received"]);
 
 /** POST /collaborate/action. Forms carry intent only; every outcome, tier and state is decided in SQL. */
 export async function collaborateAction(request: Request, services: Services) {
@@ -20,7 +22,7 @@ export async function collaborateAction(request: Request, services: Services) {
     if (typeof form === "number") return safeError(form);
     if (FORBIDDEN_FIELDS.some(field => form.has(field))) return safeError(400);
     const action = form.get("action") ?? "";
-    if (!jobActions.has(action) && !teamActions.has(action)) return safeError(400);
+    if (![jobActions, teamActions, ideaActions, fundingActions].some(set => set.has(action))) return safeError(400);
     if (confirmed.has(action) && form.get("confirm") !== "yes") return safeError(400);
     const run = (name: string, ...args: unknown[]) => domainOperation(name, hash, ...args) as Promise<{ kind: string; id?: string }>;
 
@@ -78,11 +80,54 @@ export async function collaborateAction(request: Request, services: Services) {
       return back(action === "job_accept" && ["insufficient_share", "project_missing"].includes(result.kind) ? `accept_${result.kind}` : result.kind);
     }
 
-    const project = form.get("projectId"), from = form.get("from");
+    if (action === "idea_post") {
+      const fields = ideaFields(form);
+      if (!fields) return go("/collaborate?message=idea_invalid#idea-new");
+      const result = await run("idea_post", fields);
+      if (result.kind === "forbidden") return safeError(403);
+      return result.kind === "posted" && projectId(result.id) ? go(`/collaborate/ideas/${result.id}?message=idea_posted`) : go(`/collaborate?message=idea_${result.kind}#idea-new`);
+    }
+
+    if (ideaActions.has(action)) {
+      const id = form.get("id");
+      if (!projectId(id)) return safeError(404);
+      const back = (kind: string) => go(`/collaborate/ideas/${id.toLowerCase()}?message=idea_${kind}`);
+      let result: { kind: string };
+      switch (action) {
+        case "idea_edit": { const fields = ideaFields(form); if (!fields) return back("invalid"); result = await run("idea_edit", id, form.get("version"), fields); break; }
+        case "idea_link": result = await run("idea_link", id, form.get("version"), form.get("projectId") ?? ""); break;
+        case "idea_interest": result = await run("idea_interest", id, form.get("role"), form.get("note")); break;
+        case "comment_post": result = await run("comment_post", id, form.get("body")); break;
+        default: result = await run("idea_uninterest", id);
+      }
+      if (result.kind === "forbidden") return safeError(403);
+      if (result.kind === "missing") return safeError(404);
+      return back(result.kind);
+    }
+
+    const project = form.get("projectId"), from = form.get("from"), idea = form.get("ideaId");
     if (!projectId(project)) return safeError(404);
-    if (from !== "teams" && from !== "project") return safeError(400);
+
+    if (fundingActions.has(action)) {
+      const back = (kind: string) => go(`/projects/${project.toLowerCase()}?message=funding_${kind}#funding`);
+      let result: { kind: string };
+      if (action === "funding_set") result = await run("funding_set", project, form.get("version"), form.get("seeking") === "yes", form.get("goal"));
+      else if (action === "pledge_post") result = await run("pledge_post", project, form.get("amount"), form.get("note"));
+      else {
+        const pledge = form.get("pledgeId");
+        if (!projectId(pledge)) return safeError(404);
+        result = await run("pledge_close", pledge, action === "pledge_received" ? "received" : "withdrawn");
+      }
+      if (result.kind === "forbidden") return safeError(403);
+      if (result.kind === "missing") return safeError(404);
+      return back(result.kind);
+    }
+
+    const fromIdea = from === "idea" && action === "team_invite" && projectId(idea);
+    if (from !== "teams" && from !== "project" && !fromIdea) return safeError(400);
     const prefix = action.startsWith("agreement_") ? "agreement_" : "team_";
-    const back = (kind: string) => go(from === "teams" ? `/collaborate?message=${prefix}${kind}#teams` : `/projects/${project.toLowerCase()}?message=${prefix}${kind}#team`);
+    const back = (kind: string) => go(fromIdea ? `/collaborate/ideas/${idea!.toLowerCase()}?message=${prefix}${kind}`
+      : from === "teams" ? `/collaborate?message=${prefix}${kind}#teams` : `/projects/${project.toLowerCase()}?message=${prefix}${kind}#team`);
     let result: { kind: string };
     switch (action) {
       case "team_invite": {

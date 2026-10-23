@@ -165,6 +165,21 @@
 .team-item { display: grid; gap: 12px; padding: 18px; border: 1px solid var(--rule-warm); border-radius: var(--radius-card); background: var(--paper); box-shadow: var(--shadow-raised); }
 .team-item p { overflow-wrap: anywhere; }
 
+/* Ideas */
+.idea-card .summary { font-size: var(--text-small); }
+.idea-card .badges { justify-content: flex-start; }
+.comment-list { display: grid; padding: 0; list-style: none; }
+.comment-list > li { display: grid; gap: 4px; padding: 12px 0; border-bottom: 1px solid var(--rule-soft); }
+.comment-list > li > p:first-child { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.comment-body { max-width: 65ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+.roster .hint { display: block; }
+
+/* Funding */
+.funding-card .card-bar .hex-badge { flex: none; }
+.pledges { display: grid; gap: 8px; }
+.pledges h3 { font-size: var(--text-h3); font-weight: 800; }
+.pledges .job-rows li > span:first-child { overflow-wrap: anywhere; }
+
 @media (min-width: 640px) {
   .invite-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: 12px; }
   .invite-form button { margin-top: 0; }
