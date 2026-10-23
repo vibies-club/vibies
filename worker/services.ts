@@ -2,6 +2,7 @@ import { appOrigin, digest, readAccess, sameOriginPost, validToken } from '../li
 import * as access from '../lib/d1/access';
 import * as projects from '../lib/d1/projects';
 import * as gates from '../lib/d1/gates';
+import * as collaborate from '../lib/d1/collaborate';
 import { readOnlyOperations } from '../lib/read-only';
 import { repositoryId, projectVersion } from '../lib/project-core';
 import { verifyRepository } from '../lib/project-github';
@@ -43,7 +44,7 @@ export function createServices(request:Request, env:Env) {
     if(readOnly && !(readOnlyOperations as readonly string[]).includes(name)) throw new Error('Read only');
     const db=await database();
     if(name==='access_state') return access.access_state(db,args[0],readOnly);
-    const fn=({...access,...projects,...gates} as Record<string,unknown>)[name];
+    const fn=({...access,...projects,...gates,...collaborate} as Record<string,unknown>)[name];
     if(typeof fn!=='function') throw new Error('Unavailable');
     return fn(db,...args);
   };

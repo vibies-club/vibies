@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readdirSync,readFileSync} from 'node:fs';
 import {test} from 'node:test';
 import {build} from 'esbuild';
 import {Miniflare} from 'miniflare';
@@ -14,7 +14,7 @@ test('Worker HTTP boundary uses local D1 authorization and native routes',async 
  const mf=new Miniflare(options);
  try{
   let db=await mf.getD1Database('DB');
-  for(const file of ['0001_application.sql','0002_activation.sql','0003_google.sql'])await db.batch(unstable_splitSqlQuery(readFileSync(new URL(`../d1/migrations/${file}`,import.meta.url),'utf8')).map(sql=>db.prepare(sql)));
+  for(const file of readdirSync(new URL('../d1/migrations/',import.meta.url)).filter(f=>f.endsWith('.sql')).sort())await db.batch(unstable_splitSqlQuery(readFileSync(new URL(`../d1/migrations/${file}`,import.meta.url),'utf8')).map(sql=>db.prepare(sql)));
   const get=(path,cookie)=>mf.dispatchFetch(origin+path,{redirect:'manual',headers:cookie?{cookie:`__Host-vibies-session=${token(cookie)}`}:{}});
   await t.test('disabled and mismatched activation never expose private data',async()=>{
    let data=await(await get('/api/page?path=/projects')).json();assert.equal(data.kind,'error');assert.equal(data.projects,undefined);

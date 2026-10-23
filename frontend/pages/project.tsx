@@ -3,6 +3,7 @@ import { Retry } from "../access-shell";
 import { AppShell } from "../app-shell";
 import { BackLink, Card, EmptyState, HexBadge, PageHeader } from "../ui";
 import { DemoLink, ownerNextStep, ProductStatus, ProjectAction, ProjectFields, ProjectMessage, ProjectRoadmap } from "../project-ui";
+import { ProjectTeam } from "../project-team";
 
 type PageProps = { data: PageData; search: URLSearchParams };
 
@@ -44,6 +45,7 @@ export function ProjectPage({ data, search }: PageProps) {
         </Card>
         <ProjectRoadmap project={item} quiet={statusStep} />
         {/* Collaborate: team, share agreement and funding sections drop in here, after the roadmap. */}
+        <ProjectTeam data={data} search={search} />
       </div>
       {(item.isOwner || isInstructor) && <aside className="project-side" aria-label="Product settings">
         {isInstructor && <Card title="Moderation" meta={item.moderation === "Hidden" ? "Hidden" : "Visible"}>

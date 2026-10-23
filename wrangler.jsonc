@@ -16,6 +16,7 @@
       "/auth/*",
       "/projects/action",
       "/admin/members/action",
+      "/collaborate/action",
       "/staging.json"
     ]
   },
