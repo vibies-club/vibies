@@ -20,7 +20,7 @@ function NextClass({ session, quiet }: { session: CourseSession | null; quiet?: 
       <div>
         <h3 className="next-title">{session.title}</h3>
         <p className="next-goal">{session.goal}</p>
-        <a className={quiet ? "button" : "button primary"} href={`/course/${session.n}`}>Open slides<Arrow /></a>
+        <a className={quiet ? "button" : "button primary"} href={`/course/${session.n}`}>{session.deck ? "Open slides" : `Open S${session.n}`}<Arrow /></a>
       </div>
     </div>
   </Card>;

@@ -30,6 +30,12 @@
         "VIBIES_DATABASE_BACKEND": "d1",
         "VIBIES_ENVIRONMENT": "staging"
       },
+      "r2_buckets": [
+        {
+          "binding": "COURSE",
+          "bucket_name": "vibies-course"
+        }
+      ],
       "durable_objects": {
         "bindings": [
           {
@@ -59,6 +65,12 @@
           "migrations_dir": "d1/migrations"
         }
       ],
+      "r2_buckets": [
+        {
+          "binding": "COURSE",
+          "bucket_name": "vibies-course"
+        }
+      ],
       "durable_objects": {
         "bindings": [
           {
@@ -80,6 +92,12 @@
       "database_name": "vibies-compatibility",
       "database_id": "ebfff95d-ec8a-4670-a9fc-a72647e144d2",
       "migrations_dir": "d1/migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "COURSE",
+      "bucket_name": "vibies-course"
     }
   ],
   "durable_objects": {
