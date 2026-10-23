@@ -1005,7 +1005,7 @@ export const wikiEntries: WikiEntry[] = [
       { file: "vibies-session-8.html", location: "slides 8 to 10" },
       { file: "vibies-session-catchup.html", location: "slide 24" },
     ],
-    guide: { label: "Supabase and Vercel setup", href: `${repository}/docs/SUPABASE-SETUP.md#5-configure-and-deploy-with-vercel` },
+    guide: { label: "Supabase and Vercel setup", href: "https://github.com/vibies-club/vibies/blob/690c05d/docs/SUPABASE-SETUP.md#5-configure-and-deploy-with-vercel" },
   },
   {
     id: "vercel-preview-proof",
@@ -1030,7 +1030,7 @@ export const wikiEntries: WikiEntry[] = [
     prerequisites: "A Supabase project that contains no real Vibies data.",
     result: "Creates and verifies the synthetic read-only demo, or stops at the failed safety check.",
     sources: [{ file: "vibies-session-9.html", location: "slides 13 to 17; partial classroom SQL replaced by maintained guide" }],
-    guide: { label: "Supabase demo setup", href: `${repository}/docs/SUPABASE-SETUP.md` },
+    guide: { label: "Supabase demo setup", href: "https://github.com/vibies-club/vibies/blob/690c05d/docs/SUPABASE-SETUP.md" },
   },
   {
     id: "database-migration-deployment",
