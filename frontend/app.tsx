@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import type { PageData } from "./contracts";
 import { isPagePath, loadPage, unavailableData, validatedRedirect } from "./api";
-import { AccessShell, Retry } from "./access-shell";
+import { Retry } from "./access-shell";
+import { AppShell } from "./app-shell";
 import { HomePage } from "./pages/home";
 import { DemoPage } from "./pages/demo";
 import { SignInPage } from "./pages/sign-in";
@@ -14,6 +15,7 @@ import { ConnectPage } from "./pages/connect";
 import { ProjectPage } from "./pages/project";
 import { ErrorsPage } from "./pages/errors";
 import { WikiPage } from "./pages/wiki";
+import { CollaboratePage, CoursePage, GatesPage, SessionPage } from "./pages/course";
 
 const path = window.location.pathname;
 const search = new URLSearchParams(window.location.search);
@@ -31,7 +33,11 @@ function Page({ data }: { data: PageData }) {
     case "/admin/members": return <MembersPage {...props} />;
     case "/projects": return <ProjectsPage {...props} />;
     case "/projects/connect": return <ConnectPage {...props} />;
-    default: return <ProjectPage {...props} />;
+    case "/course": return <CoursePage {...props} />;
+    case "/admin/gates": return <GatesPage {...props} />;
+    case "/collaborate": return <CollaboratePage {...props} />;
+    default: return path.startsWith("/course/") ? <SessionPage {...props} /> :
+      path.startsWith("/collaborate/") ? <CollaboratePage {...props} /> : <ProjectPage {...props} />;
   }
 }
 
@@ -84,11 +90,11 @@ export function App() {
     };
   }, []);
 
-  if (!isPagePath(path)) return <AccessShell data={unavailableData}><section><h1>Page not found</h1><a href="/">Go home</a></section></AccessShell>;
+  if (!isPagePath(path)) return <AppShell data={unavailableData}><section className="notice"><h1>Page not found</h1><a className="button primary" href="/">Go home</a></section></AppShell>;
   // ponytail: home and the errors demo need no account data, so they render without waiting.
   const content = path === "/" || path === "/errors" ? <Page data={data ?? unavailableData} /> :
-    data === null ? <AccessShell data={unavailableData}><section role="status" aria-live="polite" aria-busy="true"><h1>Checking your access</h1><p>Please wait.</p></section></AccessShell> :
-    data.kind === "error" || data.access.kind === "error" ? <AccessShell data={unavailableData}><Retry href={`${path}${window.location.search}`} /></AccessShell> : <Page data={data} />;
+    data === null ? <AppShell data={unavailableData}><section className="notice" role="status" aria-live="polite" aria-busy="true"><h1>Checking your access</h1><p className="lead">Please wait.</p></section></AppShell> :
+    data.kind === "error" || data.access.kind === "error" ? <AppShell data={unavailableData}><Retry href={`${path}${window.location.search}`} /></AppShell> : <Page data={data} />;
   return <>
     {data?.staging && <aside className="staging-banner" aria-label="Staging version">Staging · Test content · <code title={data.staging.sha}>{data.staging.sha.slice(0, 7)}</code></aside>}
     {content}
