@@ -6,6 +6,7 @@ import { projectId } from '../lib/project-core';
 import { wikiEntries } from '../lib/wiki';
 import { privatePath, type Services, type Env } from './services';
 import { coursePage } from './course';
+import { collabPage } from './page-collab';
 export async function page(request:Request,s:Services,env:Env) {
   const url=new URL(request.url),path=url.searchParams.get('path');
   const valid=path&&(['/','/demo','/errors','/sign-in','/access-denied'].includes(path)||privatePath(path));
@@ -73,6 +74,7 @@ export async function page(request:Request,s:Services,env:Env) {
           if(!actor)data.connect.status='error';else {const v=await s.verifyProject(actor);if(v.kind==='verified')data.connect.repositories=v.repositories??[];else data.connect.status=v.kind;}
         }
       }
+      await collabPage(path,data,s,hash);
     }
   }catch { data.kind='error';delete data.members;delete data.projects;delete data.project;delete data.linking;delete data.connect;delete data.demo;delete data.course;delete data.session;delete data.gates;delete data.gateBoard; }
   const response=Response.json(data,{status:data.kind==='error'?503:data.redirect?.startsWith('/sign-in')?401:data.redirect==='/access-denied'?403:200,headers:{'Cache-Control':'private, no-store','Vary':'Cookie','X-Content-Type-Options':'nosniff'}});

@@ -202,3 +202,46 @@ test('gate checks belong to an account and keep sessions, ids, states, proof lin
     assert.equal(db.prepare('SELECT count(*) n FROM gate_checks').get().n, 3);
   } finally { db.close(); }
 });
+
+test('collaborate: posters, immutable job events, agreement activation and project deletion', () => {
+  const db = fixture();
+  try {
+    account(db, 1, 'approved', 'Pixel'); account(db, 2, 'approved', 'Nova'); project(db, 1);
+    const job = (id, poster, instructor, money, share, projectId = null) => db.prepare(`INSERT INTO jobs(id,poster_account_id,poster_is_instructor,title,description,deliverable,window_days,money_usd,share_percent,project_id)
+      VALUES(?,?,?,'Fix the header','Make it sticky','pull_request',7,?,?,?)`).run(id, poster, instructor, money, share, projectId);
+    assert.throws(() => job('j0', 'account-1', 1, 10, null), /CHECK/);
+    assert.throws(() => job('j0', null, 0, 10, null), /CHECK/);
+    assert.throws(() => job('j0', 'account-1', 0, null, null), /CHECK/);
+    assert.throws(() => job('j0', null, 1, null, 5, 'project-1'), /share_project|CHECK/);
+    assert.throws(() => job('j0', 'account-2', 0, null, 5, 'project-1'), /share_project/);
+    job('j1', 'account-1', 0, 50, 5, 'project-1'); job('j2', null, 1, 80, null);
+    assert.throws(() => db.exec("DELETE FROM jobs WHERE id='j2'"), /jobs_are_kept/);
+    db.exec("INSERT INTO job_events(op,job_id,kind,actor_kind,actor_account_id) VALUES('op1','j1','posted','member','account-1')");
+    assert.throws(() => db.exec("UPDATE job_events SET kind='edited'"), /job_events_immutable/);
+    assert.throws(() => db.exec('DELETE FROM job_events'), /job_events_immutable/);
+    assert.throws(() => db.exec("INSERT INTO job_events(op,job_id,kind,actor_kind) VALUES('op1','j1','edited','system')"), /UNIQUE/);
+
+    db.exec("INSERT INTO share_agreements(id,project_id,version,source) VALUES('a1','project-1',1,'proposal')");
+    assert.throws(() => db.exec("INSERT INTO share_agreements(id,project_id,version,source) VALUES('a2','project-1',2,'proposal')"), /UNIQUE/);
+    assert.throws(() => db.exec("INSERT INTO share_agreements(id,project_id,version,source,status,activated_at) VALUES('a2','project-1',2,'proposal','active','x')"), /agreement_starts_pending/);
+    db.exec("INSERT INTO share_agreement_lines(agreement_id,account_id,role,percent) VALUES('a1','account-1','Owner',70),('a1','account-2','Designer',20)");
+    assert.throws(() => db.exec("INSERT INTO share_agreement_acceptances(agreement_id,account_id,decision) VALUES('a1','account-3','accepted')"), /acceptance_not_listed/);
+    db.exec("INSERT INTO share_agreement_acceptances(agreement_id,account_id,decision) VALUES('a1','account-1','accepted'),('a1','account-2','accepted')");
+    assert.throws(() => db.exec("UPDATE share_agreements SET status='active',activated_at='2026-10-23T00:00:00Z' WHERE id='a1'"), /agreement_not_ready/);
+    assert.throws(() => db.exec("UPDATE share_agreement_lines SET percent=30 WHERE account_id='account-2'"), /agreement_lines_fixed/);
+    db.exec("UPDATE share_agreements SET status='replaced' WHERE id='a1'");
+    db.exec("INSERT INTO share_agreements(id,project_id,version,source) VALUES('a2','project-1',2,'proposal')");
+    db.exec("INSERT INTO share_agreement_lines(agreement_id,account_id,role,percent) VALUES('a2','account-1','Owner',80),('a2','account-2','Designer',20)");
+    db.exec("INSERT INTO share_agreement_acceptances(agreement_id,account_id,decision) VALUES('a2','account-1','accepted')");
+    assert.throws(() => db.exec("UPDATE share_agreements SET status='active',activated_at='2026-10-23T00:00:00Z' WHERE id='a2'"), /agreement_not_ready/);
+    db.exec("INSERT INTO share_agreement_acceptances(agreement_id,account_id,decision) VALUES('a2','account-2','accepted')");
+    db.exec("UPDATE share_agreements SET status='active',activated_at='2026-10-23T00:00:00Z' WHERE id='a2'");
+    assert.throws(() => db.exec("UPDATE share_agreement_acceptances SET decision='declined'"));
+    assert.throws(() => db.exec("UPDATE share_agreements SET status='pending' WHERE id='a2'"), /agreement_transition/);
+    assert.throws(() => db.exec("DELETE FROM share_agreements WHERE id='a2'"), /agreement_history_kept/);
+
+    db.exec("DELETE FROM personal_projects WHERE id='project-1'");
+    assert.equal(db.prepare('SELECT count(*) n FROM share_agreements').get().n, 0);
+    assert.equal(db.prepare("SELECT project_id FROM jobs WHERE id='j1'").get().project_id, null);
+  } finally { db.close(); }
+});

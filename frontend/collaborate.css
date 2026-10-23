@@ -1,0 +1,187 @@
+/* Collaborate: jobs, teams and shares. Phone first; tokens live in globals.css. */
+
+/* Compensation: hexagon badges in mono. The outer cell is the edge, the inner cell the fill. */
+.pay { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.pay-hex { --cut: 11px; display: inline-flex; max-width: 100%; padding: 1.5px; background: var(--amber-ink); clip-path: polygon(var(--cut) 0, calc(100% - var(--cut)) 0, 100% 50%, calc(100% - var(--cut)) 100%, var(--cut) 100%, 0 50%); }
+.pay-hex > .mono { --cut: 10px; display: block; min-width: 0; padding: 5px 16px; overflow: hidden; background: linear-gradient(180deg, var(--gold-hi), var(--honey)); clip-path: polygon(var(--cut) 0, calc(100% - var(--cut)) 0, 100% 50%, calc(100% - var(--cut)) 100%, var(--cut) 100%, 0 50%); color: var(--ink); font-size: 14px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.pay-hex.is-share { background: var(--amber); }
+.pay-hex.is-share > .mono { background: var(--cell-fill); color: var(--amber-ink); }
+
+/* Sections and tabs */
+.collab-tabs ul { display: flex; gap: 4px; margin: 0 0 var(--space-md); padding: 0; list-style: none; border-bottom: 1px solid var(--rule-warm); }
+.collab-tabs a { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 8px 16px; border-bottom: 3px solid transparent; margin-bottom: -1px; color: var(--ink-2); font: 600 15px/1.2 var(--mono); text-decoration: none; }
+.collab-tabs a[aria-current="page"] { border-bottom-color: var(--amber); color: var(--amber-ink); font-weight: 700; }
+.tab-count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--honey); color: var(--ink); font-size: 12px; }
+.view-switch { display: inline-flex; justify-self: start; padding: 3px; border: 1px solid var(--rule-warm); border-radius: var(--radius-button); background: var(--paper); }
+.view-switch a { display: inline-flex; align-items: center; min-height: 40px; padding: 6px 16px; border-radius: 9px; color: var(--ink-2); font: 600 14px/1.2 var(--mono); text-decoration: none; }
+.view-switch a[aria-current] { background: var(--cell-fill); color: var(--amber-ink); box-shadow: inset 0 0 0 1px var(--honey-edge); }
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.app button.chip { min-height: 40px; padding: 6px 14px; border-color: var(--rule-warm); border-radius: 20px; font: 600 14px/1.2 var(--mono); }
+.app button.chip[aria-pressed="true"] { border-color: var(--amber-ink); background: var(--cell-fill); color: var(--amber-ink); }
+.app button.chip[aria-pressed="true"]::before { content: ""; width: 10px; height: 9px; background: var(--honey); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); box-shadow: inset 0 0 0 1px var(--amber-ink); }
+.skill-filter { margin: 0; }
+.app .skill-filter select { width: auto; min-height: 40px; padding-block: 6px; font-size: 14px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.app .money-note { max-width: 62ch; padding-left: 12px; border-left: 3px solid var(--honey); color: var(--ink-2); font-size: var(--text-small); line-height: 1.5; }
+
+/* Job board */
+.job-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: var(--space-sm); padding: 0; list-style: none; }
+.more-jobs .job-list { margin-top: 12px; }
+.job-card { position: relative; display: grid; align-content: start; gap: 10px; min-width: 0; padding: 18px; border: 1px solid var(--rule-warm); border-radius: var(--radius-card); background: var(--paper); box-shadow: var(--shadow-raised); transition: box-shadow var(--duration) var(--ease), border-color var(--duration) var(--ease); }
+.job-card.is-open { border-color: var(--honey-edge); }
+.job-card h3 { font-size: 19px; line-height: 1.2; font-weight: 800; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.job-card h3 a { text-decoration: none; }
+.job-card h3 a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.job-card h3 a:focus-visible { outline: none; }
+.job-card:has(h3 a:focus-visible) { outline: var(--focus); outline-offset: 3px; }
+.job-by { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.skills { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; list-style: none; }
+.skills li { padding: 2px 8px; border-radius: var(--radius-soft); background: var(--ground-2); color: var(--ink-2); font: 500 12.5px/1.4 var(--mono); }
+.job-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+@media (hover: hover) and (pointer: fine) {
+  .job-card:hover { border-color: var(--amber); box-shadow: var(--shadow-card); }
+  .job-card:hover h3 a { text-decoration: underline; }
+}
+
+/* My jobs */
+.my-jobs { display: grid; gap: var(--space-md); }
+.my-stats { display: flex; align-items: center; gap: 16px; }
+.my-stats p { display: grid; gap: 2px; }
+.my-group { display: grid; gap: 10px; }
+.my-group h3 { font-size: var(--text-h3); font-weight: 800; }
+.job-rows { display: grid; padding: 0; list-style: none; border-top: 1px solid var(--rule-soft); }
+.job-rows li { display: grid; gap: 6px; padding: 12px 0; border-bottom: 1px solid var(--rule-soft); }
+.job-rows a { font-weight: 700; overflow-wrap: anywhere; }
+.job-row-state { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+
+/* Post and edit form */
+.post-job { display: grid; gap: 12px; max-width: 760px; }
+.post-job h2 { font-size: clamp(26px, 3vw, 34px); line-height: 1.1; font-weight: 800; letter-spacing: -.02em; }
+.job-form { display: grid; gap: var(--space-md); margin: 0; }
+.job-form > fieldset, .proposal-row { display: grid; gap: 4px; min-width: 0; margin: 0; padding: 18px; border: 1px solid var(--rule-warm); border-radius: var(--radius-card); background: var(--paper); }
+.job-form > fieldset > legend, .proposal-row > legend { padding: 0 6px; margin-left: -6px; font-size: var(--text-h3); font-weight: 800; }
+.app .choice { display: grid; gap: 0; margin: 8px 0 0; padding: 0; border: 0; }
+.app .choice > legend { padding: 0; margin-bottom: 2px; font-weight: 700; }
+.affix { display: flex; align-items: center; gap: 8px; }
+.affix .mono { color: var(--amber-ink); font-size: 18px; font-weight: 700; }
+.app input.short { max-width: 140px; }
+.criteria-inputs { display: grid; gap: 8px; }
+.job-form > button { justify-self: start; }
+.tier-preview { display: grid; gap: 12px; padding: 18px; border: 1px solid var(--honey-edge); border-radius: var(--radius-card); background: var(--cell-fill); }
+.tier-preview h3 { font-size: var(--text-h3); font-weight: 800; }
+.tiers { display: grid; gap: 10px; }
+.tier-list { display: grid; gap: 8px; padding: 0; list-style: none; }
+.tier-list li { display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: center; gap: 12px; }
+.tier-list li > span:last-child { display: grid; gap: 2px; min-width: 0; }
+.tier-list li > span:last-child > span { color: var(--ink-2); overflow-wrap: anywhere; }
+.tier-hex { display: grid; place-items: center; width: 58px; aspect-ratio: 100 / 86.6; background: var(--paper); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); box-shadow: inset 0 0 0 2px var(--comb-line); color: var(--amber-ink); font-weight: 700; }
+.is-full .tier-hex { background: linear-gradient(180deg, var(--gold-hi), var(--honey)); color: var(--ink); }
+.is-none .tier-hex { color: var(--ink-2); }
+
+/* Job page */
+.job-head { display: grid; justify-items: start; gap: 12px; margin-bottom: 20px; }
+.job-head h1 { font-size: clamp(32px, 4vw, 48px); }
+.comb { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0 0 var(--space-md); padding: 0; list-style: none; counter-reset: step; }
+.comb li { position: relative; display: grid; justify-items: center; gap: 4px; min-width: 0; text-align: center; }
+.comb li:not(:last-child)::after { content: ""; position: absolute; z-index: 0; top: 19px; left: calc(50% + 22px); right: calc(-50% + 22px); border-top: 2px dashed var(--comb-line); }
+.comb li.is-done:not(:last-child)::after { border-top-style: solid; border-color: var(--amber); }
+.comb svg { position: relative; z-index: 1; width: 44px; height: 39px; overflow: visible; }
+.comb svg > polygon:first-child { fill: var(--paper); stroke: var(--comb-line); stroke-width: 1.8; }
+.comb path { fill: none; stroke: var(--amber-ink); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.comb .comb-dot { fill: var(--honey); stroke: var(--amber-ink); stroke-width: 1.4; }
+.comb .is-done svg > polygon:first-child { fill: var(--cell-fill); stroke: var(--amber); }
+.comb .is-now svg > polygon:first-child { fill: var(--cell-fill); stroke: var(--amber-ink); stroke-width: 2.6; }
+.comb span { display: grid; color: var(--ink-2); font: 500 12px/1.3 var(--mono); overflow-wrap: anywhere; }
+.comb .is-now span, .comb .is-done span { color: var(--amber-ink); font-weight: 700; }
+.comb em { font-style: normal; color: var(--honey-accent); }
+.comb.is-paused { opacity: .55; }
+.job-layout { display: grid; gap: var(--space-md); }
+.job-main { display: grid; gap: var(--space-md); min-width: 0; }
+.job-side { display: contents; }
+.next-step { order: -1; border-color: var(--honey-edge); }
+.next-step .card-bar { background: linear-gradient(180deg, var(--gold-hi), var(--honey)); border-color: var(--honey-edge); }
+.next-step .card-body > p { font-size: 17px; }
+.more-actions { display: grid; }
+.criteria { display: grid; gap: 0; padding: 0; list-style: none; counter-reset: crit; }
+.criteria li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; padding: 10px 0 10px 34px; border-bottom: 1px solid var(--rule-soft); counter-increment: crit; position: relative; overflow-wrap: anywhere; }
+.criteria li::before { content: counter(crit); position: absolute; left: 0; top: 10px; display: grid; place-items: center; width: 24px; height: 21px; background: var(--cell-fill); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); color: var(--amber-ink); font: 700 12px/1 var(--mono); }
+.criteria li.is-failed::before { background: var(--honey); color: var(--ink); }
+.timing { margin-bottom: 4px; }
+.tier-now { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tier-now > .mono { color: var(--amber-ink); font-weight: 700; }
+.app .quote { max-width: 65ch; padding: 8px 12px; border-radius: var(--radius-field); background: var(--ground-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+.strong-mono { color: var(--amber-ink); font-size: 18px; font-weight: 700; }
+.timeline { display: grid; padding: 0; list-style: none; }
+.timeline > li { position: relative; display: grid; gap: 4px; padding: 0 0 16px 24px; }
+.timeline > li::before { content: ""; position: absolute; left: 3px; top: 6px; width: 11px; height: 10px; background: var(--honey); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+.timeline > li:not(:last-child)::after { content: ""; position: absolute; left: 8px; top: 20px; bottom: 2px; border-left: 1.5px solid var(--rule-warm); }
+.timeline > li.is-pending::before { background: var(--comb-line); opacity: .6; }
+.timeline .failed { margin: 0; padding-left: 20px; color: var(--ink-2); font-size: var(--text-small); }
+.app .confirmation { align-items: flex-start; max-width: 560px; padding: 4px 0; line-height: 1.4; }
+.app .confirmation input { margin-top: 2px; flex: none; }
+
+/* Team & shares */
+.invite-callout { display: grid; gap: 12px; padding: 14px 16px; border: 1px solid var(--honey-edge); border-radius: var(--radius-button); background: var(--cell-fill); }
+.roster { display: grid; padding: 0; list-style: none; }
+.roster > li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 0; border-bottom: 1px solid var(--rule-soft); }
+.roster > li > span:nth-child(2) { display: grid; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.roster-hex { display: grid; place-items: center; flex: none; width: 38px; aspect-ratio: 100 / 86.6; background: var(--cell-fill); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); color: var(--amber-ink); font: 700 15px/1 var(--mono); text-transform: uppercase; }
+.roster > li:first-child .roster-hex { background: var(--honey); color: var(--ink); }
+.roster-more { flex-basis: 100%; border-top: 0; }
+.invite-form { display: grid; gap: 4px; margin: 0; }
+.invite-form > div > label { margin-top: 0; }
+.invite-form button { justify-self: start; margin-top: 8px; }
+.agreement { display: grid; gap: 12px; padding-top: 18px; border-top: 1px solid var(--rule-warm); }
+.agreement h3 { font-size: var(--text-h3); font-weight: 800; }
+.agreement h4 { font-size: 16px; font-weight: 800; }
+.app .agreement-note { max-width: 62ch; padding: 10px 12px; border: 1px dashed var(--comb-line); border-radius: var(--radius-field); background: var(--cell-fill); font-size: var(--text-small); line-height: 1.5; }
+.share-bar { display: flex; height: 16px; overflow: hidden; border: 1px solid var(--honey-edge); border-radius: 8px; background: var(--paper); }
+.share-bar > span { min-width: 3px; height: 100%; }
+.share-bar > span + span { border-left: 2px solid var(--paper); }
+.agreement-table { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
+.agreement-table :is(th, td) { padding: 8px 6px; border-bottom: 1px solid var(--rule-soft); text-align: left; vertical-align: top; }
+.agreement-table thead th { color: var(--ink-2); font: 500 12.5px/1.3 var(--mono); }
+.agreement-table tbody th { font-weight: 700; overflow-wrap: anywhere; }
+.agreement-table .num { text-align: right; }
+.agreement-table td.num { color: var(--amber-ink); font-size: 15px; font-weight: 700; }
+.swatch { display: inline-block; width: 12px; height: 11px; margin-right: 8px; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); box-shadow: inset 0 0 0 1px var(--amber-ink); }
+.brings { display: block; margin-top: 2px; color: var(--ink-2); font-weight: 400; }
+.pending { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--honey-edge); border-radius: var(--radius-button); background: var(--cell-fill); }
+.pending .agreement-table, .team-item .agreement-table { background: var(--paper); }
+.proposal { display: grid; gap: 12px; margin: 0; }
+.proposal-rows { display: grid; gap: 10px; }
+.proposal-row { padding: 14px; }
+.proposal-total { display: grid; gap: 6px; }
+.history { display: grid; gap: 12px; padding: 0; list-style: none; }
+.history > li { display: grid; gap: 2px; padding-left: 12px; border-left: 3px solid var(--rule-warm); }
+.history-lines { color: var(--ink-2); overflow-wrap: anywhere; }
+
+/* Teams tab */
+.teams { display: grid; gap: var(--space-lg); }
+.teams .list-section { margin-top: 0; }
+.team-list { display: grid; gap: var(--space-sm); padding: 0; list-style: none; }
+.team-item { display: grid; gap: 12px; padding: 18px; border: 1px solid var(--rule-warm); border-radius: var(--radius-card); background: var(--paper); box-shadow: var(--shadow-raised); }
+.team-item p { overflow-wrap: anywhere; }
+
+@media (min-width: 640px) {
+  .invite-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: 12px; }
+  .invite-form button { margin-top: 0; }
+  .job-rows li { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .job-row-state { grid-column: 1 / -1; }
+  .comb svg { width: 52px; height: 46px; }
+  .comb li:not(:last-child)::after { top: 22px; left: calc(50% + 26px); right: calc(-50% + 26px); }
+  .comb span { font-size: 13px; }
+}
+@media (min-width: 960px) {
+  .job-layout { grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); align-items: start; }
+  .job-side { display: grid; gap: var(--space-md); position: sticky; top: 88px; }
+  .next-step { order: 0; }
+}
+@media (max-width: 767px) {
+  .collab-tabs a { flex: 1; justify-content: center; }
+  .collab-tabs li { display: flex; flex: 1; }
+  .agreement-table :is(th, td) { padding-inline: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .job-card { transition: none; }
+}

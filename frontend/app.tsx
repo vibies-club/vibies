@@ -15,7 +15,8 @@ import { ConnectPage } from "./pages/connect";
 import { ProjectPage } from "./pages/project";
 import { ErrorsPage } from "./pages/errors";
 import { WikiPage } from "./pages/wiki";
-import { CollaboratePage, CoursePage, GatesPage, SessionPage } from "./pages/course";
+import { CoursePage, GatesPage, SessionPage } from "./pages/course";
+import { CollaboratePage } from "./pages/collaborate";
 
 const path = window.location.pathname;
 const search = new URLSearchParams(window.location.search);
