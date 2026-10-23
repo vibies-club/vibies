@@ -125,6 +125,15 @@ export default function Home() {
       </ul>
     </section>
 
+    <section className="home-errors reveal" aria-labelledby="errors-title">
+      <h2 id="errors-title">Stuck on an error?</h2>
+      <div>
+        <p>Find the error. Follow the steps. Get back to building.</p>
+        <p>Try five demo examples from Codex, Git, npm, and the terminal.</p>
+        <a href="/errors">Browse common errors</a>
+      </div>
+    </section>
+
     <section className="home-coming" id="coming-soon" aria-labelledby="coming-title">
       <h2 id="coming-title" className="reveal">Coming soon.</h2>
       <p className="reveal">Ask your instructor for an invitation.</p>
