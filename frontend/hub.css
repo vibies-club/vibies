@@ -13,7 +13,7 @@ html:has(.app) { background: var(--ground); scrollbar-color: var(--comb-line) va
 }
 .app :is(h1, h2, h3, p, ul, ol, dl, dd, figure) { margin: 0; }
 .app a { color: inherit; text-underline-offset: .22em; text-decoration-thickness: 1.5px; }
-.app :is(a, button, summary, input, select, textarea, pre):focus-visible { outline: var(--focus); outline-offset: 4px; border-radius: var(--radius-soft); }
+.app :is(a, button, summary, input, select, textarea, pre):focus-visible { outline: var(--focus); outline-offset: 4px; }
 .app :is(a, button, summary) { -webkit-tap-highlight-color: rgb(245 183 61 / .25); }
 .app h1 { font-size: var(--text-h1); line-height: 1.02; font-weight: 800; letter-spacing: -.035em; text-wrap: balance; overflow-wrap: anywhere; }
 .app .mono { font-family: var(--mono); font-size: var(--text-label); font-weight: 500; letter-spacing: 0; }
@@ -55,7 +55,7 @@ html:has(.app) { background: var(--ground); scrollbar-color: var(--comb-line) va
 /* Buttons and links */
 .app button, .app .button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; max-width: 100%; padding: 10px 18px; border: 1px solid var(--honey-edge); border-radius: var(--radius-button); background: var(--paper); color: var(--ink); font: 700 16px/1.2 var(--sans); text-align: center; text-decoration: none; cursor: pointer; touch-action: manipulation; transition: background-color var(--duration) var(--ease), transform var(--duration) var(--ease), box-shadow var(--duration) var(--ease); }
 .app :is(button, .button).primary { min-height: 52px; padding: 14px 24px; border-color: var(--honey-edge); background: linear-gradient(180deg, var(--gold-hi), var(--honey)); box-shadow: var(--shadow-button); font-size: 17px; }
-.app button.small { min-height: 40px; padding: 8px 12px; font-size: 14px; }
+.app button.small { min-height: 44px; padding: 8px 12px; font-size: 14px; }
 .app button.link-button { min-height: 44px; padding: 8px 0; border: 0; background: none; color: var(--amber-ink); text-decoration: underline; text-underline-offset: .22em; text-decoration-thickness: 1.5px; }
 .app button:disabled { opacity: .5; cursor: not-allowed; }
 .app .arrow { flex: none; transition: transform var(--duration) var(--ease); }
@@ -305,6 +305,12 @@ html:has(.app) { background: var(--ground); scrollbar-color: var(--comb-line) va
   .nav-more-menu:popover-open { animation: menu-in 160ms var(--ease); }
 }
 @keyframes menu-in { from { opacity: 0; transform: translateY(6px); } }
+/* Without the Popover API, More stays hidden and its links stay in the bar as plain tabs. */
+@supports not selector(:popover-open) {
+  .app-nav .nav-more { display: none; }
+  .app-nav .nav-extra { display: list-item; }
+  .app-nav a span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .app :is(button, .button, .arrow, .nav-hex, .app-nav a), .disclosure > summary::before { transition: none; }

@@ -127,12 +127,12 @@ function MilestoneControls({ project, milestone, index, total }: {
   index: number;
   total: number;
 }) {
-  const completeId = `milestone-complete-${milestone.id}`;
+  const toggle = milestone.completed ? "Mark not done" : "Mark done";
   return <div className="roadmap-controls">
     <form action="/projects/action" method="post">
       <RoadmapHiddenFields project={project} milestone={milestone} action="milestone_complete" />
-      <label htmlFor={completeId} className="check"><input id={completeId} type="checkbox" name="completed" value="yes" defaultChecked={milestone.completed} /> Complete</label>
-      <button type="submit" className="small">Save completion</button>
+      <input type="hidden" name="completed" value={milestone.completed ? "no" : "yes"} />
+      <button type="submit" className="small" aria-label={`${toggle}: ${milestone.title}`}>{toggle}</button>
     </form>
     <details className="disclosure milestone-more">
     <summary>Edit, move or delete</summary>
