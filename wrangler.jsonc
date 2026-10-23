@@ -46,7 +46,10 @@
       "vars": {
         "VIBIES_DATABASE_BACKEND": "d1",
         "VIBIES_ENVIRONMENT": "production",
-        "VIBIES_APP_ORIGIN": "https://vibies.club"
+        "VIBIES_APP_ORIGIN": "https://vibies.club",
+        "VIBIES_GITHUB_CLIENT_ID": "Ov23li7GL5mh06WfnX7h",
+        "VIBIES_GITHUB_APP_ID": "4901116",
+        "VIBIES_GITHUB_APP_SLUG": "vibies-projects-preview-17"
       },
       "d1_databases": [
         {
