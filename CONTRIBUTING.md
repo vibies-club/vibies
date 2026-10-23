@@ -65,10 +65,11 @@ handling live in [Reusable staging](docs/DATABASE-DEPLOYMENT.md#reusable-staging
 ## After merge
 
 Production is the Cloudflare Worker `vibies-production` at https://vibies.club
-with the D1 database `vibies-production`. After a merge, an
-operator applies new D1 migrations and deploys the Worker as
-[Deploy main](docs/DATABASE-DEPLOYMENT.md#deploy-main) describes, then records
-the receipt. Keep your issue open until every post-merge receipt it asks for is
+with the D1 database `vibies-production`. Cloudflare deploys every merge to
+`main` automatically, so a PR with a new D1 migration needs that migration
+applied to production before merge, as
+[Deploy main](docs/DATABASE-DEPLOYMENT.md#deploy-main) describes. Record the
+receipt after the deploy. Keep your issue open until every post-merge receipt it asks for is
 recorded.
 
 ## Writing rules

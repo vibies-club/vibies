@@ -1,7 +1,7 @@
 ---
 version: 1
 slug: "app-page-tsx"
-primary_target: "app/page.tsx"
+primary_target: "frontend/pages/home.tsx"
 related_targets: []
 ---
 

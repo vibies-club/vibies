@@ -29,7 +29,8 @@ There is no configured lint script.
 
 ## Deploy
 
-An operator deploys reviewed main to production:
+Every merge to `main` deploys to https://vibies.club automatically through
+Cloudflare Workers Builds. To deploy by hand:
 
 ```sh
 npm run build:cloudflare:production

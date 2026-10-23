@@ -94,7 +94,7 @@ components:
 
 ## Overview
 
-Recorded from `app/page.tsx` and `app/home.css`, with the sign-in extension in `app/sign-in/sign-in-shell.tsx` and `app/sign-in/sign-in.css`. This describes the shared home and sign-in identity. Other screens must adopt this identity through reviewed UI work; their current differences are not alternative design systems.
+Recorded from `frontend/pages/home.tsx` and `frontend/home.css`, with the sign-in extension in `frontend/pages/sign-in.tsx` and `frontend/sign-in.css`. This describes the shared home and sign-in identity. Other screens must adopt this identity through reviewed UI work; their current differences are not alternative design systems.
 
 **Creative North Star: "The Hive in Daylight"**
 

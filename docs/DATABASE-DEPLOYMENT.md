@@ -17,21 +17,32 @@ Vercel and Supabase were retired on 2026-10-23. See D-033 in
 
 ## Deploy main
 
-After the Instructor merges, an operator with Cloudflare access deploys from a
-clean checkout of `main`:
+Merging to `main` ships. Cloudflare Workers Builds watches `main` and deploys
+every merge to `vibies-production` with build command
+`CLOUDFLARE_ENV=production npm run build:cloudflare` and deploy command
+`npx wrangler deploy --config dist/server/wrangler.json --env=""`.
+
+When a PR adds a file to `d1/migrations`, apply it to production before you
+merge, from a clean checkout of the PR branch:
 
 ```sh
 npm ci
 npx wrangler d1 migrations apply DB --env production --remote
+```
+
+Wrangler applies only the migrations that production has not recorded yet.
+Every migration must work with the Worker that is already running, because it
+lands before the new Worker does. Keep old tables and columns until no deployed
+Worker reads them.
+
+If Workers Builds is off or a build fails, deploy by hand from a clean checkout
+of `main`:
+
+```sh
+npm ci
 npm run build:cloudflare:production
 npx wrangler deploy --config dist/server/wrangler.json
 ```
-
-Run the migration step only when `d1/migrations` gained a file. Wrangler
-applies only the migrations that production has not recorded yet. Apply
-migrations before the Worker that needs them. Every migration must also work
-with the Worker already running, so the short gap between the two steps is safe.
-Keep old tables and columns until no deployed Worker reads them.
 
 Record the merged commit, any new migration names, the deployed Worker version,
 and the date on the PR or issue. Leave account records and credentials out of
@@ -48,7 +59,7 @@ those settings.
 2. Update the D1 adapters and their tests in the same PR, including
    `tests/d1-schema.test.mjs` when the schema rules change.
 3. Run the checks below and include the receipts in the PR.
-4. After merge, follow [Deploy main](#deploy-main).
+4. Apply the migration to production, then merge. See [Deploy main](#deploy-main).
 
 ## Local and CI checks
 
