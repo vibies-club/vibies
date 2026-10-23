@@ -8,41 +8,21 @@ chosen.
 
 ## Now
 
-- Complete [issue #61](https://github.com/vibies-club/vibies/issues/61): migrate
-  hosting and all application data to Cloudflare Workers/D1 on the Free plan,
-  preserve GitHub approval and private access, and add explicitly linked Google
-  sign-in. PR #62 implements the approved static React/Vite frontend and small
-  authenticated, fetch-native Worker APIs after live vinext SSR exceeded the
-  Free 10 ms CPU allowance and an isolated OpenNext comparison was slower.
-  Preserve D1, the restricted Better Auth integration, and existing access rules.
-  Verify the public home prerender and empty private shell, authenticated API
-  and OAuth CPU suitability, browser parity, automatic preview/staging receipts,
-  and current-head CI and review. Complete production data reconciliation and
-  cutover only after the release gates and Instructor merge. Static page and
-  private API browser proof passed, but Google authentication still exceeds the
-  nominal Free CPU allowance after schema and initialization optimizations.
-  The owner approved a per-browser SQLite Durable Object OAuth coordinator.
-  Its lifecycle and isolated-preview tests pass; live CPU and authentication
-  proof remain before release. Keep Vercel and Supabase available until their
-  retirement is authorized.
-
+- Build the next feature the Instructor picks. The open backlog is issues #19,
+  #21 to #24, #26 to #28, and #58.
+- Approve the eighth student through the normal flow when they sign in.
 - Record the P8 and P13 browser receipts for issue #20 on staging in
   [Roadmap verification](ROADMAP-VERIFICATION.md).
-- Approve the eighth student through the normal flow when they sign in.
-- Bring [PR #33](https://github.com/vibies-club/vibies/pull/33) for issue #31
-  and [PR #36](https://github.com/vibies-club/vibies/pull/36) for issue #25
-  back to a mergeable state. Both are behind main with conflicts, and PR #33
-  has changes requested. Only the Instructor merges.
-- Complete the live Production Member publishing check when Builder is
-  available.
 
 ## Next
 
+- Error Library: rebuild issue #31 as one new migration, merged directly ahead
+  of the issue #27 app PR that uses it. Closed PR #33 and its branch hold the
+  earlier schema work.
+- Cloudflare move (issue #61): when the move is chosen, reopen PR #62, rebase
+  it, and split its live-site style changes into their own PR.
 - Run the first staging Preview PR selection on an eligible PR and record its
   receipt in the [deployment guide](DATABASE-DEPLOYMENT.md#reusable-staging).
-- After PR #33 merges, verify its Production migration before starting the
-  Error Library app child under issue #27.
-- Close issue #32; its final receipt is posted.
 - Manual Sync, deliberate owner Disconnect, and Archive actions remain outside
   #17. Resolve their feature plans before implementation.
 - Resolve Class Project lifecycle authority or individual Comment and Feedback

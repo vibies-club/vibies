@@ -12,6 +12,8 @@ import { MembersPage } from "./pages/members";
 import { ProjectsPage } from "./pages/projects";
 import { ConnectPage } from "./pages/connect";
 import { ProjectPage } from "./pages/project";
+import { ErrorsPage } from "./pages/errors";
+import { WikiPage } from "./pages/wiki";
 
 const path = window.location.pathname;
 const search = new URLSearchParams(window.location.search);
@@ -21,6 +23,8 @@ function Page({ data }: { data: PageData }) {
   switch (path) {
     case "/": return <HomePage {...props} />;
     case "/demo": return <DemoPage {...props} />;
+    case "/errors": return <ErrorsPage {...props} />;
+    case "/wiki": return <WikiPage {...props} />;
     case "/sign-in": return <SignInPage {...props} />;
     case "/access-denied": return <AccessDeniedPage {...props} />;
     case "/welcome": return <WelcomePage {...props} />;

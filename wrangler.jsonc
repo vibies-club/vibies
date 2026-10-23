@@ -46,7 +46,7 @@
       "vars": {
         "VIBIES_DATABASE_BACKEND": "d1",
         "VIBIES_ENVIRONMENT": "production",
-        "VIBIES_APP_ORIGIN": "https://vibies-production.xterminbeta-2b6.workers.dev"
+        "VIBIES_APP_ORIGIN": "https://vibies.club"
       },
       "d1_databases": [
         {

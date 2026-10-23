@@ -218,6 +218,8 @@ words such as “collaborate” or “manage.”
 **Supplemented by:** [D-017](#d-017-review-prs-with-an-instructor-run-agent-account),
 which lets the Instructor's review agent account satisfy the review rule, so
 the approving review comes from a Member or from `Trident-app`.
+[D-021](#d-021-merge-without-a-required-github-review) later removed the
+required review.
 
 **Decision:** The repository moves to the `vibies-club` organization and
 becomes public under the Apache License 2.0. Members receive Write access
@@ -463,7 +465,8 @@ records both actions.
 
 ## D-017: Review PRs with an Instructor-run agent account
 
-**Status:** Accepted by the Instructor on 2026-09-13.
+**Status:** Accepted by the Instructor on 2026-09-13. Superseded by
+[D-021](#d-021-merge-without-a-required-github-review) on 2026-10-23.
 
 **Decision:** The Instructor operates one GitHub machine account,
 `Trident-app`, driven by a coding agent. The account belongs to the
@@ -580,11 +583,68 @@ project skills live in `.agents/skills/`.
 quality reproducible across contributors and future agent sessions.
 
 **Merge boundary:** The owner explicitly retained the current merge rule:
-only the Instructor merges. Required GitHub approval, the three head checks,
+only the Instructor merges. Required GitHub approval (removed by
+[D-021](#d-021-merge-without-a-required-github-review)), the three head checks,
 staging eligibility, and post-merge receipts remain in force. The local
 `pr_reviewer` verdict supplements these gates.
 
-## D-021: Deliver static React pages with authenticated Worker APIs
+## D-021: Merge without a required GitHub review
+
+**Status:** Accepted by the Instructor on 2026-10-23.
+
+**Decision:** Main no longer requires an approving GitHub review. Branch
+protection still lets only the Instructor (`0xinBeta`) update main, and still
+requires green `app-check`, `migration-check`, and `links` on the head commit,
+with admins included. The agent's local `pr_reviewer` pass remains part of the
+workflow in [AGENTS.md](../AGENTS.md). `CODEOWNERS` is removed because it only
+requested the Instructor's review.
+
+**Why:** Member reviews did not arrive, so finished and checked PRs waited
+without an end.
+
+**Consequence:** This supersedes the review rule in
+[D-017](#d-017-review-prs-with-an-instructor-run-agent-account) and the
+approval part of [D-020](#d-020-configure-a-project-agent-workflow-and-craft-policy).
+A Member review is still welcome and no longer blocks a merge.
+
+## D-022: Keep class command knowledge inside Vibies
+
+**Status:** Accepted through the approved
+[issue #25 plan](https://github.com/vibies-club/vibies/issues/25) and
+[Owner answers](https://github.com/vibies-club/vibies/issues/25#issuecomment-5646775457).
+
+**Decision:** Vibies provides a protected `/wiki` page for commands taught in
+class. A curated TypeScript catalog in `lib/wiki.ts` stores its entries, and
+reviewed PRs maintain the catalog. The Error Library keeps its separate purpose:
+Members create solved-error records in the database.
+
+The wiki owns taught command references. [Supabase setup](SUPABASE-SETUP.md),
+[Personal Project setup](PROJECT-SETUP.md),
+[Database deployment](DATABASE-DEPLOYMENT.md), [access setup](ACCESS-SETUP.md),
+and the [README](../README.md) own their exact procedures. An overlapping wiki
+entry links to the relevant guide anchor and does not copy its recipe. Past
+decks remain teaching history. Future teaching documents can cite stable wiki
+anchors.
+
+**Why:** Beginners need one searchable command reference inside the product.
+Keeping the catalog in TypeScript makes every correction visible in Git review
+history and keeps procedures in their existing authoritative homes. Class
+command changes need shared curation and PR review. Members add their solved
+errors through the Error Library database workflow.
+
+**Consequence:** The catalog file stays public in GitHub. The page uses the
+existing private-area gate for the Instructor and all approved Members,
+including Members with incomplete onboarding. Database storage, a browser
+editor, and synchronization stay outside this feature. Search uses a GET query
+and works without JavaScript. A copy button is an optional JavaScript
+enhancement. A source inventory belongs in the implementing PR receipt, with no
+additional documentation file.
+
+**Related documents:** [Product class command wiki](../PRODUCT.md#class-command-wiki),
+[contributing guide](../CONTRIBUTING.md#add-a-command-entry), and
+[shared error log](ERROR_LOG.md).
+
+## D-023: Deliver static React pages with authenticated Worker APIs
 
 **Date and status:** 2026-10-15, approved amendment for issue #61;
 implementation and verification in progress. Hosted static delivery and API CPU
@@ -612,7 +672,7 @@ This replaces the initial vinext deployment decision, not the required security
 or release gates. Static delivery alone does not prove authenticated API or
 OAuth callback CPU suitability.
 
-## D-022: Add optional linked Google sign-in through Better Auth
+## D-024: Add optional linked Google sign-in through Better Auth
 
 **Date and status:** 2026-10-15, selected for issue #61 and implemented locally;
 provider setup and hosted authentication proof pending.
@@ -627,7 +687,7 @@ password sign-in are disabled. Provider profile and token retention are blocked.
 Instructor approval, and nickname-only privacy rules. Configuration gates the
 feature; synthetic OAuth tests do not prove live Google authorization.
 
-## D-023: Preserve stable identity when moving domain storage to D1
+## D-025: Preserve stable identity when moving domain storage to D1
 
 **Date and status:** 2026-10-15, selected for issue #61 and implemented locally;
 source reconciliation and production activation pending.
@@ -643,7 +703,7 @@ Synthetic fixtures and local parity tests cannot substitute for source-data
 reconciliation or production cutover receipts. Retain Supabase migration history
 and the source deployment for rollback until retirement is authorized.
 
-## D-024: Keep the Cloudflare migration within the Free-plan boundary
+## D-026: Keep the Cloudflare migration within the Free-plan boundary
 
 **Date and status:** 2026-10-15, selected for issue #61; account Free plan verified,
 full authenticated-flow capacity verification for the static architecture
@@ -658,7 +718,7 @@ configuration does not establish account entitlement, remaining quota, or live
 readiness; each deployment still needs capacity and provider proof.
 
 
-## D-025: Stream migration data through an isolated Wrangler process
+## D-027: Stream migration data through an isolated Wrangler process
 
 **Date and status:** 2026-10-15, selected for issue #61; synthetic remote proof passed, private-data use and cutover remain gated.
 
@@ -666,7 +726,7 @@ readiness; each deployment still needs capacity and provider proof.
 
 **Why:** Wrangler's file import rereads its input and cannot consume a non-rewindable stdin pipe safely. Remote bindings stalled in this environment. The HTTPS command-handler path passed a real D1 late-constraint rollback and ten-table reconciliation without putting private SQL in command arguments or files. This version-sensitive path must be revalidated whenever Wrangler changes.
 
-## D-026: Keep preview deployment authority outside candidate code
+## D-028: Keep preview deployment authority outside candidate code
 
 **Date:** 2026-10-15
 
@@ -674,7 +734,7 @@ readiness; each deployment still needs capacity and provider proof.
 
 **Why:** Worker Preview runtime isolation does not isolate a build token from arbitrary branch scripts. Separate build and deployment jobs preserve the existing private data boundary. Use `CLOUDFLARE_ENV=production` at Vite build time to flatten the reviewed production configuration. See [preview operations](CLOUDFLARE-PR-PREVIEWS.md).
 
-## D-027: Validate the pinned Google schema outside individual OAuth requests
+## D-029: Validate the pinned Google schema outside individual OAuth requests
 
 **Date:** 2026-10-15
 
@@ -682,7 +742,7 @@ readiness; each deployment still needs capacity and provider proof.
 
 **Why:** Better Auth 1.7.9 caches schema validation per adapter instance, while request-local initialization preserves link-grant and environment isolation. Repeating D1 metadata scans and endpoint initialization for each OAuth operation wastes the Free-plan CPU budget. A bounded grant-free cache avoids retaining request cookies, destinations, or authorization grants; activation checks still run before the auth subsystem is reached. SQL errors still fail the affected sign-in operation; database constraints, authorization hooks, and deployment activation checks remain enforced.
 
-## D-028: Use the minimal auth entry point with the stock D1 adapter
+## D-030: Use the minimal auth entry point with the stock D1 adapter
 
 **Date:** 2026-10-15
 
@@ -690,7 +750,7 @@ readiness; each deployment still needs capacity and provider proof.
 
 **Why:** Avoid unused full-entry setup while retaining stock SQL behavior and D1 transaction semantics. Link-bearing auth instances remain isolated, and failed initialization clears only matching cache entries. Minification reduces server JavaScript from approximately 1.60 MB to 0.76 MB; code size and passing tests alone do not prove Free-plan CPU suitability.
 
-## D-029: Prepare grant-free auth metadata during Worker startup
+## D-031: Prepare grant-free auth metadata during Worker startup
 
 **Date:** 2026-10-15
 
@@ -699,10 +759,10 @@ readiness; each deployment still needs capacity and provider proof.
 **Why:** Cloudflare supports binding-based client initialization at module scope. This moves pure metadata setup outside the first request without issuing SQL or network calls. Tests trap both kinds of I/O and verify telemetry/missing-configuration skip paths. Request-time activation, authorization and exact configuration comparisons remain mandatory; this does not establish Free-plan CPU suitability.
 
 
-## D-030: Coordinate each browser’s Google login in a SQLite Durable Object
+## D-032: Coordinate each browser’s Google login in a SQLite Durable Object
 
 **Date:** 2026-10-15
 
-**Decision:** Use one same-Worker SQLite Durable Object per hashed browser token to serialize Google starts, callbacks, linking and sign-out. Persist attempt phases and hashed revocation references before external effects. Interrupted exchanges require a fresh flow. D1 remains authoritative for accounts, approval, projects and sessions. Each compatibility, preview, staging and production Worker has its own namespace. This supersedes D-029 startup priming.
+**Decision:** Use one same-Worker SQLite Durable Object per hashed browser token to serialize Google starts, callbacks, linking and sign-out. Persist attempt phases and hashed revocation references before external effects. Interrupted exchanges require a fresh flow. D1 remains authoritative for accounts, approval, projects and sessions. Each compatibility, preview, staging and production Worker has its own namespace. This supersedes D-031 startup priming.
 
 **Why:** Live Google callbacks still exceeded the ordinary Workers Free CPU allowance after the bounded initialization optimizations. The owner selected Durable Objects after reviewing the alternatives. Cloudflare’s account dashboard confirms the $0 Free plan and includes SQLite Durable Objects. The coordinator also closes duplicate-callback and concurrent-sign-out races; live proof must establish both Worker and object CPU suitability before production migration. No paid plan or card is authorized.

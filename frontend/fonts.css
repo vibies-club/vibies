@@ -15,4 +15,6 @@
 :root {
   --font-display: "Bricolage Grotesque";
   --font-mono: "JetBrains Mono";
+  --sign-in-display: "Bricolage Grotesque";
+  --sign-in-mono: "JetBrains Mono";
 }

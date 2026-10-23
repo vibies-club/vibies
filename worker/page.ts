@@ -6,7 +6,7 @@ import { projectId } from '../lib/project-core';
 import { privatePath, type Services, type Env } from './services';
 export async function page(request:Request,s:Services,env:Env) {
   const url=new URL(request.url),path=url.searchParams.get('path');
-  const valid=path&&(['/','/demo','/sign-in','/access-denied'].includes(path)||privatePath(path));
+  const valid=path&&(['/','/demo','/errors','/sign-in','/access-denied'].includes(path)||privatePath(path));
   if(!valid||[...url.searchParams.keys()].some(k=>!['path','message','google','refresh','status','returnTo'].includes(k))||[...url.searchParams.keys()].some(k=>url.searchParams.getAll(k).length!==1)||[...url.searchParams.values()].some(v=>v.length>512))return new Response('Not found',{status:404,headers:{'Cache-Control':'no-store'}});
   const fetchSite=request.headers.get('sec-fetch-site');
   if((request.headers.has('origin')&&request.headers.get('origin')!==s.origin)||fetchSite==='cross-site')return new Response('Forbidden',{status:403,headers:{'Cache-Control':'no-store'}});

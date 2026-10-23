@@ -11,9 +11,9 @@ export async function AccountLinks() {
     : <a href="/sign-in">Sign in</a>;
 }
 
-export async function AccessShell({ children }: { children: React.ReactNode }) {
-  return <main className="access">
-    <header><a href="/" aria-label="Vibies home">vibies<span>.</span></a><nav className="account-controls" aria-label="Account"><AccountLinks /></nav></header>
+export async function AccessShell({ children, className, brand }: { children: React.ReactNode; className?: string; brand?: React.ReactNode }) {
+  return <main className={className ? `access ${className}` : "access"}>
+    <header><a href="/" aria-label="Vibies home">{brand ?? <>vibies<span>.</span></>}</a><nav className="account-controls" aria-label="Account"><AccountLinks /></nav></header>
     {children}
     <footer>Private community. Nicknames only. <a href="/demo">View the public demo</a></footer>
   </main>;

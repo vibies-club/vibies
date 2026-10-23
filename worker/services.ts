@@ -60,4 +60,4 @@ export function createServices(request:Request, env:Env) {
   return {origin,secure,readOnly,jar,name,sessionHash,database,domainOperation,accessState,projectActor,verifyProject,setCookie,allowedPost:(r:Request)=>sameOriginPost(r,origin),googleEnabled:!!(env.VIBIES_GOOGLE_CLIENT_ID&&env.VIBIES_GOOGLE_CLIENT_SECRET&&env.VIBIES_GOOGLE_AUTH_SECRET)};
 }
 export type Services=ReturnType<typeof createServices>;
-export function privatePath(path:string|null):string|null {return path&&(['/welcome','/admin/members','/projects','/projects/connect'].includes(path)||/^\/projects\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(path))?path:null;}
+export function privatePath(path:string|null):string|null {return path&&(['/welcome','/wiki','/admin/members','/projects','/projects/connect'].includes(path)||/^\/projects\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(path))?path:null;}

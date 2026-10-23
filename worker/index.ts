@@ -9,6 +9,8 @@ export type WorkerEnv=Env & {ASSETS?:{fetch(request:Request):Promise<Response>}}
 const methods:Record<string,string>={'/api/page':'GET','/auth/browser':'GET','/auth/start':'POST','/auth/callback':'GET','/auth/sign-out':'POST','/auth/google/start':'POST','/auth/google/link':'POST','/auth/google/provider/callback/google':'GET','/projects/action':'POST','/admin/members/action':'POST'};
 async function handle(request:Request,env:WorkerEnv):Promise<Response>{
   const url=new URL(request.url),path=url.pathname;
+  // ponytail: production answers on one origin; workers.dev and www only redirect there.
+  if(env.VIBIES_ENVIRONMENT==='production'&&env.VIBIES_APP_ORIGIN&&url.origin!==env.VIBIES_APP_ORIGIN&&(request.method==='GET'||request.method==='HEAD'))return Response.redirect(env.VIBIES_APP_ORIGIN+path+url.search,301);
   if(methods[path]&&request.method!==methods[path])return new Response('Method not allowed',{status:405,headers:{Allow:methods[path],'Cache-Control':'no-store'}});
   try{
     if(methods[path]){
@@ -19,7 +21,7 @@ async function handle(request:Request,env:WorkerEnv):Promise<Response>{
       if(path==='/projects/action')return await projectAction(request,s);
       return await memberAction(request,s);
     }
-    if(['/','/demo','/sign-in','/access-denied'].includes(path)||privatePath(path)){
+    if(['/','/demo','/errors','/sign-in','/access-denied'].includes(path)||privatePath(path)){
       if(request.method!=='GET'&&request.method!=='HEAD')return new Response('Method not allowed',{status:405,headers:{Allow:'GET, HEAD'}});
       if(env.ASSETS)return env.ASSETS.fetch(new Request(new URL(path==='/'?'/index.html':'/shell.html',url),request));
     }

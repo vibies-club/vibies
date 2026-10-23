@@ -11,9 +11,9 @@ export function AccountLinks({ data }: { data: PageData }) {
     : <a href="/sign-in">Sign in</a>;
 }
 
-export function AccessShell({ data, children }: { data: PageData; children: React.ReactNode }) {
-  return <main className="access">
-    <header><a href="/" aria-label="Vibies home">vibies<span>.</span></a><nav className="account-controls" aria-label="Account"><AccountLinks data={data} /></nav></header>
+export function AccessShell({ data, children, className, brand }: { data: PageData; children: React.ReactNode; className?: string; brand?: React.ReactNode }) {
+  return <main className={className ? `access ${className}` : "access"}>
+    <header><a href="/" aria-label="Vibies home">{brand ?? <>vibies<span>.</span></>}</a><nav className="account-controls" aria-label="Account"><AccountLinks data={data} /></nav></header>
     {children}
     <footer>Private community. Nicknames only. <a href="/demo">View the public demo</a></footer>
   </main>;

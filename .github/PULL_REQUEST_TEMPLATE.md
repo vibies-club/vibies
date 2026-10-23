@@ -24,4 +24,3 @@ Show how you proved each acceptance criterion. Every claim needs a receipt.
   full `migration-check` run instead.
 - Staging receipt for hosted claims: link to the staging workflow's comment on
   this PR, or "none needed".
-- Review re-requested after the last push: yes / no.
